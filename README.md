@@ -1,4 +1,5 @@
-# SCHISM (Semantic Classification of High-resolution Imaging for Scanned Materials)
+# SCHISM 
+(Semantic Classification of High-resolution Imaging for Scanned Materials)
  
 This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of images as long as semantic segmentation is required. The framework supports both training and inference workflows.
  
