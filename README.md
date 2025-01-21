@@ -1,4 +1,4 @@
-# SCHISM
+# SCHISM (Semantic Classification of High-resolution Imaging for Scanned Materials)
  
 This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of images as long as semantic segmentation is required. The framework supports both training and inference workflows.
  
@@ -131,7 +131,7 @@ Configures data handling.
 - `img_res`: Resolution to resize crops during training and inference.
 - `num_samples`: Number of samples to use.
 
-### Note
+## Note
 During training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail. Upon completing a training session, several files will be generated in the weight folder:
 
 - **data_stats.json**: Contains the standard deviation and mean values used to normalize the images.
@@ -143,12 +143,12 @@ During training, images are split into crops of user-defined size (`crop_size`),
 
 During inference, the same process is applied, with patches reassembled into the original image.
 
-## Training Workflow
+### Training Workflow
 1. Prepare the dataset following the directory structure.
 2. Create an INI file with the necessary configurations.
 3. Run the training script, specifying the dataset, output folder for weights, and the INI file.
 
-## Inference Workflow
+### Inference Workflow
 1. Use the trained weights saved during the training phase.
 2. Provide the dataset for prediction.
 3. Run the inference script specifying the weight folder and the data for prediction.
