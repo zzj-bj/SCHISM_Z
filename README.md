@@ -77,9 +77,9 @@ Defines the model architecture and hyperparameters.
 - `num_classes` is mandatory.
 - Optional parameters like `k_size`, `activation`, `n_block`, and `channels` have predefined default values. These parameters vary depending on the specific network. Please refer to the network's documentation or file for detailed guidance on parameter configuration.
 - Supported models:
-  - `UnetVanilla` --> more info here
-  - `UnetSegmentor` (our adaptation of Liang et al. 2022) --> more info here
-  - `DINOv2` (our own implementation; see [this link](https://github.com/FloFive) for more info) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/classes/DINOv2.md)
+  - `UnetVanilla` --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetVanilla.md)
+  - `UnetSegmentor` (our adaptation of Liang et al. 2022) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetSegmentor.md)
+  - `DINOv2` (our own implementation; see [this link](https://github.com/FloFive) for more info) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/DINOv2.md)
   
 More models will be added in the future.
 
