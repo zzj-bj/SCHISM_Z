@@ -45,7 +45,9 @@ To make predictions:
 
 ---
 ## INI File Setup
- 
+
+Here is an example of an INI file:
+
 ```
 [Model]
 n_block=5
@@ -72,20 +74,24 @@ crop_size=128
 img_res=560
 num_samples=70
 ```
-Please refer to the network's documentation for optional parameters specific to each model. Have a look a this page for more information about the INI setup.
- 
+Please refer to the network's documentation for optional parameters specific to each model. Have a look [at this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.
+
+---
+## Data Preparation
+
 The data should be organized as follows:
+
 ```
-datasets
-|_dataset 1
-   |_images
-   |_masks
-|_dataset 2
-   |_images
-   |_masks
-|_dataset n
-   |_images
-   |_masks
+data
+|_dataset 1/
+|   |_images/
+|   |_masks/
+|_dataset 2/
+|   |_images/
+|   |_masks/
+|_dataset n/
+|   |_images/
+|   |_masks/
 |_data_stats.json (optional)
 ```
 
@@ -94,27 +100,8 @@ datasets
 - **data_stats.json**: (Optional) JSON file providing mean and standard deviation values for normalization.
  
 ---
- 
-## Configuration
- 
-Users must create an INI file to specify model parameters, optimizer settings, scheduler configurations, and training options.
- 
-## Sections
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Note
+
 During training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail. Upon completing a training session, several files will be generated in the weight folder:
 
 - **data_stats.json**: Contains the standard deviation and mean values used to normalize the images.
