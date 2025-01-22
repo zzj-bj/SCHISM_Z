@@ -6,7 +6,7 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 ## Installation
 
 1. Clone this repository to your local machine:
-   ``` git clone <repository_url> ```
+   ``` git clone git@github.com:FloFive/SCHISM.git ```
 
 3. Navigate to the cloned directory:
    ``` cd <some path> SCHISM ```
