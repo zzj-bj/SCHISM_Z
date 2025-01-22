@@ -14,7 +14,7 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 ---
 ## How to use
 
-SCHISM offers two main functionalities: *Training* and *Inference*.
+SCHISM offers two main functionalities: **Training** and **Inference**.
 
 ### General Steps
 1. Organize your data in the required structure (see Data Preparation).
