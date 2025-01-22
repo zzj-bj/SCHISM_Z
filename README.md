@@ -74,6 +74,7 @@ crop_size=128
 img_res=560
 num_samples=70
 ```
+
 Please refer to the network's documentation for optional parameters specific to each model. Have a look [at this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.
 
 ---
