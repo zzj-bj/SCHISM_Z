@@ -7,11 +7,11 @@ UnetVanilla is a lightweight implementation of the U-Net architecture for image 
 ---
 ## Features
 - Customizable Parameters:
-  - n_block: Number of encoder and decoder blocks.
-  - channels: Number of initial feature channels, doubled in each subsequent block.
-  - k_size: Kernel size for convolutional layers.
-  - activation: Choice of activation function (relu, leakyrelu, sigmoid, or tanh).
-  - num_classes: Number of output classes for segmentation.
+  - `n_block`: Number of encoder and decoder blocks.
+  - `channels`: Number of initial feature channels, doubled in each subsequent block.
+  - `k_size`: Kernel size for convolutional layers.
+  - `activation`: Choice of activation function (`relu`, `leakyrelu`, `sigmoid`, or `tanh`).
+  - `num_classes`: Number of output classes for segmentation.
 
 - Flexible Architecture:
   - Encoder Path: Successive down-sampling with convolution and max-pooling layers.
