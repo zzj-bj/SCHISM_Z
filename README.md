@@ -22,17 +22,17 @@ SCHISM offers two main functionalities: *Training* and *Inference*.
 3. Run the main script:
    ``` python schism.py ```
 4. Navigate through the command-line menu:
- - Option 1: Train a new model.
- - Option 2: Make predictions using a trained model.
+    - Option 1: Train a new model.
+    - Option 2: Make predictions using a trained model.
 
 ---
 ### Training Workflow
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure.
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file.
 3. Run the training command: Launch the training process, then select the training option and specify:
- - The dataset directory.
- - The output folder for model weights (and more).
- - The path to the INI file.
+    - The dataset directory.
+    - The output folder for model weights (and more).
+    - The path to the INI file.
 
 ---
 ### Inference Workflow
@@ -40,8 +40,8 @@ To make predictions:
 1. Use trained weights: Ensure the trained model weights are saved from the training phase.
 2. Prepare the dataset for prediction: Organize the data in a compatible format.
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
- - The folder containing trained weights.
- - The dataset for prediction.
+    - The folder containing trained weights.
+    - The dataset for prediction.
 
 ---
 ## INI File Setup
