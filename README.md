@@ -3,7 +3,7 @@
 SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanned Materials_. This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of image as long as semantic segmentation is required. The framework supports both training and inference workflows. As for the little trivia, this project got named after [this](https://www.youtube.com/watch?v=MM62wjLrgmA&ab_channel=TOOLVEVO) :) 
 
 ---
-## Installation
+## :gear: Installation
 
 1. Clone this repository to your local machine:
    ``` git clone git@github.com:FloFive/SCHISM.git ```
@@ -12,7 +12,7 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
    ``` cd <some path> SCHISM ```
    
 ---
-## How to use
+## :question: How to use
 
 SCHISM offers two main functionalities: **Training** and **Inference**.
 
@@ -44,7 +44,7 @@ To make predictions:
     - The dataset for prediction.
 
 ---
-## INI File Setup
+## :scroll: INI File Setup
 
 Here is an example of an INI file:
 
@@ -78,7 +78,7 @@ num_samples=70
 Please refer to the network's documentation for optional parameters specific to each model. Have a look at [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.
 
 ---
-## Data Preparation
+## 👾 Data Preparation
 
 The data should be organized as follows:
 
@@ -101,11 +101,11 @@ data
 - **data_stats.json**: (Optional) JSON file providing mean and standard deviation values for normalization.
  
 ---
-## Note
+## :thinking: Note
 
 During training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail. Upon completing a training session, several files will be generated in the weight folder:
 
-- **data_stats.json**: Contains the standard deviation and mean values used to normalize the images.
+- **data_stats.json**: The standard deviation and mean values used to normalize the images.
 - **hyperparameters.ini**: A copy of the INI file used for the training session.
 - **learning_curves.png**: Displays the loss and metrics values as a function of the epochs.
 - **model_best{metric(s)}.pth**: Contains the best model weights based on each metric specified in the INI file.
@@ -114,6 +114,21 @@ During training, images are split into crops of user-defined size (`crop_size`),
 
 The same process is applied during inference, with patches reassembled into the original image.
 
-
-## Contributions
+---
+## :heart_on_fire: Contributions
 Contributions are welcome! Please fork the repository and submit a pull request.
+
+---
+## 📚 Citation / Bibtex
+
+If you use our solution or find our work helpful, please consider citing it as follows:
+
+```
+@misc{schism2025,
+  title={SCHISM: Semantic Classification of High-resolution Imaging for Scanned Materials},
+  author={Your Name and Contributors},
+  year={2025},
+  howpublished={\url{https://github.com/FloFive/SCHISM}},
+  note={GitHub repository}
+}
+```
