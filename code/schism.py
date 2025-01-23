@@ -12,31 +12,41 @@ from tqdm import tqdm
 #import cv2
 import matplotlib.pyplot as plt
 from datetime import datetime
+from patchify import patchify
 
 current_dir = os.getcwd()
 project_dir = os.path.join(current_dir, '..')  
 sys.path.append(os.path.join(current_dir))
-
-
-
 
 # Constants
 VALID_FILETYPES = [("ini files", "*.ini")]
 
 def show_main_menu():
     """Display the main menu options."""
-    print("Select the action you want to perform:")
+    ascii_art = r"""
+    ███████╗ ██████╗██╗  ██╗██╗███████╗███╗   ███╗
+    ██╔════╝██╔════╝██║  ██║██║██╔════╝████╗ ████║
+    ███████╗██║     ███████║██║███████╗██╔████╔██║
+    ╚════██║██║     ██╔══██║██║╚════██║██║╚██╔╝██║
+    ███████║╚██████╗██║  ██║██║███████║██║ ╚═╝ ██║
+    ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝     ╚═╝
+    """
+    print(ascii_art)
+    print("=========================")
+    print("Please select an action:")
     print("1. Training")
     print("2. Inference")
     print("3. Quit")
+    print("=========================")
 
 
 def show_training_menu():
     """Display options related to training."""
-    print("Select the action you want to perform:")
-    print("1. Data Loading")
-    print("2. Run Training")
-    print("3. Go Back to Main Menu")
+    print("=========================")
+    print("Please select an action:")
+    print("1. Data Loading + Run Training")
+    print("2. Go Back to Main Menu")
+    print("=========================")
 
 
 def select_directory(title: str) -> str:
@@ -51,7 +61,9 @@ def select_file(title: str, filetypes: list) -> str:
 
 def option_training():
     """Handle the training option."""
+    print("=========================")
     print("The action performed is: training.")
+    print("=========================")
 
     # Select directories and files
     data_dir = select_directory("Select your data folder")
@@ -71,21 +83,22 @@ def option_training():
     # Display training options
     while True:
         show_training_menu()
-        choice = input("Make a choice between 1 to 3: ")
+        choice = input("Make a choice between 1 and 2: ")
 
         if choice == '1':
             train_object.load_segmentation_data()
-        elif choice == '2':
             train_object.train()
-        elif choice == '3':
-            print("Returning to the main menu...")
+        elif choice == '2':
+            print("Returning to the main menu")
             break
         else:
-            print("Invalid choice! Please select a valid option.")
+            print("Invalid choice: Please select a valid option.")
 
 def option_inference():
     """Handle the inference option."""
+    print("=========================")
     print("The action performed is: inference.")
+    print("=========================")
     
     # Select directories and files
     data_dir = select_directory("Select the data to be predited")
@@ -132,7 +145,7 @@ def option_inference():
                             selected_metric=selected_metric,
                             hyperparameters=hyperparameters)
     pred_object.predict()
-    print("done bro")
+    print("Training done ;)")
 
 def main():
     """Main function to run the application."""
