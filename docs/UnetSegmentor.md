@@ -2,51 +2,56 @@
 
 ## Overview
 
-The UnetSegmentor class implements a U-Net architecture for image segmentation tasks. This model supports required and optional parameters to customize the network layers, activation functions, and more. The class utilizes PyTorch's nn.Module to define the network structure, including convolutional layers, transposed convolutions for upsampling, and a final segmentation layer.
+This network is an adaptation of [Liang et al.,2022](https://www.sciencedirect.com/science/article/abs/pii/S0098300422001662). UnetSegmentor is a CNN designed for efficient, automated segmentation of micro-CT images, critical for analyzing rock microstructures and physical properties. It replaces labor-intensive manual workflows with a fast, accurate, and flexible architecture for multi-class segmentation. Ideal for geoscience applications, it ensures precise mineral and pore identification with minimal effort.
 
 ---
+
 ## Features
-- Customizable Parameters:
+
+- **Configurable Parameters**:
   - `n_block`: Number of encoder and decoder blocks.
   - `channels`: Number of initial feature channels, doubled in each subsequent block.
   - `k_size`: Kernel size for convolutional layers.
   - `activation`: Choice of activation function (`relu`, `leakyrelu`, `sigmoid`, or `tanh`).
+  - `p`: Dropout probability for regularization.
   - `num_classes`: Number of output classes for segmentation.
 
-- Flexible Architecture:
-  - Encoder Path: Successive down-sampling with convolution and max-pooling layers.
-  - Decoder Path: Up-sampling with transpose convolutions and skip connections.
-  - Bridge: A bottleneck connecting the encoder and decoder paths.
-  - Output Layer: Converts feature maps to class probabilities using a 1x1 convolution.
-  
-- Modular Design:
-  - Encoders, decoders, and the bridge are built using reusable blocks for clarity and extensibility.
+- **Symmetrical Encoder-Decoder Design**:
+  - **Encoder**: Downsamples the input using convolution and pooling layers.
+  - **Bridge**: Bottleneck layer connecting the encoder and decoder.
+  - **Decoder**: Upsamples and refines features with transposed convolutions and skip connections.
+  - **Output Layer**: Generates a segmentation map with `num_classes` channels.
+
+- **Modular Blocks**:
+  - Encoder and decoder are composed of reusable convolutional blocks for flexibility and clarity.
 
 ---
+
 ## How It Works
+
 ### Encoder Path
-The encoder downsamples the input image, extracting hierarchical features using convolutional blocks and max-pooling layers. Each block doubles the number of channels.
+The encoder downsamples the input image, extracting hierarchical features using convolutional blocks followed by max-pooling. Each block doubles the number of channels, enhancing feature richness.
 
 ### Decoder Path
-The decoder upsamples the feature maps using transpose convolutions, merges them with corresponding encoder outputs (via skip connections), and refines them through convolutional layers.
+The decoder upsamples the features using transposed convolutions, combines them with corresponding encoder outputs (via skip connections), and refines them through convolutional layers.
 
 ### Bridge
-A bottleneck layer that serves as the connection between the deepest encoder block and the decoder.
+A bottleneck layer connects the deepest encoder block to the decoder. It captures global contextual features before upsampling begins.
 
 ### Output
-A 1x1 convolution maps the final feature maps to `num_classes` channels, representing per-pixel class probabilities.
+A 3x3 convolution maps the final feature maps to `num_classes` channels, producing per-pixel class probabilities.
 
 ---
+
 ## Constructor Parameters
 
-| Parameter      | Type   | Description                                                   | Default |
-|----------------|--------|---------------------------------------------------------------|---------|
-| `n_block`      | `int`  | Number of encoder/decoder blocks.                              | 4       |
-| `channels`     | `int`  | Number of channels in the first layer, doubled in subsequent blocks. | 8       |
-| `num_classes`  | `int`  | Number of output segmentation classes.                        | 3       |
-| `k_size`       | `int`  | Kernel size for all convolutional layers.                     | 3       |
-| `activation`   | `str`  | Activation function (`relu`, `leakyrelu`, `sigmoid`, `tanh`). | `relu`  |
+| Parameter      | Type    | Description                                                                 | Default |
+|----------------|---------|-----------------------------------------------------------------------------|---------|
+| `n_block`      | `int`   | Number of encoder and decoder blocks.                                       | 4       |
+| `channels`     | `int`   | Number of channels in the first convolution layer, doubled in each block.   | 8       |
+| `k_size`       | `int`   | Kernel size for all convolutional layers.                                  | 3       |
+| `activation`   | `str`   | Activation function (`relu`, `leakyrelu`, `sigmoid`, `tanh`).               | `relu`  |
+| `p`            | `float` | Dropout probability for regularization.                                    | 0.5     |
+| `num_classes`  | `int`   | Number of output segmentation classes.                                     | 3       |
 
 ---
-
-
