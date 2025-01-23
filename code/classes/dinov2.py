@@ -136,6 +136,7 @@ class DinoV2Segmentor(nn.Module):
 		):
 		super(DinoV2Segmentor, self).__init__()
 		assert size in self.emb_size.keys(), "Invalid size"
+		self.num_classes = num_classes
 		self.n_features = n_features
 		self.peft = peft
 		self.embedding_size = self.emb_size[size]
@@ -162,9 +163,9 @@ class DinoV2Segmentor(nn.Module):
 			self.seg_head = CNNHead(self.embedding_size, n_block, channels, num_classes, k_size, n_features)
 		print(f"Number of parameters: {sum(p.numel() for p in self.parameters() if p.requires_grad)}")
 
-	def forward(self, x, is_training=False):
+	def forward(self, x):
 		# frozen weights of dino
-		with torch.set_grad_enabled(self.peft and is_training):
+		with torch.set_grad_enabled(self.peft and self.training):
 			if self.n_features == 1:
 				features = self.backbone(pixel_values=x).last_hidden_state
 			else:
