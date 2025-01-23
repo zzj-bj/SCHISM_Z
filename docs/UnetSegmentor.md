@@ -1,8 +1,8 @@
-# UnetSegmentor : after [Liang et al.,2022](https://www.sciencedirect.com/science/article/abs/pii/S0098300422001662)
+# UnetSegmentor : after [Liang et al., 2022](https://www.sciencedirect.com/science/article/abs/pii/S0098300422001662)
 
 ## Overview
 
-This network is an adaptation of [Liang et al.,2022](https://www.sciencedirect.com/science/article/abs/pii/S0098300422001662). UnetSegmentor is a CNN designed for efficient, automated segmentation of micro-CT images, critical for analyzing rock microstructures and physical properties. It replaces labor-intensive manual workflows with a fast, accurate, and flexible architecture for multi-class segmentation. Ideal for geoscience applications, it ensures precise mineral and pore identification with minimal effort.
+This network is an adaptation of [Liang et al., 2022](https://www.sciencedirect.com/science/article/abs/pii/S0098300422001662). UnetSegmentor is a CNN designed for efficient, automated segmentation of micro-CT images, critical for analyzing rock microstructures and physical properties. It replaces labor-intensive manual workflows with a fast, accurate, and flexible architecture for multi-class segmentation. Ideal for geoscience applications, it ensures precise mineral and pore identification with minimal effort.
 
 ---
 
