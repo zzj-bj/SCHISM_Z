@@ -17,6 +17,8 @@ setup(
         "tqdm",
         "torchvision",
         "patchify",
+        "peft>=0.10.0",
+        "transformers>=4.40.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
