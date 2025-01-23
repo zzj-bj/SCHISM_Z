@@ -11,94 +11,111 @@ import torch.nn.functional as nn_func
 
 
 class UnetSegmentor(nn.Module):
-    def __init__(self, n_blocks=4, n_filter=32, num_classes=1, p=0.5):
-        """
-        Initializes the U-Net segmentation model.
+    REQUIRED_PARAMS = {
+        'num_classes': int
+    }
 
-        Args:
-            n_blocks (int): Number of blocks in the U-Net architecture. Default is 4.
-            n_filter (int): Number of filters in the first convolutional layer. Default is 32.
-            num_classes (int): Number of output classes for segmentation. Default is 1.
-            p (float): Dropout probability. Default is 0.5.
-        """
+    OPTIONAL_PARAMS = {
+        'n_block': int,
+        'channels': int,
+        'k_size': int,  
+        'activation': str, 
+        'p': float
+    }
+
+    def __init__(self, n_block=4, channels=8, num_classes=3, p=0.5, k_size=3, activation='relu'):
         super(UnetSegmentor, self).__init__()
-        self.n_blocks = n_blocks
-        self.p = p
-        self.input_conv = nn.Conv2d(in_channels=3, out_channels=n_filter, kernel_size=3, padding=1)
+        self.n_block = int(n_block)
+        self.channels = int(channels)
+        self.k_size = int(k_size)
+        self.activation = str(activation).lower()
+        self.p = float(p)
+        self.num_classes = int(num_classes)
+        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels, kernel_size=self.k_size, padding=1)
         self.encoder_convs = nn.ModuleList([
-            self._create_encoder_conv_block(channels=n_filter * 2 ** i, kernel_size=3)
-            for i in range(0, n_blocks - 1)
+            self._create_encoder_conv_block(channels= self.channels * 2 ** i)
+            for i in range(0, self.n_block - 1)
         ])
-        self.mid_conv = self._create_encoder_conv_block(
-            channels=n_filter * 2 ** (n_blocks - 1),
-            kernel_size=3
-        )
+        self.mid_conv = self._create_encoder_conv_block(channels=self.channels * 2 ** (self.n_block - 1))
         self.decoder_deconvs = nn.ModuleList([
             nn.ConvTranspose2d(
-                in_channels=n_filter * 2 ** (i + 1),
-                out_channels=n_filter * 2 ** i,
+                in_channels= self.channels * 2 ** (i + 1),
+                out_channels= self.channels * 2 ** i,
                 kernel_size=3,
                 stride=2,
                 padding=1,
                 output_padding=1
             )
-            for i in reversed(range(n_blocks))
+            for i in reversed(range(self.n_block))
         ])
         self.decoder_convs = nn.ModuleList([
-            self._create_decoder_conv_block(
-                channels=n_filter * 2 ** i,
-                kernel_size=3
-            )
-            for i in reversed(range(n_blocks))
+            self._create_decoder_conv_block(channels=self.channels * 2 ** i)
+            for i in reversed(range(self.n_block))
         ])
         self.seg_conv = nn.Conv2d(
-            in_channels=n_filter,
-            out_channels=num_classes,
+            in_channels=self.channels,
+            out_channels=self.num_classes,
             kernel_size=3,
             padding=1
         )
 
-    def _create_encoder_conv_block(self, channels, kernel_size):
+    def _create_encoder_conv_block(self, channels):
         """
         Creates a convolutional block for the encoder part of the U-Net.
 
         Args:
             channels (int): Number of input channels for the convolutional block.
-            kernel_size (int): Size of the convolutional kernel.
 
         Returns:
             nn.Sequential: A sequential block containing convolutional layers,
-            batch normalization, and ReLU activation.
+            batch normalization, and the specified activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(channels, channels * 2, kernel_size=kernel_size, padding=1),
+            nn.Conv2d(channels, channels * 2, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels * 2),
-            nn.ReLU(),
-            nn.Conv2d(channels * 2, channels * 2, kernel_size=kernel_size, padding=1),
+            self._get_activation(),
+            nn.Conv2d(channels * 2, channels * 2, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels * 2),
-            nn.ReLU(),
+            self._get_activation(),
         )
 
-    def _create_decoder_conv_block(self, channels, kernel_size):
+    def _create_decoder_conv_block(self, channels):
         """
         Creates a convolutional block for the decoder part of the U-Net.
 
         Args:
             channels (int): Number of input channels for the convolutional block.
-            kernel_size (int): Size of the convolutional kernel.
 
         Returns:
             nn.Sequential: A sequential block containing convolutional layers,
-            batch normalization, and ReLU activation.
+            batch normalization, and the specified activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(channels, channels, kernel_size=kernel_size, padding=1),
+            nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels),
-            nn.ReLU(),
-            nn.Conv2d(channels, channels, kernel_size=kernel_size, padding=1),
+            self._get_activation(),
+            nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels),
-            nn.ReLU(),
+            self._get_activation(),
         )
+
+    def _get_activation(self):
+        """
+        Returns the specified activation function.
+
+        Returns:
+            nn.Module: Activation function module.
+        """
+        if self.activation == 'relu':
+            return nn.ReLU()
+        elif self.activation == 'leakyrelu':
+            return nn.LeakyReLU()
+        elif self.activation == 'sigmoid':
+            return nn.Sigmoid()
+        elif self.activation == 'tanh':
+            return nn.Tanh()
+        else:
+            raise ValueError(f"Unsupported activation: {self.activation}")
 
     def forward(self, x):
         """
@@ -116,7 +133,7 @@ class UnetSegmentor(nn.Module):
         feature_list.append(x)
         x = nn_func.max_pool2d(x, kernel_size=2)
         x = nn_func.dropout(x, p=self.p)
-        for i in range(self.n_blocks - 1):
+        for i in range(self.n_block - 1):
             x = self.encoder_convs[i](x)
             feature_list.append(x)
             x = nn_func.max_pool2d(x, kernel_size=2)
@@ -124,7 +141,7 @@ class UnetSegmentor(nn.Module):
 
         x = self.mid_conv(x)
 
-        for i in range(self.n_blocks):
+        for i in range(self.n_block):
             x = self.decoder_deconvs[i](x)
             x = nn_func.dropout(x, p=self.p)
             x = self.decoder_convs[i](x + feature_list[::-1][i])

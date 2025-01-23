@@ -12,6 +12,7 @@ from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.UnetVanilla import UnetVanilla
 import torch.nn.functional as nn_func
 from patchify import unpatchify
+import torchvision.transforms as T
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -54,7 +55,6 @@ class Inference:
         self.crop_size = int(self.data_params.get('crop_size', 224))
         self.num_classes = int(self.model_params.get('num_classes', 1))
         self.data_stats = self.load_data_stats_from_json()
-        print(self.data_stats)
 
         # Initialize model
         self.model_mapping = {
@@ -113,7 +113,6 @@ class Inference:
         # Prepare dataset structure
         img_data = {}
         indices = []
-        dataset_counter = 0
 
         for subfolder in os.listdir(self.data_dir):
             img_folder = os.path.join(self.data_dir, subfolder, "images")
@@ -121,17 +120,17 @@ class Inference:
             if not os.path.isdir(img_folder):
                 continue
 
-            img_data[dataset_counter] = sorted(
+            img_data[subfolder] = sorted(
                 glob.glob(os.path.join(img_folder, "*.*"))
             )
-            for i in range(len(img_data[dataset_counter])):
-                indices.append((dataset_counter, i))
+            for i in range(len(img_data[subfolder])):
+                indices.append((subfolder, i))  # Store subfolder names
 
             # Create the preds folder for saving predicted masks
             preds_folder = os.path.join(self.data_dir, subfolder, "preds")
             os.makedirs(preds_folder, exist_ok=True)
 
-            dataset_counter += 1
+            #dataset_counter += 1
         dataset = TiffDatasetLoader(
             img_data=img_data,
             indices=indices,
@@ -220,24 +219,25 @@ class Inference:
         for i in range(grid_size):  
             for j in range(grid_size):  
                 patch = patches[patch_index]
-                
-                # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
-                patch_pred = self.model(patch)  # Batch dimension is already handled
-                
-                if self.num_classes > 1:
-                    # Multiclass: get the class with the highest probability for each pixel
-                    patch_pred = torch.argmax(patch_pred, dim=1).squeeze(0)  # [C, H, W] -> [H, W]
-                else:
-                    # Binary: apply sigmoid and threshold
-                    patch_pred = torch.sigmoid(patch_pred).squeeze(0)  # [B, 1, H, W] -> [H, W]
-                    patch_pred = (patch_pred > 0.5).float()  # Convert to binary mask [H, W]
+                with torch.no_grad():
+                    # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
+                    patch_pred = self.model(patch)  # Batch dimension is already handled
+
+                    if self.num_classes > 1:
+                        # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
+                        patch_pred = torch.argmax(patch_pred, dim=1).float()   # [B, C, H, W] -> [H, W]
+                        patch_pred = self._scale_mask_to_class_values(patch_pred)  # [B, H, W] -> [B, H, W] with class values
+                    else:
+                        # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
+                        patch_pred = torch.sigmoid(patch_pred).squeeze(0)  # [B, 1, H, W] -> [H, W]
+                        patch_pred = (patch_pred > 0.5).float()  # Convert to binary mask [H, W]
+
 
                 patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0), 
-                                                         size=(self.crop_size, self.crop_size), 
-                                                         mode='bicubic', 
-                                                         align_corners=False).squeeze(0)
+                                                            size=(self.crop_size, self.crop_size), 
+                                                            mode='bicubic', 
+                                                            align_corners=False).squeeze(0)
 
-                # Add the resized patch prediction to the list of predicted patches
                 predicted_patches.append(patch_pred_resized)
                 patch_index += 1
 

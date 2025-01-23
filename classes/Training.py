@@ -10,10 +10,12 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.UnetVanilla import UnetVanilla
+from classes.UnetSegmentor import UnetSegmentor
+from classes.Unet_liang import UNet_liang
 from datetime import datetime
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import StepLR
-from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU, HausdorffDistance
+from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
+from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
+from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU, DiceScore
 from torch.utils.data import DataLoader
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,28 +51,20 @@ class Training:
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
         self.hyperparameters = kwargs.get('hyperparameters')
-
+       
         # Extract category-wise parameters
         self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.train_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
+        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
+        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
+        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
-        self.paths = {k: v for k, v in self.hyperparameters.get_parameters()['Paths'].items()}
 
-        # Mapping of model names to classes
-        self.model_mapping = {
-            'UnetVanilla': UnetVanilla,
-            # 'ResNet': ResNet
-        }
-
-        # Initialize the model dynamically
-        self.model = self.initialize_model()
+        self.num_classes = int(self.model_params.get('num_classes'))
 
         # Training parameters
-        self.lr = float(self.train_params.get('lr', 0.001))
-        self.weight_decay = float(self.train_params.get('weight_decay', 0.0001))
-        self.batch_size = int(self.train_params.get('batch_size', 8))
-        self.val_split = float(self.train_params.get('val_split', 0.8))
-        self.epochs = int(self.train_params.get('epochs', 10))
+        self.batch_size = int(self.training_params.get('batch_size', 8))
+        self.val_split = float(self.training_params.get('val_split', 0.8))
+        self.epochs = int(self.training_params.get('epochs', 10))
 
         # Data parameters
         self.img_res = int(self.data.get('img_res', 560))
@@ -78,31 +72,178 @@ class Training:
         self.num_samples = int(self.data.get('num_samples', 500))
 
         # Extract and parse metrics from the ini file
-        metrics_str = self.train_params.get('metrics', '')
-        if metrics_str:
-            self.metrics = [metric.strip() for metric in metrics_str.split(',')]
+        self.metrics_str = self.training_params.get('metrics', '')        
+        self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
+        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
+
+        # Mapping of model names to classes
+        self.model_mapping = {
+            'UnetVanilla': UnetVanilla,
+            'UnetSegmentor': UnetSegmentor,
+            'liang': UNet_liang
+        }
+
+        # Setup optimizer mapping
+        self.optimizer_mapping = {
+            'Adagrad' : Adagrad, 
+            'Adam' : Adam, 
+            'AdamW' : AdamW, 
+            'NAdam' : NAdam, 
+            'RMSprop' : RMSprop, 
+            'RAdam' : RAdam, 
+            'SGD' : SGD
+        }
+
+        # Setup learning rate scheduler mapping
+        self.scheduler_mapping = {
+            'LRScheduler': LRScheduler,
+            'LambdaLR': LambdaLR,
+            'MultiplicativeLR': MultiplicativeLR,
+            'StepLR': StepLR,
+            'MultiStepLR': MultiStepLR,
+            'ConstantLR': ConstantLR,
+            'LinearLR': LinearLR,
+            'ExponentialLR': ExponentialLR,
+            'PolynomialLR': PolynomialLR,
+            'CosineAnnealingLR': CosineAnnealingLR,
+            'SequentialLR': SequentialLR,
+            'ReduceLROnPlateau': ReduceLROnPlateau,
+            'CyclicLR': CyclicLR,
+            'OneCycleLR': OneCycleLR,
+            'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
+        }
+
+        self.metrics_mapping = {
+            "DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
+            "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
+            #TODO : "HausdorffDistance": HausdorffDistance(num_classes=self.num_classes, input_format='index').to(self.device),
+            "MeanIoU": MeanIoU(num_classes=self.num_classes).to(self.device),
+        }
+
+        # Initialize the model dynamically
+        self.model = self.initialize_model()
+        self.save_directory = self.create_unique_folder()
+
+    def initialize_metrics(self):
+        """
+        Retrieves the specified metrics for evaluation.
+
+        Args:
+            metrics_list (list): A list of metric names to retrieve.
+
+        Returns:
+            list: A list of metric instances corresponding to the specified names.
+
+        Raises:
+            ValueError: If a specified metric is not recognized.
+        """
+        if self.metrics_str:
+            self.metrics = [metric.strip() for metric in self.metrics_str.split(',')]
         else:
             self.metrics = ["MeanIoU"]
 
-        self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
+        selected_metrics = []
+        for metric in self.metrics:
+            metric = metric.strip()
+            if metric in self.metrics_mapping:
+                selected_metrics.append(self.metrics_mapping[metric])
+            else:
+                raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
 
-        # Check if 'weight_dir' exists in paths, else create a unique folder
-        if 'weight_dir' not in self.paths:
-            self.save_directory = self.create_unique_folder()
-        else:
-            self.save_directory = os.path.join(self.run_dir, str(self.paths['weight_dir']))
+        return selected_metrics
 
-    def initialize_model(self) -> nn.Module:
+    def initialize_losses(self):
         """
-        Initializes the model based on the specified model type.
+        Retrieves the appropriate loss function based on the model's output.
 
         Returns:
-            nn.Module: The initialized model instance.
-
-        Raises:
-            ValueError: If the specified model type is not supported.
+            callable: The loss function to be used during training.
         """
-        model_name = self.model_params.get('model_type')
+        is_binary = self.model.num_classes <= 2
+
+        if not is_binary:
+            loss = nn.CrossEntropyLoss
+            return loss(ignore_index=-1)
+        else:
+            loss = nn.BCEWithLogitsLoss
+            return loss()
+
+    def initialize_optimizer(self):
+        optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
+        optimizer_class = self.optimizer_mapping.get(optimizer_name)
+
+        if not optimizer_class:
+            raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
+
+        # Convert parameters to their appropriate types, excluding the 'optimizer' key
+        converted_params = {}
+        for k, v in self.optimizer_params.items():
+            if k == 'optimizer':
+                continue  # Skip the 'optimizer' key
+            if isinstance(v, str):
+                # Attempt to convert string representations of booleans and floats
+                if v.lower() == 'true':
+                    converted_params[k] = True
+                elif v.lower() == 'false':
+                    converted_params[k] = False
+                else:
+                    try:
+                        converted_params[k] = float(v)
+                    except ValueError:
+                        raise ValueError(f"Could not convert parameter '{k}' with value '{v}' to a valid type.")
+            else:
+                # Use the value as is for non-string types
+                converted_params[k] = v
+
+        return optimizer_class(self.model.parameters(), **converted_params)
+
+    def initialize_scheduler(self, optimizer):
+        scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
+        scheduler_class = self.scheduler_mapping.get(scheduler_name)
+
+        if not scheduler_class:
+            raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
+
+        # Convert parameters to their appropriate types, excluding the 'scheduler' key
+        converted_params = {}
+        for k, v in self.scheduler_params.items():
+            if k == 'scheduler':
+                continue  # Skip the 'scheduler' key
+            if isinstance(v, str):
+                # Strip quotes from strings if they are enclosed
+                v = v.strip("'\"")
+                # Handle None
+                if v.lower() == 'none':
+                    converted_params[k] = None
+                # Attempt to convert booleans
+                elif v.lower() == 'true':
+                    converted_params[k] = True
+                elif v.lower() == 'false':
+                    converted_params[k] = False
+                # Attempt to convert to a list of floats
+                elif ',' in v:
+                    try:
+                        converted_params[k] = [float(x.strip()) for x in v.split(',')]
+                    except ValueError:
+                        raise ValueError(f"Could not convert parameter '{k}' with value '{v}' to a list of floats.")
+                else:
+                    # Attempt to convert to a float
+                    try:
+                        converted_params[k] = float(v)
+                    except ValueError:
+                        # If conversion fails, use as string (as for `mode` parameter)
+                        converted_params[k] = v
+            else:
+                # Use the value as is for non-string types
+                converted_params[k] = v
+
+        if not converted_params:
+            return scheduler_class(optimizer)
+        else:
+            return scheduler_class(optimizer, **converted_params)
+
+    def initialize_model(self) -> nn.Module:
+        model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
@@ -132,9 +273,8 @@ class Training:
         Returns:
             str: The path to the created directory.
         """
-        filename = f"{self.model_params.get('model_type', 'UnknownModel')}__time-" \
-            f"{self.training_time}__lr-{self.lr}" \
-            f"__bs-{self.batch_size}__numsamples-{self.num_samples}"
+        filename = f"{self.model_params.get('model_type', 'UnknownModel')}__" \
+            f"{self.training_time}"
 
         save_directory = os.path.join(self.run_dir, filename)
 
@@ -164,31 +304,31 @@ class Training:
             neutral_stats = [np.array([0.5] * 3), np.array([0.5] * 3)]  # Default mean and std
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
-            data_stats_loaded = {"default": neutral_stats}
-
             if not os.path.exists(json_file_path):
                 print(f"File {json_file_path} not found. Using default normalization stats.")
-                return data_stats_loaded
+                return {"default": neutral_stats}
 
             try:
                 with open(json_file_path, 'r') as file:
                     raw_data_stats = json.load(file)
 
+                data_stats_loaded = {}
                 for key, value in raw_data_stats.items():
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         raise ValueError(f"Invalid format in data_stats.json for key {key}")
 
                     data_stats_loaded[key] = [
-                        np.array(value[0]) / 255.0,
-                        np.array(value[1]) / 255.0
+                        np.array(value[0]),
+                        np.array(value[1])
                     ]
 
                 return data_stats_loaded
 
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                print(f"Error reading JSON file {json_file_path}: {e}")
-                return data_stats_loaded
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"Error loading data stats from {json_file_path}: {e}. Using default normalization stats.")
+                return {"default": neutral_stats}
+
 
         def save_indices_to_file(indices_list):
             """
@@ -246,7 +386,6 @@ class Training:
         mask_data = {}
         num_sample_per_subfolder = {}
         data_stats = load_data_stats(self.data_dir)
-        print(data_stats)
 
         for subfolder in self.subfolders:
             img_folder = os.path.join(self.data_dir, subfolder, "images")
@@ -307,52 +446,6 @@ class Training:
             'indices': indices,
         }
 
-    def get_metrics(self, metrics_list):
-        """
-        Retrieves the specified metrics for evaluation.
-
-        Args:
-            metrics_list (list): A list of metric names to retrieve.
-
-        Returns:
-            list: A list of metric instances corresponding to the specified names.
-
-        Raises:
-            ValueError: If a specified metric is not recognized.
-        """
-        num_classes = 1 if self.model.num_classes <= 2 else self.model.num_classes
-
-        metrics_mapping = {
-            "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=num_classes).to(self.device),
-            "HausdorffDistance": HausdorffDistance(num_classes=num_classes).to(self.device),
-            "MeanIoU": MeanIoU(num_classes=num_classes).to(self.device),
-        }
-        selected_metrics = []
-        for metric in metrics_list:
-            metric = metric.strip()
-            if metric in metrics_mapping:
-                selected_metrics.append(metrics_mapping[metric])
-            else:
-                raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
-
-        return selected_metrics
-
-    def get_losses(self):
-        """
-        Retrieves the appropriate loss function based on the model's output.
-
-        Returns:
-            callable: The loss function to be used during training.
-        """
-        is_binary = self.model.num_classes <= 2
-
-        if not is_binary:
-            loss = nn.CrossEntropyLoss
-            return loss(ignore_index=-1)
-        else:
-            loss = nn.BCEWithLogitsLoss
-            return loss()
-
     def save_data_stats(self, data_stats):
         """
         Saves the data statistics to a JSON file.
@@ -360,6 +453,7 @@ class Training:
         Args:
             data_stats (dict): A dictionary containing the data statistics to save.
         """
+        # Ensure default stats are not saved unless they are the only stats
         data_stats_serializable = {
             key: [value[0].tolist(), value[1].tolist()]
             for key, value in data_stats.items()
@@ -381,18 +475,22 @@ class Training:
         config.add_section('Model')
         for key, value in self.model_params.items():
             config.set('Model', key, str(value))
+        
+        config.add_section('Optimizer')
+        for key, value in self.optimizer_params.items():
+            config.set('Optimizer', key, str(value))
+
+        config.add_section('Scheduler')
+        for key, value in self.scheduler_params.items():
+            config.set('Scheduler', key, str(value))
 
         config.add_section('Training')
-        for key, value in self.train_params.items():
+        for key, value in self.training_params.items():
             config.set('Training', key, str(value))
 
         config.add_section('Data')
         for key, value in self.data.items():
             config.set('Data', key, str(value))
-
-        config.add_section('Paths')
-        for key, value in self.paths.items():
-            config.set('Paths', key, str(value))
 
         with open(os.path.join(self.save_directory, 'hyperparameters.ini'), 'w') as configfile:
             config.write(configfile)
@@ -449,8 +547,8 @@ class Training:
             import torch.backends.cudnn as cudnn
             cudnn.benchmark = True
 
-        metrics = self.get_metrics(self.metrics)
-        loss_fn = self.get_losses()
+        metrics = self.initialize_metrics()
+        loss_fn = self.initialize_losses()
         print(loss_fn)
 
         loss_dict = {"train": {}, "val": {}}
@@ -488,7 +586,11 @@ class Training:
                                 else:
                                     loss.backward()
                                     optimizer.step()
-                                scheduler.step()
+
+                                if self.scheduler_params.get('scheduler') == "ReduceLROnPlateau":
+                                    scheduler.step(loss)
+                                else:
+                                    scheduler.step()
 
                         running_loss += loss.item()
                         total_samples += labels.size(0)
@@ -536,14 +638,6 @@ class Training:
         self.save_data_stats(self.dataloaders['train'].dataset.data_stats)
 
     def train(self):
-        """
-        Initiates the training process by setting up the optimizer and scheduler,
-        and then calling the training loop.
-
-        This method is responsible for managing the training workflow.
-        """
-        optimizer = AdamW(self.model.parameters(),
-                          lr=self.lr,
-                          weight_decay=self.weight_decay)
-        scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
-        self.training_loop(optimizer, scheduler)
+            optimizer = self.initialize_optimizer()
+            scheduler = self.initialize_scheduler(optimizer)
+            self.training_loop(optimizer, scheduler)

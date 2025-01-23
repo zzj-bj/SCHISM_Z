@@ -77,52 +77,30 @@ class TiffDatasetLoader(VisionDataset):
 
         return i, j, th, tw
 
-    def extract_patches(self, img_tensor, dataset_id):
+    def extract_patches(self, img_np):
         height, width = self.image_dims
-        patch_h, patch_w = self.crop_size  # Typically 224x224
+        patch_h, patch_w = self.crop_size 
 
-        # Convert the tensor to numpy for patchify
-        img_np = img_tensor.numpy()
+        # Transpose to [H, W, C] for padding
+        img_np = np.transpose(img_np, (1, 2, 0))
 
         # Check if padding is necessary (non-square or not a multiple of crop size)
         if height != width or height % patch_h != 0 or width % patch_w != 0:
             # Calculate the padding needed to reach the nearest multiple of crop size (224)
             pad_height = (patch_h - height % patch_h) % patch_h
             pad_width = (patch_w - width % patch_w) % patch_w
-            padding = [(0, 0), (0, pad_height), (0, pad_width)]  # Pad along height and width
+
+            # Correct padding tuple for a 3D image (H, W, C)
+            padding = [(0, pad_height), (0, pad_width), (0, 0)]  # Pad along height and width, no padding for channels
 
             # Pad the image
             img_np = np.pad(img_np, padding, mode='constant', constant_values=0)
 
-        patches = patchify(img_np, (3, patch_h, patch_w), step=patch_h)
-
-        m, s = self.data_stats.get(dataset_id, self.data_stats["default"])
-        processed_patches = []
-
-        #save_dir = "C:\\Users\\florent.brondolo\\OneDrive - Akkodis\\Documents\\SCHISM\\data\\test_pred\\sample2\\test"
-        patch_index = 0
-
-        for i in range(patches.shape[1]):  # Loop through patch grid
-            for j in range(patches.shape[2]):
-                patch = patches[0, i, j]
-
-                patch_tensor = torch.tensor(patch).float()  
-
-                # Resize patch using nn.functional.interpolate
-                patch_resized = nn_func.interpolate(patch_tensor.unsqueeze(0), size=(self.img_res, self.img_res),
-                                                    mode="bicubic", align_corners=False).squeeze(0)  # Remove the batch dimension
-
-                # Normalize the tensor
-                patch_normalized = torchvision.transforms.functional.normalize(patch_resized, mean=m, std=s).float()
-
-                # Save the patch for visualization/debugging
-                #patch_filename = os.path.join(save_dir, f"patch_{patch_index}.png")
-                #T.functional.to_pil_image(patch_resized).save(patch_filename)
-                patch_index += 1
-
-                processed_patches.append(patch_normalized)
-
-        return processed_patches
+        # Transpose back to [C, H, W] after padding
+        img_np = np.transpose(img_np, (2, 0, 1)).squeeze()
+        patches = patchify(img_np, (img_np.shape[0], patch_h, patch_h), step=patch_h)
+        patches = patches.reshape(-1, img_np.shape[0], patch_h, patch_w)  # [num_patches, C, patch_h, patch_w]
+        return patches
 
     def __getitem__(self, idx):
         """
@@ -140,12 +118,28 @@ class TiffDatasetLoader(VisionDataset):
         """
         dataset_id, sample_id = self.indices[idx]
         img_path = self.img_data[dataset_id][sample_id]
+        
+        if dataset_id in self.data_stats:
+            m, s = self.data_stats[dataset_id]
+        else:
+            m, s = self.data_stats["default"]
 
         if self.inference_mode:
             img = np.array(Image.open(img_path).convert("RGB"))
-            img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255.0
-            patches = self.extract_patches(img_tensor, dataset_id)
-            return patches, dataset_id, img_path
+            img_tensor = torch.from_numpy(img).float() 
+            img_tensor = img_tensor.permute(2, 0, 1).contiguous() / 255.0
+            img_normalized = torchvision.transforms.functional.normalize(img_tensor, mean=m, std=s)
+            patches = self.extract_patches(img_normalized)
+            processed_patches = []
+
+            for i in range(patches.shape[0]):  # Loop through patch grid
+                patch = patches[i]
+                patch_tensor = torch.tensor(patch).unsqueeze(0)
+                patch_resized = nn_func.interpolate(patch_tensor, size=(self.img_res, self.img_res),
+                                                    mode="bicubic", align_corners=False).squeeze()  
+                processed_patches.append(patch_resized)
+
+            return processed_patches, dataset_id, img_path
 
         mask_path = self.mask_data[dataset_id][sample_id]
         img = np.array(Image.open(img_path).convert("RGB"))
@@ -167,7 +161,6 @@ class TiffDatasetLoader(VisionDataset):
                                           mode="bicubic", align_corners=False).squeeze()
         mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0), size=(self.img_res, self.img_res),
                                            mode="nearest").squeeze()
-
         if torch.rand(1).item() < self.p:
             img_resized = torchvision.transforms.functional.hflip(img_resized)
             mask_resized = torchvision.transforms.functional.hflip(mask_resized)
@@ -176,7 +169,11 @@ class TiffDatasetLoader(VisionDataset):
             img_resized = torchvision.transforms.functional.vflip(img_resized)
             mask_resized = torchvision.transforms.functional.vflip(mask_resized)
 
-        m, s = self.data_stats.get(dataset_id, self.data_stats["default"])
+        
+        #TODO: as many image treatment as required
+        #shear
+        
+
         img_normalized = torchvision.transforms.functional.normalize(img_resized, mean=m, std=s).float()
 
         if self.num_classes >= 2:
