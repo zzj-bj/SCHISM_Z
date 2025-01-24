@@ -44,7 +44,7 @@ def show_training_menu():
     """Display options related to training."""
     print("=========================")
     print("Please select an action:")
-    print("1. Data Loading + Run Training")
+    print("1. Run Training")
     print("2. Go Back to Main Menu")
     print("=========================")
 
