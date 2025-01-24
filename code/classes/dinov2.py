@@ -12,12 +12,12 @@ class DinoV2Segmentor(nn.Module):
 	}
 
 	OPTIONAL_PARAMS = {
-		'k_size': int, 
-		'activation': str, 
 		'n_block': int,
 		'channels': int,
-		'size' : str,
 		'linear_head' : bool,
+		'k_size': int, 
+		'activation': str, 
+		'size' : str,
 		'n_features' : int,
 		'peft' : bool,
 		'quantize' : bool,
@@ -36,7 +36,7 @@ class DinoV2Segmentor(nn.Module):
 			self, 
 			n_block=4, 
 			channels=512, 
-			num_classes=2, 
+			num_classes=3, 
 			linear_head=True,
 			k_size=3, 
 			activation='relu', 
@@ -44,18 +44,25 @@ class DinoV2Segmentor(nn.Module):
 			n_features=1, 
 			peft=True, 
 			quantize=True, 
+			r=32,
+			lora_alpha=32,
+			lora_dropout=0.1
 		):
 		super(DinoV2Segmentor, self).__init__()
-		assert size in self.emb_size.keys(), "Invalid size embedding size"
+		self.n_block = int(n_block)
+		self.channels = int(channels)
 		self.num_classes = int(num_classes)
+		self.linear_head = bool(linear_head)
+		self.k_size = int(k_size)
+		self.activation = str(activation)
+		assert size in self.emb_size.keys(), "Invalid size embedding size"
+		self.embedding_size = self.emb_size[str(size)]
 		self.n_features = int(n_features)
 		self.peft = bool(peft)
-		self.embedding_size = self.emb_size[str(size)]
-		self.activation = str(activation)
-		self.k_size = int(k_size)
-		self.channels = int(channels)
-		self.n_block = int(n_block)
 		self.quantize = bool(quantize)
+		self.r = int(r)
+		self.lora_alpha = int(lora_alpha)
+		self.lora_dropout = float(lora_dropout)
 
 		if self.quantize :
 			self.quantization_config = BitsAndBytesConfig(
@@ -70,11 +77,11 @@ class DinoV2Segmentor(nn.Module):
 			self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{size}')
 
 		if self.peft:
-			peft_config = LoraConfig(inference_mode=False, r=32, lora_alpha=32, lora_dropout=0.1, target_modules="all-linear", use_rslora=True)
+			peft_config = LoraConfig(inference_mode=False, r=self.r , lora_alpha=self.lora_alpha, lora_dropout=self.lora_dropout, target_modules="all-linear", use_rslora=True)
 			self.backbone = get_peft_model(self.backbone, peft_config)
 			self.backbone.print_trainable_parameters()
 
-		if linear_head:
+		if self.linear_head:
 			self.seg_head = LinearHead(self.embedding_size, self.num_classes, self.n_features)
 		else:
 			self.seg_head = CNNHead(self.embedding_size, self.n_block, self.channels, self.num_classes, self.k_size, self.n_features, self.activation)

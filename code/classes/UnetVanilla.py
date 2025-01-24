@@ -20,15 +20,20 @@ class UnetVanilla(nn.Module):
         'activation': str 
     }
 
-    def __init__(self, n_block=4, channels=8, num_classes=3, k_size=3, activation='relu'):
+    def __init__(self, 
+                 n_block=4, 
+                 channels=8, 
+                 num_classes=3, 
+                 k_size=3, 
+                 activation='relu'
+                 ):
         super(UnetVanilla, self).__init__()
         self.n_block = int(n_block)
         self.channels = int(channels)
+        self.num_classes = num_classes
         self.k_size = int(k_size)
         self.activation = str(activation).lower()
-        self.num_classes = num_classes
 
-        # Define down sampling path
         self.encoder_blocks = nn.ModuleList()
         self.max_pools = nn.ModuleList()
         for i in range(n_block):

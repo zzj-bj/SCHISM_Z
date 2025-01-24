@@ -23,14 +23,22 @@ class UnetSegmentor(nn.Module):
         'p': float
     }
 
-    def __init__(self, n_block=4, channels=8, num_classes=3, p=0.5, k_size=3, activation='relu'):
+    def __init__(self, 
+                 n_block=4, 
+                 channels=8, 
+                 num_classes=3, 
+                 p=0.5, 
+                 k_size=3, 
+                 activation='relu'
+                 ):
         super(UnetSegmentor, self).__init__()
         self.n_block = int(n_block)
         self.channels = int(channels)
+        self.num_classes = int(num_classes)
+        self.p = float(p)
         self.k_size = int(k_size)
         self.activation = str(activation).lower()
-        self.p = float(p)
-        self.num_classes = int(num_classes)
+        
         self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels, kernel_size=self.k_size, padding=1)
         self.encoder_convs = nn.ModuleList([
             self._create_encoder_conv_block(channels= self.channels * 2 ** i)
