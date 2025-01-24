@@ -10,6 +10,8 @@ from torch.utils.data import DataLoader
 from PIL import Image
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.UnetVanilla import UnetVanilla
+from classes.UnetSegmentor import UnetSegmentor
+from classes.dinov2 import DinoV2Segmentor
 import torch.nn.functional as nn_func
 from patchify import unpatchify
 import torchvision.transforms as T
@@ -56,10 +58,13 @@ class Inference:
         self.num_classes = int(self.model_params.get('num_classes', 1))
         self.data_stats = self.load_data_stats_from_json()
 
-        # Initialize model
+        # Mapping of model names to classes
         self.model_mapping = {
             'UnetVanilla': UnetVanilla,
+            'UnetSegmentor': UnetSegmentor,
+            'DINOv2' : DinoV2Segmentor
         }
+
 
         self.model = self.initialize_model()
 
