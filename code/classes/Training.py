@@ -11,12 +11,11 @@ from tqdm import tqdm
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.UnetVanilla import UnetVanilla
 from classes.UnetSegmentor import UnetSegmentor
-from classes.Unet_liang import UNet_liang
 from classes.dinov2 import DinoV2Segmentor
 from datetime import datetime
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
-from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU#, DiceScore
+from torchmetrics.segmentation import GeneralizedDiceScore, DiceScore
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex
 from torch.utils.data import DataLoader
 
@@ -62,6 +61,7 @@ class Training:
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
 
         self.num_classes = int(self.model_params.get('num_classes'))
+        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
         # Training parameters
         self.batch_size = int(self.training_params.get('batch_size', 8))
@@ -76,13 +76,11 @@ class Training:
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
-        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
         # Mapping of model names to classes
         self.model_mapping = {
             'UnetVanilla': UnetVanilla,
             'UnetSegmentor': UnetSegmentor,
-            'liang': UNet_liang,
             'DINOv2' : DinoV2Segmentor
         }
 
@@ -124,8 +122,13 @@ class Training:
         }"""
 
         self.metrics_mapping = {
-            "MeanIoU": MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=-1).to(self.device),
-            "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device)
+            "Jaccard": (
+                BinaryJaccardIndex( ignore_index=-1).to(self.device)
+                if self.num_classes <= 2
+                else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=-1).to(self.device)
+            ),
+            "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
+            "DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
         }
 
         # Initialize the model dynamically
@@ -148,7 +151,7 @@ class Training:
         if self.metrics_str:
             self.metrics = [metric.strip() for metric in self.metrics_str.split(',')]
         else:
-            self.metrics = ["MeanIoU"]
+            self.metrics = ["Jaccard"]
 
         selected_metrics = []
         for metric in self.metrics:
@@ -281,7 +284,7 @@ class Training:
         Returns:
             str: The path to the created directory.
         """
-        filename = f"{self.model_params.get('model_type', 'UnknownModel')}__" \
+        filename = f"{self.model_params.get('model_type', 'UnetVanilla')}__" \
             f"{self.training_time}"
 
         save_directory = os.path.join(self.run_dir, filename)
@@ -557,11 +560,8 @@ class Training:
 
         metrics = self.initialize_metrics()
         loss_fn = self.initialize_losses()
-        print(loss_fn)
-
         loss_dict = {"train": {}, "val": {}}
         metrics_dict = {phase: {metric: [] for metric in self.metrics} for phase in ["train", "val"]}
-
         best_val_loss = float("inf")
         best_val_metrics = {metric: 0 for metric in self.metrics}
 
