@@ -3,13 +3,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class LinearHead(nn.Module):
-    def __init__(self, embedding_size=768, num_classes=3, n_features=1):
+    def __init__(self, 
+                 embedding_size=512, 
+                 num_classes=3, 
+                 n_features=1
+                 ):
         super(LinearHead, self).__init__()
-        self.n_features = n_features
-        self.embedding_size = embedding_size * n_features
+        self.n_features = int(n_features)
+        self.embedding_size = int(embedding_size) * self.n_features
+        self.num_classes = int(num_classes)
         self.head = nn.Sequential(
             nn.BatchNorm2d(self.embedding_size),
-            nn.Conv2d(self.embedding_size, num_classes, kernel_size=1, padding=0, bias=True),
+            nn.Conv2d(self.embedding_size, self.num_classes, kernel_size=1, padding=0, bias=True),
         )
 
     def forward(self, inputs):

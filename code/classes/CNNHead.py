@@ -8,17 +8,19 @@ class CNNHead(nn.Module):
         embedding_size,
         n_block=4,
         channels=512,
-        num_classes=2,
+        num_classes=3,
         k_size=3,
         n_features=1,
+        activation='relu'
     ):
         super(CNNHead, self).__init__()
-        self.n_features = n_features
-        self.embedding_size = embedding_size * n_features
-        self.n_block = n_block
-        self.channels = channels
+        self.n_features = int(n_features)
+        self.embedding_size = int(embedding_size) * self.n_features
+        self.n_block = int(n_block)
+        self.channels = int(channels)
         self.k_size = int(k_size)
-        self.num_classes = num_classes
+        self.num_classes = int(num_classes)
+        self.activation = str(activation).lower()
 
         self.input_conv = nn.Conv2d(
             in_channels=self.embedding_size,
@@ -43,6 +45,26 @@ class CNNHead(nn.Module):
         self.seg_conv = nn.Sequential(
             nn.Conv2d(channels, num_classes, kernel_size=self.k_size, padding=1)
         )
+
+
+    def _get_activation(self):
+            """
+            Returns the specified activation function.
+
+            Returns:
+                nn.Module: Activation function module.
+            """
+            if self.activation == 'relu':
+                return nn.ReLU()
+            elif self.activation == 'leakyrelu':
+                return nn.LeakyReLU()
+            elif self.activation == 'sigmoid':
+                return nn.Sigmoid()
+            elif self.activation == 'tanh':
+                return nn.Tanh()
+            else:
+                raise ValueError(f"Unsupported activation: {self.activation}")
+
 
     def _create_decoder_conv_block(self, channels, kernel_size):
         return nn.Sequential(
@@ -73,5 +95,6 @@ class CNNHead(nn.Module):
             x = x + self.decoder_convs[i](x)
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=0.2)
-                x = F.leaky_relu(x)
+                x = self._get_activation()(x) 
+
         return self.seg_conv(x)

@@ -12,8 +12,8 @@ class DinoV2Segmentor(nn.Module):
 	}
 
 	OPTIONAL_PARAMS = {
-		'k_size': int,  # Kernel size for convolutions
-		'activation': str,  # Activation function type
+		'k_size': int, 
+		'activation': str, 
 		'n_block': int,
 		'channels': int,
 		'size' : str,
@@ -40,18 +40,24 @@ class DinoV2Segmentor(nn.Module):
 			linear_head=True,
 			k_size=3, 
 			activation='relu', 
-			size="base", 
+			size='base', 
 			n_features=1, 
 			peft=True, 
 			quantize=True, 
 		):
 		super(DinoV2Segmentor, self).__init__()
-		assert size in self.emb_size.keys(), "Invalid size"
-		self.num_classes = num_classes
-		self.n_features = n_features
-		self.peft = peft
-		self.embedding_size = self.emb_size[size]
-		if quantize :
+		assert size in self.emb_size.keys(), "Invalid size embedding size"
+		self.num_classes = int(num_classes)
+		self.n_features = int(n_features)
+		self.peft = bool(peft)
+		self.embedding_size = self.emb_size[str(size)]
+		self.activation = str(activation)
+		self.k_size = int(k_size)
+		self.channels = int(channels)
+		self.n_block = int(n_block)
+		self.quantize = bool(quantize)
+
+		if self.quantize :
 			self.quantization_config = BitsAndBytesConfig(
 				load_in_4bit=True,
 				bnb_4bit_quant_type="nf4",
@@ -63,15 +69,15 @@ class DinoV2Segmentor(nn.Module):
 		else:
 			self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{size}')
 
-		if peft:
+		if self.peft:
 			peft_config = LoraConfig(inference_mode=False, r=32, lora_alpha=32, lora_dropout=0.1, target_modules="all-linear", use_rslora=True)
 			self.backbone = get_peft_model(self.backbone, peft_config)
 			self.backbone.print_trainable_parameters()
 
 		if linear_head:
-			self.seg_head = LinearHead(self.embedding_size, num_classes, n_features)
+			self.seg_head = LinearHead(self.embedding_size, self.num_classes, self.n_features)
 		else:
-			self.seg_head = CNNHead(self.embedding_size, n_block, channels, num_classes, k_size, n_features)
+			self.seg_head = CNNHead(self.embedding_size, self.n_block, self.channels, self.num_classes, self.k_size, self.n_features, self.activation)
 		print(f"Number of parameters: {sum(p.numel() for p in self.parameters() if p.requires_grad)}")
 
 	def forward(self, x):
