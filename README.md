@@ -50,7 +50,7 @@ Here is an example of an INI file:
 
 ```
 [Model]
-n_block=5
+n_block=4
 channels=8
 num_classes=3
 model_type=UnetSegmentor
@@ -63,18 +63,18 @@ optimizer=Adam
 [Scheduler]
 scheduler = MultiStepLR
 gamma = 0.5
-milestones = [1,3]
+milestones = [10,30]
  
 [Training]
 batch_size=4
 val_split=0.8
-epochs=3
+epochs=40
 metrics=DiceScore, GeneralizedDiceScore
  
 [Data]
 crop_size=128
 img_res=560
-num_samples=70
+num_samples=700
 ```
 
 Please refer to the network's documentation for optional parameters specific to each model. Have a look at [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.
