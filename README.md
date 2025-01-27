@@ -27,8 +27,8 @@ SCHISM offers two main functionalities: **Training** and **Inference**.
 
 ---
 ### Training Workflow
-1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure.
-2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file.
+1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).
+2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
     - The dataset directory.
     - The output folder for model weights (and more).
