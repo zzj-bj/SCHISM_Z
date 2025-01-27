@@ -61,13 +61,15 @@ activation=leakyrelu
 optimizer=Adam
  
 [Scheduler]
-scheduler=ConstantLR
+scheduler = MultiStepLR
+gamma = 0.5
+milestones = [1,3]
  
 [Training]
 batch_size=4
 val_split=0.8
 epochs=3
-metrics=DiceScore
+metrics=DiceScore, GeneralizedDiceScore
  
 [Data]
 crop_size=128
