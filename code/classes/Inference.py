@@ -65,9 +65,37 @@ class Inference:
             'DINOv2' : DinoV2Segmentor
         }
 
-
         self.model = self.initialize_model()
-
+    
+    def _convert_param(self, v):
+        """
+        Helper function to convert a parameter value to the appropriate type.
+        """
+        if isinstance(v, str):
+            v = v.strip("'\"")
+            if v.lower() == 'none':
+                return None
+            elif v.lower() == 'true':
+                return True
+            elif v.lower() == 'false':
+                return False
+            elif v.startswith('[') and v.endswith(']'):
+                try:
+                    return eval(v)  # Convert Python-style list
+                except (SyntaxError, NameError):
+                    raise ValueError(f"Could not convert value '{v}' to a valid list.")
+            elif ',' in v:
+                try:
+                    return [float(x.strip()) for x in v.split(',')]  # Convert CSV to list
+                except ValueError:
+                    raise ValueError(f"Could not convert value '{v}' to a list of floats.")
+            else:
+                try:
+                    return float(v)  # Convert to float
+                except ValueError:
+                    return v  # Leave as string
+        return v  # Return as is for non-string types
+        
     def initialize_model(self) -> nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
@@ -78,34 +106,48 @@ class Inference:
         Raises:
             ValueError: If the specified model type is not supported or if there is an error converting parameters.
         """
-        model_name = self.model_params.get('model_type')
+        model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
+        
         model_class = self.model_mapping[model_name]
 
-        # Extract the required and optional parameters for the model
-        required_params = {k: v for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS}
-        optional_params = {k: v for k, v in self.model_params.items() if k not in model_class.REQUIRED_PARAMS}
+        # Convert parameters using the common method
+        required_params = {
+            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+        }
+        optional_params = {
+            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+        }
 
         # Ensure `model_type` is not included in the parameters
-        required_params.pop('model_type', None)  # Remove 'model_type' if present in required_params
-        optional_params.pop('model_type', None)  # Remove 'model_type' if present in optional_params
+        required_params.pop('model_type', None)
+        optional_params.pop('model_type', None)
+
+        # Ensure 'num_classes' is only in the required parameters, remove it from optional if present
+        if 'num_classes' in optional_params:
+            del optional_params['num_classes']
 
         try:
-            # Convert the required parameters to the correct types for the model class
+            # Convert the required parameters to their correct types as defined by the model class
             typed_required_params = {
-                k: model_class.REQUIRED_PARAMS[k](v)  # Ensure the parameters match the expected types
-                for k, v in required_params.items()
+                k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
             }
         except ValueError as e:
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
+
+        # Initialize the model
         model = model_class(**typed_required_params, **optional_params).to(self.device)
 
-        # Load model weights
+        # Load pre-trained weights
         checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Checkpoint not found at '{checkpoint_path}'. Ensure the path is correct.")
+        
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)
-        model.eval()
+        model.eval()  # Set the model to evaluation mode
+
         return model
 
     def load_dataset(self):
