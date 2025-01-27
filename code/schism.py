@@ -109,34 +109,30 @@ def option_inference():
     hyperparameters = Hyperparameters(os.path.join(run_dir, 'hyperparameters.ini'))
     params = {k: v for k, v in hyperparameters.get_parameters()['Training'].items()}
 
-    # Handle metrics
-    if 'metrics' in params:
-        # Extract and split metrics
-        metrics = [metric.strip() for metric in params['metrics'].split(',')]
+    # Extract and split metrics, defaulting to 'Jaccard' if not provided or empty
+    metrics = [metric.strip() for metric in params.get('metrics', 'Jaccard').split(',') if metric.strip()]
 
-        if len(metrics) == 1:
-            selected_metric = metrics[0]
-            print(f"Only one metric found: {selected_metric}. Proceeding with it.")
-        else:
-            print("Multiple metrics found. Please choose one:")
-            for i, metric in enumerate(metrics, 1):
-                print(f"{i}. {metric}")
-            
-            # Ask the user to choose one metric
-            while True:
-                try:
-                    choice = int(input("Enter the number corresponding to your choice: "))
-                    if 1 <= choice <= len(metrics):
-                        selected_metric = metrics[choice - 1]
-                        print(f"Selected metric: {selected_metric}")
-                        break
-                    else:
-                        print(f"Please enter a number between 1 and {len(metrics)}.")
-                except ValueError:
-                    print("Invalid input. Please enter a valid number.")
+    if len(metrics) == 1:
+        selected_metric = metrics[0]
+        print(f"Only one metric found: {selected_metric}. Proceeding with it.")
     else:
-        print("No metrics found in the hyperparameters file.")
-        return
+        print("Multiple metrics found. Please choose one:")
+        for i, metric in enumerate(metrics, 1):
+            print(f"{i}. {metric}")
+        
+        # Ask the user to choose one metric
+        while True:
+            try:
+                choice = int(input("Enter the number corresponding to your choice: "))
+                if 1 <= choice <= len(metrics):
+                    selected_metric = metrics[choice - 1]
+                    print(f"Selected metric: {selected_metric}")
+                    break
+                else:
+                    print(f"Please enter a number between 1 and {len(metrics)}.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+
 
     # The rest of your code to use the selected_metric
     pred_object = Inference(data_dir=data_dir,
