@@ -134,6 +134,35 @@ class Training:
         # Initialize the model dynamically
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
+        
+    def _convert_param(self, v):
+        """
+        Helper function to convert a parameter value to the appropriate type.
+        """
+        if isinstance(v, str):
+            v = v.strip("'\"")
+            if v.lower() == 'none':
+                return None
+            elif v.lower() == 'true':
+                return True
+            elif v.lower() == 'false':
+                return False
+            elif v.startswith('[') and v.endswith(']'):
+                try:
+                    return eval(v)  # Convert Python-style list
+                except (SyntaxError, NameError):
+                    raise ValueError(f"Could not convert value '{v}' to a valid list.")
+            elif ',' in v:
+                try:
+                    return [float(x.strip()) for x in v.split(',')]  # Convert CSV to list
+                except ValueError:
+                    raise ValueError(f"Could not convert value '{v}' to a list of floats.")
+            else:
+                try:
+                    return float(v)  # Convert to float
+                except ValueError:
+                    return v  # Leave as string
+        return v  # Return as is for non-string types
 
     def initialize_metrics(self):
         """
@@ -174,7 +203,7 @@ class Training:
 
         if not is_binary:
             loss = nn.CrossEntropyLoss
-            return loss()
+            return loss(ignore_index=-1)
         else:
             loss = nn.BCEWithLogitsLoss
             return loss()
@@ -186,25 +215,8 @@ class Training:
         if not optimizer_class:
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
-        # Convert parameters to their appropriate types, excluding the 'optimizer' key
-        converted_params = {}
-        for k, v in self.optimizer_params.items():
-            if k == 'optimizer':
-                continue  # Skip the 'optimizer' key
-            if isinstance(v, str):
-                # Attempt to convert string representations of booleans and floats
-                if v.lower() == 'true':
-                    converted_params[k] = True
-                elif v.lower() == 'false':
-                    converted_params[k] = False
-                else:
-                    try:
-                        converted_params[k] = float(v)
-                    except ValueError:
-                        raise ValueError(f"Could not convert parameter '{k}' with value '{v}' to a valid type.")
-            else:
-                # Use the value as is for non-string types
-                converted_params[k] = v
+        # Convert parameters using the common method
+        converted_params = {k: self._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
         return optimizer_class(self.model.parameters(), **converted_params)
 
@@ -215,38 +227,8 @@ class Training:
         if not scheduler_class:
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
 
-        # Convert parameters to their appropriate types, excluding the 'scheduler' key
-        converted_params = {}
-        for k, v in self.scheduler_params.items():
-            if k == 'scheduler':
-                continue  # Skip the 'scheduler' key
-            if isinstance(v, str):
-                # Strip quotes from strings if they are enclosed
-                v = v.strip("'\"")
-                # Handle None
-                if v.lower() == 'none':
-                    converted_params[k] = None
-                # Attempt to convert booleans
-                elif v.lower() == 'true':
-                    converted_params[k] = True
-                elif v.lower() == 'false':
-                    converted_params[k] = False
-                # Attempt to convert to a list of floats
-                elif ',' in v:
-                    try:
-                        converted_params[k] = [float(x.strip()) for x in v.split(',')]
-                    except ValueError:
-                        raise ValueError(f"Could not convert parameter '{k}' with value '{v}' to a list of floats.")
-                else:
-                    # Attempt to convert to a float
-                    try:
-                        converted_params[k] = float(v)
-                    except ValueError:
-                        # If conversion fails, use as string (as for `mode` parameter)
-                        converted_params[k] = v
-            else:
-                # Use the value as is for non-string types
-                converted_params[k] = v
+        # Convert parameters using the common method
+        converted_params = {k: self._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
             return scheduler_class(optimizer)
@@ -261,27 +243,60 @@ class Training:
 
         model_class = self.model_mapping[model_name]
 
-        required_params = {k: v for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS}
-        optional_params = {k: v for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS}
+        # Convert parameters using the common method
+        required_params = {
+            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+        }
+        optional_params = {
+            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+        }
 
+        # Ensure `model_type` is not included in the parameters
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
 
-        try:
-            typed_required_params = {
-                k: model_class.REQUIRED_PARAMS[k](v) # casting type according to param name
-                for k, v in required_params.items()
-            }
+        # Ensure 'num_classes' is only in the required parameters
+        if 'num_classes' in optional_params:
+            del optional_params['num_classes']
 
-            typed_optional_params = {
-                k: model_class.OPTIONAL_PARAMS[k](v) # casting type according to param name
-                for k, v in optional_params.items()
+        try:
+            # Convert the required parameters to their correct types as defined by the model class
+            typed_required_params = {
+                k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
             }
         except ValueError as e:
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
 
-        print(optional_params)
-        return model_class(**typed_required_params, **typed_optional_params).to(self.device)
+        # Initialize the model
+        model = model_class(**typed_required_params, **optional_params).to(self.device)
+
+        return model
+
+    def _convert_param(self, v):
+        """
+        Helper function to convert a parameter value to the appropriate type.
+        """
+        if isinstance(v, str):
+            v = v.strip("'\"")
+            if v.lower() == 'none':
+                return None
+            elif v.lower() == 'true':
+                return True
+            elif v.lower() == 'false':
+                return False
+            elif v.startswith('[') and v.endswith(']'):
+                try:
+                    return eval(v)  # Convert Python-style list
+                except (SyntaxError, NameError):
+                    raise ValueError(f"Could not convert value '{v}' to a valid list.")
+            elif ',' in v:
+                return [float(x.strip()) for x in v.split(',')]  # Convert CSV to list
+            else:
+                try:
+                    return float(v)  # Convert to float
+                except ValueError:
+                    return v  # Leave as string
+        return v
 
     def create_unique_folder(self):
         """
@@ -431,7 +446,6 @@ class Training:
             num_classes=self.model.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
-            img_res=self.img_res
         )
         val_dataset = TiffDatasetLoader(
             indices=val_indices,
@@ -440,7 +454,6 @@ class Training:
             num_classes=self.model.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
-            img_res=self.img_res
         )
         test_dataset = TiffDatasetLoader(
             indices=test_indices,
@@ -449,13 +462,12 @@ class Training:
             num_classes=self.model.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
-            img_res=self.img_res
         )
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2,
-                                  pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
-        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False, num_workers=2)
+                                  pin_memory=True, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False, num_workers=2, drop_last=True)
 
         save_indices_to_file([train_indices, val_indices, test_indices])
 
