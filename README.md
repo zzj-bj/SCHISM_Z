@@ -10,7 +10,7 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 
 3. Navigate to the cloned directory:
    ``` cd <some path> SCHISM ```
-3. Install the library
+3. Install the library (python 3.9 mini is required)
    ``` pip install -e .```
    
 ---
