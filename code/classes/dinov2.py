@@ -4,6 +4,7 @@ from transformers import AutoModel, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from classes.LinearHead import LinearHead
 from classes.CNNHead import CNNHead
+from classes import str2bool
 
 class DinoV2Segmentor(nn.Module):
 
@@ -12,18 +13,18 @@ class DinoV2Segmentor(nn.Module):
 	}
 
 	OPTIONAL_PARAMS = {
-		'n_block': int,
 		'channels': int,
-		'linear_head' : bool,
+		'linear_head' : str2bool,
 		'k_size': int, 
 		'activation': str, 
 		'size' : str,
 		'n_features' : int,
-		'peft' : bool,
-		'quantize' : bool,
+		'peft' : str2bool,
+		'quantize' : str2bool,
 		'r' : int,
 		'lora_alpha' : int,
-		'lora_dropout' : float
+		'lora_dropout' : float,
+		'inference_mode' : str2bool
 	}
 
 	emb_size = {
@@ -34,7 +35,6 @@ class DinoV2Segmentor(nn.Module):
 
 	def __init__(
 			self, 
-			n_block=4, 
 			channels=512, 
 			num_classes=3, 
 			linear_head=True,
@@ -46,23 +46,24 @@ class DinoV2Segmentor(nn.Module):
 			quantize=True, 
 			r=32,
 			lora_alpha=32,
-			lora_dropout=0.1
+			lora_dropout=0.1,
+			inference_mode=False
 		):
 		super(DinoV2Segmentor, self).__init__()
-		self.n_block = int(n_block)
-		self.channels = int(channels)
-		self.num_classes = int(num_classes)
-		self.linear_head = bool(linear_head)
-		self.k_size = int(k_size)
-		self.activation = str(activation)
+		self.inference_mode=inference_mode
+		self.channels = channels
+		self.num_classes = num_classes
+		self.linear_head = linear_head
+		self.k_size = k_size
+		self.activation = activation
 		assert size in self.emb_size.keys(), "Invalid size embedding size"
 		self.embedding_size = self.emb_size[str(size)]
-		self.n_features = int(n_features)
-		self.peft = bool(peft)
-		self.quantize = bool(quantize)
-		self.r = int(r)
-		self.lora_alpha = int(lora_alpha)
-		self.lora_dropout = float(lora_dropout)
+		self.n_features = n_features
+		self.peft = peft
+		self.quantize = quantize
+		self.r = r
+		self.lora_alpha = lora_alpha
+		self.lora_dropout = lora_dropout
 
 		if self.quantize :
 			self.quantization_config = BitsAndBytesConfig(
@@ -77,14 +78,14 @@ class DinoV2Segmentor(nn.Module):
 			self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{size}')
 
 		if self.peft:
-			peft_config = LoraConfig(inference_mode=False, r=self.r , lora_alpha=self.lora_alpha, lora_dropout=self.lora_dropout, target_modules="all-linear", use_rslora=True)
+			peft_config = LoraConfig(inference_mode=self.inference_mode, r=self.r , lora_alpha=self.lora_alpha, lora_dropout=self.lora_dropout, target_modules="all-linear", use_rslora=True)
 			self.backbone = get_peft_model(self.backbone, peft_config)
 			self.backbone.print_trainable_parameters()
 
 		if self.linear_head:
 			self.seg_head = LinearHead(self.embedding_size, self.num_classes, self.n_features)
 		else:
-			self.seg_head = CNNHead(self.embedding_size, self.n_block, self.channels, self.num_classes, self.k_size, self.n_features, self.activation)
+			self.seg_head = CNNHead(self.embedding_size, self.channels, self.num_classes, self.k_size, self.n_features, self.activation)
 		print(f"Number of parameters: {sum(p.numel() for p in self.parameters() if p.requires_grad)}")
 
 	def forward(self, x):
