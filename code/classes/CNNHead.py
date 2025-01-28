@@ -32,7 +32,7 @@ class CNNHead(nn.Module):
         #TODO : make the number of blocks customizable.
         self.upscale_fn = ["interpolate", "interpolate", "pixel_shuffle", "pixel_shuffle"]
 
-        for i in range(n_block):
+        for i in range(self.n_block):
             if self.upscale_fn[i] == "interpolate":
                 self.decoder_convs.append(
                     self._create_decoder_conv_block(channels=channels, kernel_size=self.k_size)
