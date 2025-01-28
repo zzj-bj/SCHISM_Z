@@ -9,9 +9,9 @@ class LinearHead(nn.Module):
                  n_features=1
                  ):
         super(LinearHead, self).__init__()
-        self.n_features = int(n_features)
-        self.embedding_size = int(embedding_size) * self.n_features
-        self.num_classes = int(num_classes)
+        self.n_features = n_features
+        self.embedding_size = embedding_size * self.n_features
+        self.num_classes = num_classes
         self.head = nn.Sequential(
             nn.BatchNorm2d(self.embedding_size),
             nn.Conv2d(self.embedding_size, self.num_classes, kernel_size=1, padding=0, bias=True),

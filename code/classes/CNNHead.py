@@ -6,7 +6,6 @@ class CNNHead(nn.Module):
     def __init__(
         self,
         embedding_size,
-        n_block=4,
         channels=512,
         num_classes=3,
         k_size=3,
@@ -14,13 +13,13 @@ class CNNHead(nn.Module):
         activation='relu'
     ):
         super(CNNHead, self).__init__()
-        self.n_features = int(n_features)
-        self.embedding_size = int(embedding_size) * self.n_features
-        self.n_block = int(n_block)
-        self.channels = int(channels)
-        self.k_size = int(k_size)
-        self.num_classes = int(num_classes)
-        self.activation = str(activation).lower()
+        self.n_features = n_features
+        self.embedding_size = embedding_size * self.n_features
+        self.n_block = 4 # Hardcoded for now
+        self.channels = channels
+        self.k_size = k_size
+        self.num_classes = num_classes
+        self.activation = activation
 
         self.input_conv = nn.Conv2d(
             in_channels=self.embedding_size,
@@ -29,6 +28,8 @@ class CNNHead(nn.Module):
             padding=1,
         )
         self.decoder_convs = nn.ModuleList()
+        
+        #TODO : make the number of blocks customizable.
         self.upscale_fn = ["interpolate", "interpolate", "pixel_shuffle", "pixel_shuffle"]
 
         for i in range(n_block):
@@ -96,5 +97,4 @@ class CNNHead(nn.Module):
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=0.2)
                 x = self._get_activation()(x) 
-
         return self.seg_conv(x)
