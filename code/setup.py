@@ -10,7 +10,7 @@ setup(
     packages=find_packages(where="classes"),
     install_requires=[
         "tk",
-        "torchmetrics>=1.5.2",
+        "torchmetrics>=1.6.1",
         "numpy>=1.17.4",
         "torch>=2.3.0",
         "matplotlib",
@@ -26,5 +26,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.7, <3.12",
+    python_requires=">=3.9, <3.12",
 )
