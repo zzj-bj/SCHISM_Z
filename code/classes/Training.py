@@ -78,6 +78,7 @@ class Training:
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
+        self.progress_callback = None  # New variable to store the callback
 
         # Mapping of model names to classes
         self.model_mapping = {
@@ -535,6 +536,10 @@ class Training:
         with open(os.path.join(self.save_directory, 'hyperparameters.ini'), 'w') as configfile:
             config.write(configfile)
 
+    def set_progress_callback(self, callback):
+            """Set the progress callback function."""
+            self.progress_callback = callback
+ 
     def training_loop(self, optimizer, scheduler):
         """
         Executes the training loop for the model, including training and validation phases.
@@ -642,6 +647,11 @@ class Training:
                             loss=running_loss / (pbar.n + 1),
                             **{metric: running_metrics[metric] / (pbar.n + 1) for metric in self.metrics}
                         )
+                        
+                        if self.progress_callback:
+                            self.progress_callback(epoch, self.epochs, running_loss / (pbar.n + 1), 
+                                                    {metric: running_metrics[metric] / (pbar.n + 1) for metric in self.metrics})
+
                         pbar.update(1)
 
                 epoch_loss = running_loss / len(self.dataloaders[phase])

@@ -57,6 +57,8 @@ class Inference:
         self.crop_size = int(self.data_params.get('crop_size', 224))
         self.num_classes = int(self.model_params.get('num_classes', 1))
         self.data_stats = self.load_data_stats_from_json()
+        
+        self.progress_callback = None
 
         # Mapping of model names to classes
         self.model_mapping = {
@@ -218,7 +220,11 @@ class Inference:
             print(f"Error loading data stats: {e}")
             raise
 
-    def predict(self):
+    def set_progress_callback(self, callback):
+        """Set the progress callback function."""
+        self.progress_callback = callback
+
+    def predict(self, progress_callback=None):
         """
         Performs patch-based predictions on the dataset and saves the results.
 
@@ -226,6 +232,7 @@ class Inference:
         and stitches the patches back together to form the full-size output image.
         """
         dataloader = self.load_dataset()
+        total_images = len(dataloader)
         for i, (img, dataset_id, img_path) in enumerate(tqdm(dataloader, desc="Predicting")):
 
             with torch.no_grad():
@@ -237,6 +244,10 @@ class Inference:
             subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
             pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
             self._save_mask(full_pred, pred_save_path)
+            
+            # Call the progress callback if provided
+            if progress_callback:
+                progress_callback(i+1, total_images)
 
     def _patch_based_prediction(self, patches):
         """
