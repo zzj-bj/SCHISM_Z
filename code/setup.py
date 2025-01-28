@@ -18,7 +18,8 @@ setup(
         "torchvision",
         "patchify",
         "peft>=0.10.0",
-        "transformers>=4.40.0"
+        "transformers>=4.40.0",
+        "bitsandbytes>=0.42.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
