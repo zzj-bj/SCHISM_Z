@@ -28,11 +28,11 @@ class UnetVanilla(nn.Module):
                  activation='relu'
                  ):
         super(UnetVanilla, self).__init__()
-        self.n_block = int(n_block)
-        self.channels = int(channels)
+        self.n_block = n_block
+        self.channels = channels
         self.num_classes = num_classes
-        self.k_size = int(k_size)
-        self.activation = str(activation).lower()
+        self.k_size = k_size
+        self.activation = activation.lower()
 
         self.encoder_blocks = nn.ModuleList()
         self.max_pools = nn.ModuleList()
