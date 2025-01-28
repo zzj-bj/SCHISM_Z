@@ -10,8 +10,7 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
 ## Features
 
 - **Configurable Parameters**:
-  - `n_block`: Number of convolutional blocks in the CNN-based segmentation head.
-  - `channels`: Number of initial feature channels in the segmentation head. Should match the feature size from the DINOv2 backbone.
+  - `channels`: Number of initial feature channels in the segmentation head.
   - `k_size`: Kernel size for convolutional layers.
   - `linear_head`: Option to switch between a linear or CNN-based segmentation head.
   - `n_features`: Number of transformer layers used for feature aggregation.
@@ -54,7 +53,7 @@ A simple and lightweight head designed for basic segmentation tasks. It processe
 A more advanced head for high-quality segmentation, leveraging convolutional blocks for feature refinement and upsampling.
 
 **Key Features**:
-- Multi-block architecture with configurable `n_block` and `channels`.
+- Multi-block architecture with configurable `channels`.
 - Upsampling via bicubic interpolation and pixel shuffling.
 - Supports multiple activation functions (e.g., `relu`, `leakyrelu`).
 - Dropout for regularization and robust segmentation outputs.
