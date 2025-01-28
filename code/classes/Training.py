@@ -18,6 +18,7 @@ from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, St
 from torchmetrics.segmentation import GeneralizedDiceScore, DiceScore
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex
 from torch.utils.data import DataLoader
+from classes import str2bool
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -72,6 +73,7 @@ class Training:
         self.img_res = int(self.data.get('img_res', 560))
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
+        self.ignore_background = str2bool(self.data.get('ignore_background', "False"))
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
@@ -120,12 +122,12 @@ class Training:
             #TODO : "HausdorffDistance": HausdorffDistance(num_classes=self.num_classes, input_format='index').to(self.device),
             "MeanIoU": MeanIoU(num_classes=self.num_classes, include_background=True).to(self.device),
         }"""
-
+        ignore_index = -1 if self.ignore_background else None
         self.metrics_mapping = {
             "Jaccard": (
-                BinaryJaccardIndex( ignore_index=-1).to(self.device)
+                BinaryJaccardIndex(ignore_index=ignore_index).to(self.device)
                 if self.num_classes <= 2
-                else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=-1).to(self.device)
+                else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=ignore_index).to(self.device)
             ),
             "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
             "DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
@@ -203,7 +205,10 @@ class Training:
 
         if not is_binary:
             loss = nn.CrossEntropyLoss
-            return loss(ignore_index=-1)
+            if self.ignore_background:
+                return loss(ignore_index=-1)
+            else:
+                return loss()
         else:
             loss = nn.BCEWithLogitsLoss
             return loss()
@@ -251,26 +256,23 @@ class Training:
             k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
-        # Ensure `model_type` is not included in the parameters
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
 
-        # Ensure 'num_classes' is only in the required parameters
-        if 'num_classes' in optional_params:
-            del optional_params['num_classes']
-
         try:
-            # Convert the required parameters to their correct types as defined by the model class
             typed_required_params = {
-                k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
+                k: model_class.REQUIRED_PARAMS[k](v) # casting type according to param name
+                for k, v in required_params.items()
+            }
+
+            typed_optional_params = {
+                k: model_class.OPTIONAL_PARAMS[k](v) # casting type according to param name
+                for k, v in optional_params.items()
             }
         except ValueError as e:
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
 
-        # Initialize the model
-        model = model_class(**typed_required_params, **optional_params).to(self.device)
-
-        return model
+        return model_class(**typed_required_params, **typed_optional_params).to(self.device)
 
     def _convert_param(self, v):
         """
@@ -446,6 +448,8 @@ class Training:
             num_classes=self.model.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
+            img_res=self.img_res, 
+            ignore_background=self.ignore_background
         )
         val_dataset = TiffDatasetLoader(
             indices=val_indices,
@@ -454,6 +458,8 @@ class Training:
             num_classes=self.model.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
+            img_res=self.img_res,
+            ignore_background=self.ignore_background
         )
         test_dataset = TiffDatasetLoader(
             indices=test_indices,
@@ -462,6 +468,8 @@ class Training:
             num_classes=self.model.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
+            img_res=self.img_res,
+            ignore_background=self.ignore_background
         )
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2,
