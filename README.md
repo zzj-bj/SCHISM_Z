@@ -10,6 +10,8 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 
 3. Navigate to the cloned directory:
    ``` cd <some path> SCHISM ```
+3. Install the library (python 3.9 mini is required)
+   ``` pip install -e .```
    
 ---
 ## :question: How to use
@@ -59,7 +61,8 @@ activation=leakyrelu
  
 [Optimizer]
 optimizer=Adam
- 
+lr=0.0001
+
 [Scheduler]
 scheduler = MultiStepLR
 gamma = 0.5
@@ -75,6 +78,7 @@ metrics=DiceScore, GeneralizedDiceScore
 crop_size=128
 img_res=560
 num_samples=700
+ignore_background=False
 ```
 
 Please refer to the network's documentation for optional parameters specific to each model. Have a look at [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.

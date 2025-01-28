@@ -56,6 +56,7 @@ Configures training parameters.
 ## [Data]
 Configures data handling.
 
-- `crop_size`: Size of image crops.
-- `img_res`: Resolution to resize crops during training and inference.
-- `num_samples`: Number of samples to use.
+- `crop_size`: Size of image crops. Default value is 224px.
+- `img_res`: Resolution to resize crops during training and inference. Default value is 560px.
+- `num_samples`: Number of samples to use. Default value is 500 samples.
+- `ignore_background` : Should the background class be ignored during training and inference. If set to True, `num_class` should be decreased by one.

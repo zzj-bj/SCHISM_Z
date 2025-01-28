@@ -279,7 +279,7 @@ class Inference:
                 patch = patches[patch_index]
                 with torch.no_grad():
                     # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
-                    patch_pred = self.model(patch)  # Batch dimension is already handled
+                    patch_pred = self.model(patch.to(self.device))  # Batch dimension is already handled
 
                     if self.num_classes > 1:
                         # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
@@ -296,7 +296,7 @@ class Inference:
                                                             mode='bicubic', 
                                                             align_corners=False).squeeze(0)
 
-                predicted_patches.append(patch_pred_resized)
+                predicted_patches.append(patch_pred_resized.cpu())
                 patch_index += 1
 
         # Resize the full prediction map to the original image size

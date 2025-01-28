@@ -13,7 +13,7 @@ import torchvision.transforms as T
 class TiffDatasetLoader(VisionDataset):
 
     def __init__(self, img_data=None, mask_data=None, indices=None, data_stats=None,
-                 num_classes=None, img_res=560, crop_size=(224, 224), p=0.5, inference_mode=False):
+                 num_classes=None, img_res=560, crop_size=(224, 224), p=0.5, inference_mode=False, ignore_background=True):
         """
         Initializes the TiffDatasetLoader with image and mask data.
 
@@ -38,6 +38,7 @@ class TiffDatasetLoader(VisionDataset):
         self.img_res = img_res
         self.inference_mode = inference_mode
         self.p = p
+        self.ignore_background = ignore_background
         self.image_dims = self.get_image_dimensions()
 
     def get_image_dimensions(self):
@@ -177,7 +178,12 @@ class TiffDatasetLoader(VisionDataset):
         img_normalized = torchvision.transforms.functional.normalize(img_resized, mean=m, std=s).float()
 
         if self.num_classes >= 2:
-            mask_resized = (mask_resized * self.num_classes).long() - 1
+            if self.ignore_background:
+                # ignore index is -1
+                mask_resized = (mask_resized * self.num_classes).long() - 1
+            else:
+                # no ignore index but rescale to int
+                mask_resized = (mask_resized * (self.num_classes- 1)).long()
 
         return img_normalized, mask_resized, dataset_id, img_path
 
