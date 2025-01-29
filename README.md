@@ -91,8 +91,8 @@ The data should be organized as follows:
 ```
 data <--- Select this folder for data input during training or inference.
 |_dataset 1/
-|   |_images/ <--- grayscale image in tiff format, 
-|   |_masks/
+|   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
+|   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
 |_dataset 2/
 |   |_images/
 |   |_masks/
