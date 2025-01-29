@@ -60,3 +60,5 @@ Configures data handling.
 - `img_res`: Resolution to resize crops during training and inference. Default value is 560px.
 - `num_samples`: Number of samples to use. Default value is 500 samples.
 - `ignore_background` : Should the background class be ignored during training and inference. If set to True, `num_class` should be decreased by one.
+
+Note that during a training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail.
