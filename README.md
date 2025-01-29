@@ -1,4 +1,4 @@
-# ![image](https://github.com/user-attachments/assets/22d60a8a-12a8-439b-bd12-636500ee28d0)
+# ![logo](https://github.com/user-attachments/assets/22d60a8a-12a8-439b-bd12-636500ee28d0)
 
 SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanned Materials_. This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of image as long as semantic segmentation is required. The framework supports both training and inference workflows. As for the little trivia, this project got named after [this](https://www.youtube.com/watch?v=MM62wjLrgmA&ab_channel=TOOLVEVO) :) 
 
@@ -32,9 +32,18 @@ SCHISM offers two main functionalities: **Training** and **Inference**.
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
-    - The dataset directory.
-    - The output folder for model weights (and more).
+    - The dataset directory: contains one or more datasets (example below). The ordering and sorting of the data is explained later in this readme.
+    - The output folder: the space where, amongst others, a folder containing the model weights will be created after training. The files saved in the folder are later described in this readme.
     - The path to the INI file.
+
+<p align="center">
+  <img src="images/training.png" alt="training panel" width="400">
+</p>
+
+
+<p align="center">
+  <img src="images/select_data.png" alt="data selection" width="400">
+</p>
 
 ---
 ### Inference Workflow
