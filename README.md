@@ -32,18 +32,9 @@ SCHISM offers two main functionalities: **Training** and **Inference**.
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
-    - The dataset directory: contains one or more datasets (example below). The ordering and sorting of the data is explained later in this readme.
+    - The dataset directory: contains one or more datasets. The ordering and sorting of the data are explained later in this readme.
     - The output folder: the space where, amongst others, a folder containing the model weights will be created after training. The files saved in the folder are later described in this readme.
     - The path to the INI file.
-
-<p align="center">
-  <img src="images/training.png" alt="training panel" width="400">
-</p>
-
-
-<p align="center">
-  <img src="images/select_data.png" alt="data selection" width="400">
-</p>
 
 ---
 ### Inference Workflow
@@ -57,7 +48,7 @@ To make predictions:
 ---
 ## :scroll: INI File Setup
 
-Here is an example of an INI file:
+Below is an example of an INI file:
 
 ```
 [Model]
@@ -90,7 +81,7 @@ num_samples=700
 ignore_background=False
 ```
 
-Please refer to the network's documentation for optional parameters specific to each model. Have a look at [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.
+For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
 
 ---
 ## 👾 Data Preparation
@@ -98,9 +89,9 @@ Please refer to the network's documentation for optional parameters specific to 
 The data should be organized as follows:
 
 ```
-data
+data <--- Select this folder for data input during training or inference.
 |_dataset 1/
-|   |_images/
+|   |_images/ <--- grayscale image in tiff format, 
 |   |_masks/
 |_dataset 2/
 |   |_images/
@@ -108,13 +99,32 @@ data
 |_dataset n/
 |   |_images/
 |   |_masks/
-|_data_stats.json (optional)
+|_data_stats.json <--- This file is optional.
 ```
 
 - **Images**: Directory containing the input images.
 - **Masks**: Directory containing the corresponding segmentation masks.
-- **data_stats.json**: (Optional) JSON file providing mean and standard deviation values for normalization.
- 
+- **data_stats.json**: (Optional) A JSON file containing mean and standard deviation values for normalization. Currently, this file must be set manually and should follow this format:
+
+```
+{
+    "dataset1": [
+        [0.52, 0.52, 0.52],
+        [0.31, 0.31, 0.31]
+    ],
+    "dataset2": [
+        [0.46, 0.46, 0.46],
+        [0.5, 0.5, 0.5]
+    ],
+
+   [...]
+
+    "datasetn": [
+        [0.11, 0.11, 0.11],
+        [0.42, 0.42, 0.42]
+    ]
+}
+```
 ---
 ## :thinking: Note
 
