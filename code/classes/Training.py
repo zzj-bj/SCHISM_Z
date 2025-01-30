@@ -6,19 +6,22 @@ import torch.nn as nn
 import numpy as np
 import glob
 import json
+import matplotlib
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.UnetVanilla import UnetVanilla
 from classes.UnetSegmentor import UnetSegmentor
 from classes.dinov2 import DinoV2Segmentor
+from classes.ParamConverter import ParamConverter
 from datetime import datetime
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
 from torchmetrics.segmentation import GeneralizedDiceScore, DiceScore
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex
 from torch.utils.data import DataLoader
-from classes import str2bool
+import re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -48,6 +51,7 @@ class Training:
         Raises:
             Exception: If pathLogDir is not provided.
         """
+        self.param_converter = ParamConverter()  
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
         self.data_dir = kwargs.get('data_dir')
@@ -73,12 +77,13 @@ class Training:
         self.img_res = int(self.data.get('img_res', 560))
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
-        self.ignore_background = str2bool(self.data.get('ignore_background', "False"))
+        self.ignore_background = self.param_converter._convert_param(self.data.get('ignore_background', "False"))
+        self.ignore_index = -1 if self.ignore_background else None
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
-        self.progress_callback = None  # New variable to store the callback
+        self.progress_callback = None  
 
         # Mapping of model names to classes
         self.model_mapping = {
@@ -117,18 +122,11 @@ class Training:
             'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
         }
 
-        """self.metrics_mapping = {
-            #"DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
-            "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
-            #TODO : "HausdorffDistance": HausdorffDistance(num_classes=self.num_classes, input_format='index').to(self.device),
-            "MeanIoU": MeanIoU(num_classes=self.num_classes, include_background=True).to(self.device),
-        }"""
-        ignore_index = -1 if self.ignore_background else None
         self.metrics_mapping = {
             "Jaccard": (
-                BinaryJaccardIndex(ignore_index=ignore_index).to(self.device)
+                BinaryJaccardIndex(ignore_index=self.ignore_index).to(self.device)
                 if self.num_classes <= 2
-                else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=ignore_index).to(self.device)
+                else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=self.ignore_index).to(self.device)
             ),
             "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
             "DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
@@ -137,35 +135,6 @@ class Training:
         # Initialize the model dynamically
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
-        
-    def _convert_param(self, v):
-        """
-        Helper function to convert a parameter value to the appropriate type.
-        """
-        if isinstance(v, str):
-            v = v.strip("'\"")
-            if v.lower() == 'none':
-                return None
-            elif v.lower() == 'true':
-                return True
-            elif v.lower() == 'false':
-                return False
-            elif v.startswith('[') and v.endswith(']'):
-                try:
-                    return eval(v)  # Convert Python-style list
-                except (SyntaxError, NameError):
-                    raise ValueError(f"Could not convert value '{v}' to a valid list.")
-            elif ',' in v:
-                try:
-                    return [float(x.strip()) for x in v.split(',')]  # Convert CSV to list
-                except ValueError:
-                    raise ValueError(f"Could not convert value '{v}' to a list of floats.")
-            else:
-                try:
-                    return float(v)  # Convert to float
-                except ValueError:
-                    return v  # Leave as string
-        return v  # Return as is for non-string types
 
     def initialize_metrics(self):
         """
@@ -215,16 +184,16 @@ class Training:
             return loss()
 
     def initialize_optimizer(self):
-        optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
-        optimizer_class = self.optimizer_mapping.get(optimizer_name)
+            optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
+            optimizer_class = self.optimizer_mapping.get(optimizer_name)
 
-        if not optimizer_class:
-            raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
+            if not optimizer_class:
+                raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
-        # Convert parameters using the common method
-        converted_params = {k: self._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
+            # Convert parameters using the common method
+            converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
-        return optimizer_class(self.model.parameters(), **converted_params)
+            return optimizer_class(self.model.parameters(), **converted_params)
 
     def initialize_scheduler(self, optimizer):
         scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
@@ -234,7 +203,7 @@ class Training:
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
 
         # Convert parameters using the common method
-        converted_params = {k: self._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
+        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
             return scheduler_class(optimizer)
@@ -251,10 +220,10 @@ class Training:
 
         # Convert parameters using the common method
         required_params = {
-            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         required_params.pop('model_type', None)
@@ -275,31 +244,6 @@ class Training:
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
 
-    def _convert_param(self, v):
-        """
-        Helper function to convert a parameter value to the appropriate type.
-        """
-        if isinstance(v, str):
-            v = v.strip("'\"")
-            if v.lower() == 'none':
-                return None
-            elif v.lower() == 'true':
-                return True
-            elif v.lower() == 'false':
-                return False
-            elif v.startswith('[') and v.endswith(']'):
-                try:
-                    return eval(v)  # Convert Python-style list
-                except (SyntaxError, NameError):
-                    raise ValueError(f"Could not convert value '{v}' to a valid list.")
-            elif ',' in v:
-                return [float(x.strip()) for x in v.split(',')]  # Convert CSV to list
-            else:
-                try:
-                    return float(v)  # Convert to float
-                except ValueError:
-                    return v  # Leave as string
-        return v
 
     def create_unique_folder(self):
         """
@@ -504,8 +448,6 @@ class Training:
         json_file_path = os.path.join(self.save_directory, 'data_stats.json')
         with open(json_file_path, 'w') as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
-
-        print(f"Data stats saved to {json_file_path}")
 
     def save_hyperparameters(self):
         """
