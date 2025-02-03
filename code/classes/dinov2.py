@@ -4,7 +4,6 @@ from transformers import AutoModel, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from classes.LinearHead import LinearHead
 from classes.CNNHead import CNNHead
-from classes import str2bool
 
 class DinoV2Segmentor(nn.Module):
 
@@ -14,17 +13,17 @@ class DinoV2Segmentor(nn.Module):
 
 	OPTIONAL_PARAMS = {
 		'channels': int,
-		'linear_head' : str2bool,
+		'linear_head' : bool,
 		'k_size': int, 
 		'activation': str, 
 		'size' : str,
 		'n_features' : int,
-		'peft' : str2bool,
-		'quantize' : str2bool,
+		'peft' : bool,
+		'quantize' : bool,
 		'r' : int,
 		'lora_alpha' : int,
 		'lora_dropout' : float,
-		'inference_mode' : str2bool
+		'inference_mode' : bool
 	}
 
 	emb_size = {
@@ -49,6 +48,7 @@ class DinoV2Segmentor(nn.Module):
 			lora_dropout=0.1,
 			inference_mode=False
 		):
+
 		super(DinoV2Segmentor, self).__init__()
 		self.inference_mode=inference_mode
 		self.channels = channels

@@ -1,4 +1,4 @@
-# ![image](https://github.com/user-attachments/assets/22d60a8a-12a8-439b-bd12-636500ee28d0)
+![gradient_image](https://github.com/user-attachments/assets/5e76c773-82b8-4790-b5b9-5bfff6eed0a1)
 
 SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanned Materials_. This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of image as long as semantic segmentation is required. The framework supports both training and inference workflows. As for the little trivia, this project got named after [this](https://www.youtube.com/watch?v=MM62wjLrgmA&ab_channel=TOOLVEVO) :) 
 
@@ -32,8 +32,8 @@ SCHISM offers two main functionalities: **Training** and **Inference**.
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
-    - The dataset directory.
-    - The output folder for model weights (and more).
+    - The dataset directory: contains one or more datasets. The ordering and sorting of the data are explained later in this readme.
+    - The output folder: the space where, amongst others, a folder containing the model weights will be created after training. The files saved in the folder are later described in this readme.
     - The path to the INI file.
 
 ---
@@ -48,7 +48,7 @@ To make predictions:
 ---
 ## :scroll: INI File Setup
 
-Here is an example of an INI file:
+Below is an example of an INI file:
 
 ```
 [Model]
@@ -81,7 +81,7 @@ num_samples=700
 ignore_background=False
 ```
 
-Please refer to the network's documentation for optional parameters specific to each model. Have a look at [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md) for more information about the INI setup.
+For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
 
 ---
 ## 👾 Data Preparation
@@ -89,27 +89,46 @@ Please refer to the network's documentation for optional parameters specific to 
 The data should be organized as follows:
 
 ```
-data
+data <--- Select this folder for data input during training or inference.
 |_dataset 1/
-|   |_images/
-|   |_masks/
+|   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
+|   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
 |_dataset 2/
 |   |_images/
 |   |_masks/
 |_dataset n/
 |   |_images/
 |   |_masks/
-|_data_stats.json (optional)
+|_data_stats.json <--- This file is optional.
 ```
 
 - **Images**: Directory containing the input images.
 - **Masks**: Directory containing the corresponding segmentation masks.
-- **data_stats.json**: (Optional) JSON file providing mean and standard deviation values for normalization.
- 
----
-## :thinking: Note
+- **data_stats.json**: (Optional) A JSON file containing mean and standard deviation values for normalization. Currently, this file must be set manually and should follow this format:
 
-During training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail. Upon completing a training session, several files will be generated in the weight folder:
+```
+{
+    "dataset1": [
+        [0.52, 0.52, 0.52],
+        [0.31, 0.31, 0.31]
+    ],
+    "dataset2": [
+        [0.46, 0.46, 0.46],
+        [0.5, 0.5, 0.5]
+    ],
+
+   [...]
+
+    "datasetn": [
+        [0.11, 0.11, 0.11],
+        [0.42, 0.42, 0.42]
+    ]
+}
+```
+---
+## 💾 Training Output Files
+
+ Upon completing a training session, several files will be generated in the weight folder:
 
 - **data_stats.json**: The standard deviation and mean values used to normalize the images.
 - **hyperparameters.ini**: A copy of the INI file used for the training session.
@@ -117,8 +136,6 @@ During training, images are split into crops of user-defined size (`crop_size`),
 - **model_best{metric(s)}.pth**: Contains the best model weights based on each metric specified in the INI file.
 - **model_best_loss.pth**: Contains the best model weights based on the loss value.
 - **test/train/val_indices.txt**: Records the indices of images and masks used for training, validation, and testing. These indices are formatted as `[dataset subfolder][image or mask number in the folder]`. For example, if you have 5,000 image/mask pairs, but `num_samples` is set to 3,000 and `val_split` is 0.8, then 2,400 indices will be recorded in `train_indices.txt`, 600 in `val_indices.txt`, and the remaining 2,000 in `test_indices.txt`.
-
-The same process is applied during inference, with patches reassembled into the original image.
 
 ---
 ## :heart_on_fire: Contributions

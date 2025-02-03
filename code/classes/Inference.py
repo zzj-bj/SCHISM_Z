@@ -12,6 +12,7 @@ from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.UnetVanilla import UnetVanilla
 from classes.UnetSegmentor import UnetSegmentor
 from classes.dinov2 import DinoV2Segmentor
+from classes.ParamConverter import ParamConverter
 import torch.nn.functional as nn_func
 from patchify import unpatchify
 import torchvision.transforms as T
@@ -41,6 +42,7 @@ class Inference:
                 - hyperparameters (Hyperparameters): An object containing model and training parameters.
                 - selected_metric (str): Metric used for model evaluation.
         """
+        self.param_converter = ParamConverter()  
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
@@ -69,35 +71,6 @@ class Inference:
 
         self.model = self.initialize_model()
     
-    def _convert_param(self, v):
-        """
-        Helper function to convert a parameter value to the appropriate type.
-        """
-        if isinstance(v, str):
-            v = v.strip("'\"")
-            if v.lower() == 'none':
-                return None
-            elif v.lower() == 'true':
-                return True
-            elif v.lower() == 'false':
-                return False
-            elif v.startswith('[') and v.endswith(']'):
-                try:
-                    return eval(v)  # Convert Python-style list
-                except (SyntaxError, NameError):
-                    raise ValueError(f"Could not convert value '{v}' to a valid list.")
-            elif ',' in v:
-                try:
-                    return [float(x.strip()) for x in v.split(',')]  # Convert CSV to list
-                except ValueError:
-                    raise ValueError(f"Could not convert value '{v}' to a list of floats.")
-            else:
-                try:
-                    return float(v)  # Convert to float
-                except ValueError:
-                    return v  # Leave as string
-        return v  # Return as is for non-string types
-        
     def initialize_model(self) -> nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
@@ -116,10 +89,10 @@ class Inference:
 
         # Convert parameters using the common method
         required_params = {
-            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         # Ensure `model_type` is not included in the parameters
