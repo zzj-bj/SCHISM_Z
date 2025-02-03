@@ -11,9 +11,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from classes.TiffDatasetLoader import TiffDatasetLoader
-from classes.UnetVanilla import UnetVanilla
-from classes.UnetSegmentor import UnetSegmentor
-from classes.dinov2 import DinoV2Segmentor
 from classes.ParamConverter import ParamConverter
 from datetime import datetime
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
@@ -21,10 +18,9 @@ from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, St
 from torchmetrics.segmentation import GeneralizedDiceScore, DiceScore
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex
 from torch.utils.data import DataLoader
-import re
+from classes.model_registry import model_mapping
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 class Training:
 
@@ -84,13 +80,7 @@ class Training:
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
         self.progress_callback = None  
-
-        # Mapping of model names to classes
-        self.model_mapping = {
-            'UnetVanilla': UnetVanilla,
-            'UnetSegmentor': UnetSegmentor,
-            'DINOv2' : DinoV2Segmentor
-        }
+        self.model_mapping = model_mapping
 
         # Setup optimizer mapping
         self.optimizer_mapping = {
@@ -580,8 +570,8 @@ class Training:
                         total_samples += labels.size(0)
 
                         with torch.no_grad():
-                            preds = (outputs > 0.5).int() if self.model.num_classes <= 2 \
-                                else torch.argmax(outputs, dim=1).int()
+                            preds = (outputs > 0.5).to(torch.uint8) if self.num_classes <= 2 \
+                                    else torch.argmax(outputs, dim=1).int()
                             labels = labels.int()
                             for metric_name, metric_fn in zip(self.metrics, metrics):
                                 running_metrics[metric_name] += metric_fn(preds, labels).item()

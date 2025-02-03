@@ -9,16 +9,13 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from PIL import Image
 from classes.TiffDatasetLoader import TiffDatasetLoader
-from classes.UnetVanilla import UnetVanilla
-from classes.UnetSegmentor import UnetSegmentor
-from classes.dinov2 import DinoV2Segmentor
+from classes.model_registry import model_mapping
 from classes.ParamConverter import ParamConverter
 import torch.nn.functional as nn_func
 from patchify import unpatchify
 import torchvision.transforms as T
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 class Inference:
 
@@ -59,15 +56,8 @@ class Inference:
         self.crop_size = int(self.data_params.get('crop_size', 224))
         self.num_classes = int(self.model_params.get('num_classes', 1))
         self.data_stats = self.load_data_stats_from_json()
-        
         self.progress_callback = None
-
-        # Mapping of model names to classes
-        self.model_mapping = {
-            'UnetVanilla': UnetVanilla,
-            'UnetSegmentor': UnetSegmentor,
-            'DINOv2' : DinoV2Segmentor
-        }
+        self.model_mapping = model_mapping
 
         self.model = self.initialize_model()
     
@@ -206,6 +196,7 @@ class Inference:
         """
         dataloader = self.load_dataset()
         total_images = len(dataloader)
+        print("total_images : ", total_images)
         for i, (img, dataset_id, img_path) in enumerate(tqdm(dataloader, desc="Predicting")):
 
             with torch.no_grad():
@@ -257,13 +248,13 @@ class Inference:
                     if self.num_classes > 1:
                         # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
                         patch_pred = torch.argmax(patch_pred, dim=1).float()   # [B, C, H, W] -> [H, W]
-                        patch_pred = self._scale_mask_to_class_values(patch_pred)  # [B, H, W] -> [B, H, W] with class values
                     else:
                         # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
                         patch_pred = torch.sigmoid(patch_pred).squeeze(0)  # [B, 1, H, W] -> [H, W]
-                        patch_pred = (patch_pred > 0.5).float()  # Convert to binary mask [H, W]
+                        patch_pred = (patch_pred > 0.5).to(torch.uint8)  # Convert to binary mask [H, W]
 
 
+                patch_pred = self._scale_mask_to_class_values(patch_pred)  # [B, H, W] -> [B, H, W] with class values
                 patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0), 
                                                             size=(self.crop_size, self.crop_size), 
                                                             mode='bicubic', 
@@ -289,9 +280,12 @@ class Inference:
         Returns:
             torch.Tensor: A tensor containing the scaled mask with class values.
         """
-        class_values = torch.linspace(0, 255, self.num_classes, device=mask_tensor.device).round()
-        scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
-        return scaled_mask
+        if self.num_classes > 1:  
+            class_values = torch.linspace(0, 255, self.num_classes, device=mask_tensor.device).round()
+            scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
+            return scaled_mask
+        else:  
+            return mask_tensor * 255  # Converts 0 to 0 and 1 to 255
 
     def _save_mask(self, mask_tensor, save_path):
         """
