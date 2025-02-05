@@ -82,7 +82,6 @@ class Training:
         self.progress_callback = None  
         self.model_mapping = model_mapping
 
-        # Setup optimizer mapping
         self.optimizer_mapping = {
             'Adagrad' : Adagrad, 
             'Adam' : Adam, 
@@ -93,7 +92,6 @@ class Training:
             'SGD' : SGD
         }
 
-        # Setup learning rate scheduler mapping
         self.scheduler_mapping = {
             'LRScheduler': LRScheduler,
             'LambdaLR': LambdaLR,
@@ -115,14 +113,13 @@ class Training:
         self.metrics_mapping = {
             "Jaccard": (
                 BinaryJaccardIndex(ignore_index=self.ignore_index).to(self.device)
-                if self.num_classes <= 2
+                if self.num_classes == 1
                 else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=self.ignore_index).to(self.device)
             ),
             "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
             "DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
         }
 
-        # Initialize the model dynamically
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
 
@@ -161,9 +158,8 @@ class Training:
         Returns:
             callable: The loss function to be used during training.
         """
-        is_binary = self.model.num_classes <= 2
 
-        if not is_binary:
+        if self.num_classes > 1:
             loss = nn.CrossEntropyLoss
             if self.ignore_background:
                 return loss(ignore_index=-1)
@@ -180,7 +176,6 @@ class Training:
             if not optimizer_class:
                 raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
-            # Convert parameters using the common method
             converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
             return optimizer_class(self.model.parameters(), **converted_params)
@@ -192,7 +187,6 @@ class Training:
         if not scheduler_class:
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
 
-        # Convert parameters using the common method
         converted_params = {k: self.param_converter._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
@@ -207,8 +201,8 @@ class Training:
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
+        self.model_params['num_classes'] = self.num_classes
 
-        # Convert parameters using the common method
         required_params = {
             k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
@@ -221,12 +215,12 @@ class Training:
 
         try:
             typed_required_params = {
-                k: model_class.REQUIRED_PARAMS[k](v) # casting type according to param name
+                k: model_class.REQUIRED_PARAMS[k](v) 
                 for k, v in required_params.items()
             }
 
             typed_optional_params = {
-                k: model_class.OPTIONAL_PARAMS[k](v) # casting type according to param name
+                k: model_class.OPTIONAL_PARAMS[k](v) 
                 for k, v in optional_params.items()
             }
         except ValueError as e:
@@ -380,7 +374,7 @@ class Training:
             indices=train_indices,
             img_data=img_data,
             mask_data=mask_data,
-            num_classes=self.model.num_classes,
+            num_classes=self.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
             img_res=self.img_res, 
@@ -390,7 +384,7 @@ class Training:
             indices=val_indices,
             img_data=img_data,
             mask_data=mask_data,
-            num_classes=self.model.num_classes,
+            num_classes=self.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
             img_res=self.img_res,
@@ -400,7 +394,7 @@ class Training:
             indices=test_indices,
             img_data=img_data,
             mask_data=mask_data,
-            num_classes=self.model.num_classes,
+            num_classes=self.num_classes,
             crop_size=(self.crop_size, self.crop_size),
             data_stats=data_stats,
             img_res=self.img_res,
@@ -570,7 +564,7 @@ class Training:
                         total_samples += labels.size(0)
 
                         with torch.no_grad():
-                            preds = (outputs > 0.5).to(torch.uint8) if self.num_classes <= 2 \
+                            preds = (outputs > 0.5).to(torch.uint8) if self.num_classes == 1 \
                                     else torch.argmax(outputs, dim=1).int()
                             labels = labels.int()
                             for metric_name, metric_fn in zip(self.metrics, metrics):

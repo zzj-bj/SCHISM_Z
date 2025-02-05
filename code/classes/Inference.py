@@ -55,6 +55,7 @@ class Inference:
         self.img_res = int(self.data_params.get('img_res', 560))
         self.crop_size = int(self.data_params.get('crop_size', 224))
         self.num_classes = int(self.model_params.get('num_classes', 1))
+        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.data_stats = self.load_data_stats_from_json()
         self.progress_callback = None
         self.model_mapping = model_mapping
@@ -76,8 +77,8 @@ class Inference:
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
         
         model_class = self.model_mapping[model_name]
+        self.model_params['num_classes'] = self.num_classes
 
-        # Convert parameters using the common method
         required_params = {
             k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
@@ -136,13 +137,11 @@ class Inference:
                 glob.glob(os.path.join(img_folder, "*.*"))
             )
             for i in range(len(img_data[subfolder])):
-                indices.append((subfolder, i))  # Store subfolder names
+                indices.append((subfolder, i)) 
 
-            # Create the preds folder for saving predicted masks
             preds_folder = os.path.join(self.data_dir, subfolder, "preds")
             os.makedirs(preds_folder, exist_ok=True)
 
-            #dataset_counter += 1
         dataset = TiffDatasetLoader(
             img_data=img_data,
             indices=indices,
@@ -233,8 +232,6 @@ class Inference:
         # Initialize an empty tensor to store the final predictions (no overlap handling needed)
         full_pred = torch.zeros((self.num_classes, dimenssions, dimenssions), device=self.device)
 
-        # Iterate through patches to perform predictions
-        # Loop through rows of patches
         patch_index = 0
         predicted_patches = []
 
@@ -252,13 +249,12 @@ class Inference:
                         # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
                         patch_pred = torch.sigmoid(patch_pred).squeeze(0)  # [B, 1, H, W] -> [H, W]
                         patch_pred = (patch_pred > 0.5).to(torch.uint8)  # Convert to binary mask [H, W]
-
+                        
 
                 patch_pred = self._scale_mask_to_class_values(patch_pred)  # [B, H, W] -> [B, H, W] with class values
                 patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0), 
                                                             size=(self.crop_size, self.crop_size), 
-                                                            mode='bicubic', 
-                                                            align_corners=False).squeeze(0)
+                                                            mode='nearest-exact').squeeze(0)
 
                 predicted_patches.append(patch_pred_resized.cpu())
                 patch_index += 1
