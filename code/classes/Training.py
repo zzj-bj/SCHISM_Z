@@ -487,7 +487,7 @@ class Training:
             train_loss_values = [_param['train'][epoch_train] for epoch_train in epochs]
             val_loss_values = [_param['val'][epoch_val] for epoch_val in epochs]
 
-            axes = plt.subplots(1, 2, figsize=(15, 5))
+            fig, axes = plt.subplots(1, 2, figsize=(15, 5))
 
             ax0 = axes[0]
             ax0.plot(epochs, train_loss_values, 'b-', label='Train Loss')
