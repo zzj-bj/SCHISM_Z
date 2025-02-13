@@ -13,7 +13,6 @@ from classes.model_registry import model_mapping
 from classes.ParamConverter import ParamConverter
 import torch.nn.functional as nn_func
 from patchify import unpatchify
-import torchvision.transforms as T
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -57,9 +56,7 @@ class Inference:
         self.num_classes = int(self.model_params.get('num_classes', 1))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.data_stats = self.load_data_stats_from_json()
-        self.progress_callback = None
         self.model_mapping = model_mapping
-
         self.model = self.initialize_model()
     
     def initialize_model(self) -> nn.Module:
@@ -182,11 +179,7 @@ class Inference:
             print(f"Error loading data stats: {e}")
             raise
 
-    def set_progress_callback(self, callback):
-        """Set the progress callback function."""
-        self.progress_callback = callback
-
-    def predict(self, progress_callback=None):
+    def predict(self):
         """
         Performs patch-based predictions on the dataset and saves the results.
 
@@ -208,10 +201,6 @@ class Inference:
             pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
             self._save_mask(full_pred, pred_save_path)
             
-            # Call the progress callback if provided
-            if progress_callback:
-                progress_callback(i+1, total_images)
-
     def _patch_based_prediction(self, patches):
         """
         Reassembles patches into a full-size prediction map.
@@ -292,6 +281,5 @@ class Inference:
             save_path (str): The file path where the mask will be saved.
         """
         mask_array = mask_tensor.cpu().numpy().astype(np.uint8)
-        # mask_image = Image.fromarray(mask_array)
         mask_image = Image.fromarray(mask_array)
         mask_image.save(save_path)

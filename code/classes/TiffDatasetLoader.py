@@ -5,10 +5,8 @@ import torchvision
 import torchvision.transforms.functional as func_torch
 from torchvision.datasets import VisionDataset
 import torch.nn.functional as nn_func
-import os
 from patchify import patchify
 import torchvision.transforms as T
-
 
 class TiffDatasetLoader(VisionDataset):
 
@@ -77,6 +75,44 @@ class TiffDatasetLoader(VisionDataset):
         j = torch.randint(0, w - tw + 1, size=(1,)).item()
 
         return i, j, th, tw
+        
+    def get_valid_crop(self, img, mask, threshold=0.8, max_attempts=10):
+        """
+        Attempts to find a crop of the image and mask where the fraction of background pixels
+        (with value 0 in the mask) is below the specified threshold. Falls back to center crop if no valid crop is found.
+    
+        Args:
+            img (np.array): The input image (H x W x C).
+            mask (np.array): The segmentation mask (H x W), where 0 indicates background.
+            threshold (float): Maximum allowed fraction of background pixels (default 0.8).
+            max_attempts (int): Maximum number of crop attempts before falling back to center crop.
+    
+        Returns:
+            tuple: Cropped image and mask.
+        """
+        for attempt in range(max_attempts):
+            # Get random crop parameters
+            i, j, h, w = self.get_random_crop_params()
+            # Crop the mask
+            crop_mask = mask[i:i+h, j:j+w].copy()
+            # Calculate the fraction of background pixels
+            background_ratio = (crop_mask == 0).sum() / crop_mask.size
+    
+            if background_ratio < threshold:
+                # Valid crop found, return it
+                crop_img = img[i:i+h, j:j+w, :].copy()
+                return crop_img, crop_mask
+    
+        # If max_attempts reached, perform center crop
+        h, w = self.image_dims
+        th, tw = self.crop_size
+        center_i = (h - th) // 2
+        center_j = (w - tw) // 2
+    
+        crop_img = img[center_i:center_i+th, center_j:center_j+tw, :].copy()
+        crop_mask = mask[center_i:center_i+th, center_j:center_j+tw].copy()
+    
+        return crop_img, crop_mask
 
     def extract_patches(self, img_np):
         height, width = self.image_dims
@@ -150,10 +186,7 @@ class TiffDatasetLoader(VisionDataset):
             f"Mismatch in dimensions: Image {img.shape} vs Mask {mask.shape} for {img_path}"
         )
 
-        # Apply cropping and resizing as before
-        i, j, h, w = self.get_random_crop_params()
-        img = img[i:i + h, j:j + w, :].copy()
-        mask = mask[i:i + h, j:j + w].copy()
+        img, mask = self.get_valid_crop(img, mask, threshold=0.8, max_attempts=20)
 
         img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255.0
         mask_tensor = torch.from_numpy(mask).contiguous() / 255.0
@@ -170,13 +203,11 @@ class TiffDatasetLoader(VisionDataset):
             img_resized = torchvision.transforms.functional.vflip(img_resized)
             mask_resized = torchvision.transforms.functional.vflip(mask_resized)
 
-        
         #TODO: as many image treatment as required
         #shear
         
-
         img_normalized = torchvision.transforms.functional.normalize(img_resized, mean=m, std=s).float()
-
+ 
         if self.num_classes >= 2:
             if self.ignore_background:
                 # ignore index is -1
