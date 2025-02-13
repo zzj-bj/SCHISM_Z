@@ -15,10 +15,11 @@ from classes.ParamConverter import ParamConverter
 from datetime import datetime
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
-from torchmetrics.segmentation import GeneralizedDiceScore, DiceScore
-from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex
+from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
+from torch.nn import L1Loss, MSELoss, CrossEntropyLoss, BCEWithLogitsLoss, SmoothL1Loss
 from torch.utils.data import DataLoader
 from classes.model_registry import model_mapping
+import torch.backends.cudnn as cudnn
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -60,7 +61,6 @@ class Training:
         self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
         self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
-
         self.num_classes = int(self.model_params.get('num_classes'))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
@@ -74,12 +74,15 @@ class Training:
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
         self.ignore_background = self.param_converter._convert_param(self.data.get('ignore_background', "False"))
-        self.ignore_index = -1 if self.ignore_background else None
+        
+        if self.ignore_background:
+            self.ignore_index = -1 
+        else:
+            self.ignore_index = -100
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
-        self.progress_callback = None  
         self.model_mapping = model_mapping
 
         self.optimizer_mapping = {
@@ -109,46 +112,49 @@ class Training:
             'OneCycleLR': OneCycleLR,
             'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
         }
-
-        self.metrics_mapping = {
-            "Jaccard": (
-                BinaryJaccardIndex(ignore_index=self.ignore_index).to(self.device)
-                if self.num_classes == 1
-                else MulticlassJaccardIndex(num_classes=self.num_classes, ignore_index=self.ignore_index).to(self.device)
-            ),
-            "GeneralizedDiceScore": GeneralizedDiceScore(num_classes=self.num_classes).to(self.device),
-            "DiceScore": DiceScore(num_classes=self.num_classes).to(self.device),
-        }
-
+        
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
 
+    def create_metric(self, binary_metric, multiclass_metric):
+        """Helper function to initialize metrics based on task type (binary/multiclass)."""
+        return (
+            binary_metric(ignore_index=self.ignore_index).to(self.device)
+            if self.num_classes == 1
+            else multiclass_metric(num_classes=self.num_classes, ignore_index=self.ignore_index).to(self.device)
+        )
+
     def initialize_metrics(self):
         """
-        Retrieves the specified metrics for evaluation.
-
-        Args:
-            metrics_list (list): A list of metric names to retrieve.
-
+        Initializes the specified metrics for evaluation.
+        
         Returns:
             list: A list of metric instances corresponding to the specified names.
-
+        
         Raises:
             ValueError: If a specified metric is not recognized.
         """
-        if self.metrics_str:
-            self.metrics = [metric.strip() for metric in self.metrics_str.split(',')]
-        else:
-            self.metrics = ["Jaccard"]
-
+        self.metrics_mapping = {
+            "Jaccard": self.create_metric(BinaryJaccardIndex, MulticlassJaccardIndex),
+            "F1": self.create_metric(BinaryF1Score, MulticlassF1Score),
+            "Accuracy": self.create_metric(BinaryAccuracy, MulticlassAccuracy),
+            "AveragePrecision": self.create_metric(BinaryAveragePrecision, MulticlassAveragePrecision),
+            "ConfusionMatrix": self.create_metric(BinaryConfusionMatrix, MulticlassConfusionMatrix),
+            "Precision": self.create_metric(BinaryPrecision, MulticlassPrecision),
+            "Recall": self.create_metric(BinaryRecall, MulticlassRecall),
+        }
+    
+        # Parse metrics from string input or use default
+        self.metrics = [metric.strip() for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+    
+        # Retrieve metric instances
         selected_metrics = []
         for metric in self.metrics:
-            metric = metric.strip()
             if metric in self.metrics_mapping:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
                 raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
-
+    
         return selected_metrics
 
     def initialize_losses(self):
@@ -160,13 +166,13 @@ class Training:
         """
 
         if self.num_classes > 1:
-            loss = nn.CrossEntropyLoss
+            loss = CrossEntropyLoss
             if self.ignore_background:
-                return loss(ignore_index=-1)
+                return loss(ignore_index=self.ignore_index)
             else:
                 return loss()
         else:
-            loss = nn.BCEWithLogitsLoss
+            loss = BCEWithLogitsLoss
             return loss()
 
     def initialize_optimizer(self):
@@ -462,151 +468,258 @@ class Training:
         with open(os.path.join(self.save_directory, 'hyperparameters.ini'), 'w') as configfile:
             config.write(configfile)
 
-    def set_progress_callback(self, callback):
-            """Set the progress callback function."""
-            self.progress_callback = callback
- 
+    def save_best_metrics(self, loss_dict, metrics_dict):
+        """
+        Saves the full history of validation loss and metrics for each epoch in a readable format.
+        
+        Args:
+            loss_dict (dict): Dictionary containing loss values for training and validation.
+            metrics_dict (dict): Dictionary containing metric values for training and validation.
+        """
+        file_path = os.path.join(self.save_directory, "val_metrics_history.txt")
+        
+        with open(file_path, "w") as f:
+            f.write("Validation Metrics History\n")
+            f.write("=" * 30 + "\n\n")
+    
+            for epoch in sorted(loss_dict['val'].keys()):
+                f.write(f"Epoch {epoch}:\n")
+                f.write(f"  - Loss: {loss_dict['val'][epoch]:.4f}\n")
+                for metric, values in metrics_dict['val'].items():
+                    f.write(f"  - {metric}: {values[epoch - 1]:.4f}\n")
+                f.write("\n" + "-" * 30 + "\n\n")
+        
+        print(f"Validation metrics history saved to {file_path}")
+        
+    def plot_learning_curves(self, _param, metrics_dict_param):
+        """
+        Plots the learning curves for loss and metrics over epochs.
+
+        Args:
+            _param (dict): A dictionary containing loss values for training and validation.
+            metrics_dict_param (dict): A dictionary containing metric values for training and validation.
+        """
+        epochs = list(_param['train'].keys())
+        train_loss_values = [_param['train'][epoch_train] for epoch_train in epochs]
+        val_loss_values = [_param['val'][epoch_val] for epoch_val in epochs]
+
+        fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+        ax0 = axes[0]
+        ax0.plot(epochs, train_loss_values, 'b-', label='Train Loss')
+        ax0.plot(epochs, val_loss_values, 'r-', label='Val Loss')
+        ax0.set_title('Loss')
+        ax0.set_xlabel('Epochs')
+        ax0.set_ylabel('Loss Value')
+        ax0.legend()
+
+        ax1 = axes[1]
+        for metric in metrics_dict_param['train']:
+            train_metric_values = [metrics_dict_param['train'][metric][epoch_train - 1] for epoch_train in epochs]
+            val_metric_values = [metrics_dict_param['val'][metric][epoch_val - 1] for epoch_val in epochs]
+            ax1.plot(epochs, train_metric_values, label=f'Train {metric}')
+            ax1.plot(epochs, val_metric_values, label=f'Val {metric}')
+
+        ax1.set_title('Metrics')
+        ax1.set_xlabel('Epochs')
+        ax1.set_ylabel('Metric Values')
+        ax1.legend()
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
+
+    
+    def save_confusion_matrix(self, metrics):
+        """
+        Runs a final validation pass using the best validation model (saved by lowest loss),
+        computes the confusion matrix using the pre-initialized ConfusionMatrix metric instance,
+        converts the values to percentages (row-normalized), and saves a matplotlib plot.
+        
+        Args:
+            metrics (list): List of metric instances as returned by self.initialize_metrics().
+        """
+        
+        # Load the best model weights (assumed to be saved by lowest validation loss)
+        best_model_path = os.path.join(self.save_directory, "model_best_loss.pth")
+        if not os.path.exists(best_model_path):
+            print("Best model not found. Skipping confusion matrix generation.")
+            return
+    
+        self.model.load_state_dict(torch.load(best_model_path))
+        self.model.eval()
+    
+        # Retrieve the pre-initialized ConfusionMatrix metric instance from metrics
+        conf_idx = self.metrics.index("ConfusionMatrix")
+        conf_metric = metrics[conf_idx]
+        conf_metric.reset()  # Reset state before final update
+    
+        final_all_preds = []
+        final_all_labels = []
+        with torch.no_grad():
+            for inputs, labels, _, _ in self.dataloaders["val"]:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = self.model(inputs)
+                preds = (torch.argmax(outputs, dim=1).long() 
+                         if self.num_classes > 1 
+                         else (outputs > 0.5).to(torch.uint8))
+                final_all_preds.append(preds.cpu())
+                final_all_labels.append(labels.cpu())
+    
+        if final_all_preds and final_all_labels:
+            # Concatenate and ensure tensors are on the same device as conf_metric
+            all_preds_tensor = torch.cat(final_all_preds).to(self.device)
+            all_labels_tensor = torch.cat(final_all_labels).to(self.device)
+            # Compute confusion matrix using the pre-initialized metric
+            cm = conf_metric(all_preds_tensor, all_labels_tensor)
+            cm_np = cm.cpu().numpy()
+    
+            # Normalize the confusion matrix row-wise and convert to percentages
+            cm_percent = (cm_np.astype(np.float32) / (cm_np.sum(axis=1, keepdims=True) + 1e-6)) * 100
+    
+            # Plot the normalized confusion matrix using matplotlib
+            plt.figure(figsize=(8, 6))
+            plt.imshow(cm_percent, interpolation='nearest', cmap=plt.cm.Blues)
+            plt.colorbar()
+            tick_marks = list(range(self.num_classes))
+            plt.xticks(tick_marks)
+            plt.yticks(tick_marks)
+            plt.xlabel("Predicted Label")
+            plt.ylabel("True Label")
+    
+            thresh = cm_percent.max() / 2.0
+            for i in range(cm_percent.shape[0]):
+                for j in range(cm_percent.shape[1]):
+                    plt.text(j, i, f"{cm_percent[i, j]:.1f}%",
+                             horizontalalignment="center",
+                             color="white" if cm_percent[i, j] > thresh else "black")
+    
+            save_path = os.path.join(self.save_directory, "confusion_matrix.png")
+            plt.savefig(save_path, dpi=300)
+            plt.close()
+            print(f"Confusion matrix saved to {save_path}")
+    
     def training_loop(self, optimizer, scheduler):
-        """
-        Executes the training loop for the model, including training and validation phases.
-
-        Args
-            optimizer (torch.optim.Optimizer): The optimizer to use for training.
-            scheduler (torch.optim.lr_scheduler): The learning rate scheduler to use.
-        """
-
-        def plot_learning_curves(_param, metrics_dict_param):
-            """
-            Plots the learning curves for loss and metrics over epochs.
-
-            Args:
-                _param (dict): A dictionary containing loss values for training and validation.
-                metrics_dict_param (dict): A dictionary containing metric values for training and validation.
-            """
-            epochs = list(_param['train'].keys())
-            train_loss_values = [_param['train'][epoch_train] for epoch_train in epochs]
-            val_loss_values = [_param['val'][epoch_val] for epoch_val in epochs]
-
-            fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-
-            ax0 = axes[0]
-            ax0.plot(epochs, train_loss_values, 'b-', label='Train Loss')
-            ax0.plot(epochs, val_loss_values, 'r-', label='Val Loss')
-            ax0.set_title('Loss')
-            ax0.set_xlabel('Epochs')
-            ax0.set_ylabel('Loss Value')
-            ax0.legend()
-
-            ax1 = axes[1]
-            for metric in metrics_dict_param['train']:
-                train_metric_values = [metrics_dict_param['train'][metric][epoch_train - 1] for epoch_train in epochs]
-                val_metric_values = [metrics_dict_param['val'][metric][epoch_val - 1] for epoch_val in epochs]
-                ax1.plot(epochs, train_metric_values, label=f'Train {metric}')
-                ax1.plot(epochs, val_metric_values, label=f'Val {metric}')
-
-            ax1.set_title('Metrics')
-            ax1.set_xlabel('Epochs')
-            ax1.set_ylabel('Metric Values')
-            ax1.legend()
-
-            plt.tight_layout()
-            plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
-
+    
         scaler = None
         if self.device == "cuda":
-            scaler = torch.cuda.amp.GradScaler()
-            import torch.backends.cudnn as cudnn
+            scaler = torch.amp.GradScaler()
             cudnn.benchmark = True
-
-        metrics = self.initialize_metrics()
+    
+        # Initialize metric instances and losses
+        metrics = self.initialize_metrics()  # This list includes your ConfusionMatrix instance if enabled
         loss_fn = self.initialize_losses()
         loss_dict = {"train": {}, "val": {}}
-        metrics_dict = {phase: {metric: [] for metric in self.metrics} for phase in ["train", "val"]}
+    
+        # Build a list of display metric names (excluding "ConfusionMatrix")
+        display_metrics = [m for m in self.metrics if m != "ConfusionMatrix"]
+        metrics_dict = {phase: {metric: [] for metric in display_metrics} for phase in ["train", "val"]}
         best_val_loss = float("inf")
-        best_val_metrics = {metric: 0 for metric in self.metrics}
-
+        best_val_metrics = {metric: 0 for metric in display_metrics}
+            
         for epoch in range(1, self.epochs + 1):
             print(f"\n{'-' * 18}\n--- Epoch {epoch}/{self.epochs} ---")
-
+        
             for phase in ["train", "val"]:
-                is_training = phase == "train"
+                is_training = (phase == "train")
                 self.model.train() if is_training else self.model.eval()
-
+        
                 running_loss = 0.0
-                running_metrics = {metric: 0.0 for metric in self.metrics}
+                running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
-
+        
                 with tqdm(total=len(self.dataloaders[phase]), unit="batch") as pbar:
                     for inputs, labels, _, _ in self.dataloaders[phase]:
+                        
                         inputs, labels = inputs.to(self.device), labels.to(self.device)
                         optimizer.zero_grad()
-
+                        
                         with torch.set_grad_enabled(is_training):
-                            with torch.autocast(device_type=self.device, dtype=torch.float16):
-                                outputs = self.model(inputs).squeeze()
-                                loss = loss_fn(outputs, labels.squeeze())
-
+                            with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
+                                outputs = self.model(inputs)
+        
+                                if self.num_classes == 1:
+                                    outputs = outputs.squeeze() # Squeeze for binary segmentation
+        
+                                # Debug: Check for NaN or Inf
+                                if torch.isnan(outputs).any() or torch.isinf(outputs).any():
+                                    print(f"Outputs contain NaN or Inf! Min: {outputs.min().item()}, Max: {outputs.max().item()}")
+                                if torch.isnan(labels).any() or torch.isinf(labels).any():
+                                    print(f"Labels contain NaN or Inf! Min: {labels.min().item()}, Max: {labels.max().item()}")
+        
+                                # Compute loss (adjust labels as needed)
+                                loss = loss_fn(
+                                    outputs,
+                                    labels.squeeze().long() if self.num_classes > 1 else labels.squeeze().float()
+                                )
+        
                             if is_training:
-                                if self.device == "cuda":
+                                if scaler:
                                     scaler.scale(loss).backward()
                                     scaler.step(optimizer)
                                     scaler.update()
                                 else:
                                     loss.backward()
                                     optimizer.step()
-
-                                if self.scheduler_params.get('scheduler') == "ReduceLROnPlateau":
+        
+                                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                                     scheduler.step(loss)
                                 else:
                                     scheduler.step()
-
+        
                         running_loss += loss.item()
                         total_samples += labels.size(0)
-
+        
                         with torch.no_grad():
-                            preds = (outputs > 0.5).to(torch.uint8) if self.num_classes == 1 \
-                                    else torch.argmax(outputs, dim=1).int()
-                            labels = labels.int()
+                            preds = (torch.argmax(outputs, dim=1).long()
+                                     if self.num_classes > 1
+                                     else (outputs > 0.5).to(torch.uint8))
+                            labels = labels.long()
+        
+                            # Update display metrics only (skip ConfusionMatrix)
                             for metric_name, metric_fn in zip(self.metrics, metrics):
-                                running_metrics[metric_name] += metric_fn(preds, labels).item()
+                                if metric_name != "ConfusionMatrix":
+                                    running_metrics[metric_name] += metric_fn(preds, labels).item()
+        
                         pbar.set_postfix(
                             loss=running_loss / (pbar.n + 1),
-                            **{metric: running_metrics[metric] / (pbar.n + 1) for metric in self.metrics}
+                            **{metric: running_metrics[metric] / (pbar.n + 1) for metric in display_metrics}
                         )
-                        
-                        if self.progress_callback:
-                            self.progress_callback(epoch, self.epochs, running_loss / (pbar.n + 1), 
-                                                    {metric: running_metrics[metric] / (pbar.n + 1) for metric in self.metrics})
-
                         pbar.update(1)
-
+                                
                 epoch_loss = running_loss / len(self.dataloaders[phase])
-                epoch_metrics = {metric: running_metrics[metric] / len(self.dataloaders[phase]) for metric in self.metrics}
-
+                epoch_metrics = {metric: running_metrics[metric] / len(self.dataloaders[phase])
+                                 for metric in display_metrics}
                 loss_dict[phase][epoch] = epoch_loss
+                        
                 for metric, value in epoch_metrics.items():
                     metrics_dict[phase][metric].append(value)
-
+        
                 print(f"{phase.title()} Loss: {epoch_loss: .4f}")
                 for metric, value in epoch_metrics.items():
                     print(f"{phase.title()} {metric}: {value: .4f}", end=" | ")
                 print()
-
+        
                 if phase == "val" and epoch_loss < best_val_loss:
                     best_val_loss = epoch_loss
                     torch.save(self.model.state_dict(), os.path.join(self.save_directory, "model_best_loss.pth"))
-
+        
                 if phase == "val":
                     for metric, value in epoch_metrics.items():
                         if value > best_val_metrics[metric]:
                             best_val_metrics[metric] = value
-                            torch.save(self.model.state_dict(),
-                                       os.path.join(self.save_directory, f"model_best_{metric}.pth"))
-
+                            torch.save(
+                                self.model.state_dict(),
+                                os.path.join(self.save_directory, f"model_best_{metric}.pth")
+                            )
+        
         print(f"Best Validation Metrics: {best_val_metrics}")
-        plot_learning_curves(loss_dict, metrics_dict)
+        
+        self.save_best_metrics(loss_dict, metrics_dict)
+        self.plot_learning_curves(loss_dict, metrics_dict)
         self.save_hyperparameters()
-        self.save_data_stats(self.dataloaders['train'].dataset.data_stats)
+        if "ConfusionMatrix" in self.metrics:
+            self.save_confusion_matrix(metrics)
+        self.save_data_stats(self.dataloaders["train"].dataset.data_stats)
 
     def train(self):
             optimizer = self.initialize_optimizer()

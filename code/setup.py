@@ -68,14 +68,13 @@ from setuptools import find_packages, setup
 
 setup(
     name="SCHISM",
-    version="0.0.5",
+    version="0.1.0",
     author="Florent Brondolo",
     author_email="florent.brondolo@akkodis.com",
     description="Simple framework for computer vision",
     packages_dir={"": "classes"},
     packages=find_packages(where="classes"),
     install_requires=[
-        "tk",
         "torchmetrics>=1.6.1",
         "numpy>=1.17.4",
         "torch>=2.3.0",
