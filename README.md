@@ -28,9 +28,6 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 - **Graphical Interface Removed:**  
   The previous graphical interface, which had certain limitations, has been removed. Instead, we now offer a **classic command-line interface (CLI)** that is more streamlined and intuitive for users.
 
-### README Update:
-- The README has been updated to reflect the changes mentioned above, including metric adjustments, confusion matrix usage, and the transition to the CLI.
-
 ### Coming Soon:
 - **Addition of Several Loss Functions**:  
   Among other improvements, we are planning to add multiple loss functions for enhanced flexibility in training. Additionally, we're working on introducing pre-configured data augmentation options. Stay tuned!
