@@ -528,7 +528,6 @@ class Training:
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
 
-    
     def save_confusion_matrix(self, metrics):
         """
         Runs a final validation pass using the best validation model (saved by lowest loss),
@@ -547,21 +546,25 @@ class Training:
     
         self.model.load_state_dict(torch.load(best_model_path))
         self.model.eval()
-    
+        
         # Retrieve the pre-initialized ConfusionMatrix metric instance from metrics
         conf_idx = self.metrics.index("ConfusionMatrix")
         conf_metric = metrics[conf_idx]
         conf_metric.reset()  # Reset state before final update
-    
+        
         final_all_preds = []
         final_all_labels = []
         with torch.no_grad():
             for inputs, labels, _, _ in self.dataloaders["val"]:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = self.model(inputs)
-                preds = (torch.argmax(outputs, dim=1).long() 
-                         if self.num_classes > 1 
-                         else (outputs > 0.5).to(torch.uint8))
+                
+                # For multi-class segmentation
+                if self.num_classes > 1:
+                    preds = torch.argmax(outputs, dim=1)  # Get the class with the highest probability
+                else:
+                    preds = (outputs > 0.5).to(torch.uint8)  # For binary segmentation
+    
                 final_all_preds.append(preds.cpu())
                 final_all_labels.append(labels.cpu())
     
@@ -569,35 +572,55 @@ class Training:
             # Concatenate and ensure tensors are on the same device as conf_metric
             all_preds_tensor = torch.cat(final_all_preds).to(self.device)
             all_labels_tensor = torch.cat(final_all_labels).to(self.device)
+            
+            # Ensure both tensors are the same shape and have the right dtype
+            all_preds_tensor = all_preds_tensor.long()
+            all_labels_tensor = all_labels_tensor.long()
+        
+            # Check for binary task: in binary tasks, predictions and labels should be 2D (batch_size, height, width)
+            if self.num_classes == 1:
+                # Squeeze extra dimensions for binary classification
+                all_preds_tensor = all_preds_tensor.squeeze(1)  # Remove the channel dimension for binary tasks
+                all_labels_tensor = all_labels_tensor.squeeze(1)
+                
             # Compute confusion matrix using the pre-initialized metric
             cm = conf_metric(all_preds_tensor, all_labels_tensor)
-            cm_np = cm.cpu().numpy()
     
+            cm_np = cm.cpu().numpy()
+        
             # Normalize the confusion matrix row-wise and convert to percentages
             cm_percent = (cm_np.astype(np.float32) / (cm_np.sum(axis=1, keepdims=True) + 1e-6)) * 100
-    
+        
             # Plot the normalized confusion matrix using matplotlib
             plt.figure(figsize=(8, 6))
             plt.imshow(cm_percent, interpolation='nearest', cmap=plt.cm.Blues)
             plt.colorbar()
-            tick_marks = list(range(self.num_classes))
-            plt.xticks(tick_marks)
-            plt.yticks(tick_marks)
+            
+            # Adjust labels for binary classification
+            if self.num_classes == 1:
+                tick_marks = [0, 1]
+                plt.xticks(tick_marks)
+                plt.yticks(tick_marks)
+            else:
+                tick_marks = list(range(self.num_classes))
+                plt.xticks(tick_marks)
+                plt.yticks(tick_marks)
+            
             plt.xlabel("Predicted Label")
             plt.ylabel("True Label")
-    
+        
             thresh = cm_percent.max() / 2.0
             for i in range(cm_percent.shape[0]):
                 for j in range(cm_percent.shape[1]):
                     plt.text(j, i, f"{cm_percent[i, j]:.1f}%",
                              horizontalalignment="center",
                              color="white" if cm_percent[i, j] > thresh else "black")
-    
+        
             save_path = os.path.join(self.save_directory, "confusion_matrix.png")
             plt.savefig(save_path, dpi=300)
             plt.close()
             print(f"Confusion matrix saved to {save_path}")
-    
+        
     def training_loop(self, optimizer, scheduler):
     
         scaler = None
@@ -717,9 +740,9 @@ class Training:
         self.save_best_metrics(loss_dict, metrics_dict)
         self.plot_learning_curves(loss_dict, metrics_dict)
         self.save_hyperparameters()
+        self.save_data_stats(self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:
             self.save_confusion_matrix(metrics)
-        self.save_data_stats(self.dataloaders["train"].dataset.data_stats)
 
     def train(self):
             optimizer = self.initialize_optimizer()
