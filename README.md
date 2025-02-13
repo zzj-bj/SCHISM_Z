@@ -3,6 +3,39 @@
 SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanned Materials_. This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of image as long as semantic segmentation is required. The framework supports both training and inference workflows. As for the little trivia, this project got named after [this](https://www.youtube.com/watch?v=MM62wjLrgmA&ab_channel=TOOLVEVO) :) 
 
 ---
+## 🔧 Latest Updates (Feb 2025)
+
+### New Features:
+- **Metric Changes:**  
+  We have updated the metrics available in the segmentation model. The **Dice Score** and **Generalized Dice Score** metrics have been removed. In their place, we've added:
+  - **F1 Score**
+  - **Accuracy**
+  - **Precision**
+  - **Recall**
+
+- **Confusion Matrix Support:**  
+  You can now plot the confusion matrix as part of the evaluation process.  
+  To enable this feature, simply add `"ConfusionMatrix"` to the list of metrics in your configuration file.  
+  **Example:**  
+  `metrics = F1, Accuracy, ConfusionMatrix`  
+  For more details, check the [documentation](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
+
+### Bug Fixes:
+- **Loss Calculation Bug Fix:**  
+  A critical bug related to the loss calculation has been fixed, ensuring more accurate training and evaluation.
+
+### 🖥Interface Update:
+- **Graphical Interface Removed:**  
+  The previous graphical interface, which had certain limitations, has been removed. Instead, we now offer a **classic command-line interface (CLI)** that is more streamlined and intuitive for users.
+
+### README Update:
+- The README has been updated to reflect the changes mentioned above, including metric adjustments, confusion matrix usage, and the transition to the CLI.
+
+### Coming Soon:
+- **Addition of Several Loss Functions**:  
+  Among other improvements, we are planning to add multiple loss functions for enhanced flexibility in training. Additionally, we're working on introducing pre-configured data augmentation options. Stay tuned!
+  
+---
 ## :gear: Installation
 
 1. Clone this repository to your local machine:
