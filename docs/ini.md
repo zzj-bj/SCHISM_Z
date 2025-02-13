@@ -49,7 +49,7 @@ These options are derived from `torch.optim.lr_scheduler`. Parameters, if any, s
 Configures training parameters.
 
 - `batch_size`, `val_split`, and `epochs` are required.
-- Metrics: `DiceScore`, `GeneralizedDiceScore`, `Jaccard` (preset).
+- Metrics: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, simply add `ConfusionMatrix` to the list of metrics.
 - Note that the loss functions in use are `CategoricalCrossEntropy` for multiclass, and `BinaryCrossEntropy` for binary. Users don't need to specify it.
 
 
