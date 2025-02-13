@@ -50,7 +50,7 @@ def train_model():
     print("\n[!] Starting training...")
     train_object.load_segmentation_data()
     train_object.train()
-    print("\n[✓] Training completed successfully!")
+    print("\n[√] Training completed successfully!")
 
 def run_inference():
     """Executes the inference process in CLI."""
@@ -71,8 +71,11 @@ def run_inference():
         print("[X] No metrics found in the hyperparameters.")
         return
 
-    print("\n[?] Choose a metric for inference:")
-    for i, metric in enumerate(metrics, start=1):
+    # Filter out 'ConfusionMatrix' if it's part of the metrics
+    available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
+
+    # Display the available metrics for inference
+    for i, metric in enumerate(available_metrics, start=1):
         print(f" {i} --> {metric}")
 
     while True:
@@ -95,7 +98,7 @@ def run_inference():
 
     pred_object.predict()
     
-    print("\n[✓] Inference completed successfully!")
+    print("\n[√] Inference completed successfully!")
 
 def main():
     """Displays the CLI menu and handles user choices."""
@@ -108,7 +111,7 @@ def main():
         elif choice == "2":
             run_inference()
         elif choice == "3":
-            print("\n[:)] Goodbye! o/")
+            print("\n[<3] Goodbye! o/")
             sys.exit()
         else:
             print("[X] Invalid choice. Try again.")
