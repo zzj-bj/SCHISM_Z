@@ -24,7 +24,7 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 - **Loss Calculation Bug Fix:**  
   A critical bug related to the loss calculation has been fixed, ensuring more accurate training and evaluation.
 
-### 🖥Interface Update:
+### Interface Update:
 - **Graphical Interface Removed:**  
   The previous graphical interface, which had certain limitations, has been removed. Instead, we now offer a **classic command-line interface (CLI)** that is more streamlined and intuitive for users.
 
