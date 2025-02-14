@@ -30,7 +30,7 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 
 ### Coming Soon:
 - **Addition of Several Loss Functions**:  
-  Among other improvements, we are planning to add multiple loss functions for enhanced flexibility in training. Additionally, we're working on introducing pre-configured data augmentation options. Stay tuned!
+  Among other improvements, we are planning to add multiple loss functions for enhanced flexibility in training. Additionally, we're working on introducing pre-configured data augmentation options and early stoppings. Stay tuned!
   
 ---
 ## :gear: Installation
