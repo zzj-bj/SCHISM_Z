@@ -13,6 +13,7 @@ from classes.model_registry import model_mapping
 from classes.ParamConverter import ParamConverter
 import torch.nn.functional as nn_func
 from patchify import unpatchify
+import torchvision.transforms as Tc
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -57,6 +58,7 @@ class Inference:
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.data_stats = self.load_data_stats_from_json()
         self.model_mapping = model_mapping
+
         self.model = self.initialize_model()
     
     def initialize_model(self) -> nn.Module:
@@ -201,6 +203,7 @@ class Inference:
             pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
             self._save_mask(full_pred, pred_save_path)
             
+
     def _patch_based_prediction(self, patches):
         """
         Reassembles patches into a full-size prediction map.
@@ -229,18 +232,18 @@ class Inference:
                 patch = patches[patch_index]
                 with torch.no_grad():
                     # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
-                    patch_pred = self.model(patch.to(self.device))  # Batch dimension is already handled
+                    patch_pred = self.model(patch.to(self.device))  
 
                     if self.num_classes > 1:
                         # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
-                        patch_pred = torch.argmax(patch_pred, dim=1).float()   # [B, C, H, W] -> [H, W]
+                        patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)   
                     else:
                         # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
-                        patch_pred = torch.sigmoid(patch_pred).squeeze(0)  # [B, 1, H, W] -> [H, W]
-                        patch_pred = (patch_pred > 0.5).to(torch.uint8)  # Convert to binary mask [H, W]
+                        patch_pred = torch.sigmoid(patch_pred).squeeze(0)  
+                        patch_pred = (patch_pred > 0.5).to(torch.uint8) 
                         
 
-                patch_pred = self._scale_mask_to_class_values(patch_pred)  # [B, H, W] -> [B, H, W] with class values
+                patch_pred = self._scale_mask_to_class_values(patch_pred)  
                 patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0), 
                                                             size=(self.crop_size, self.crop_size), 
                                                             mode='nearest-exact').squeeze(0)

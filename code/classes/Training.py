@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.ParamConverter import ParamConverter
+from classes.TrainingLogger import TrainingLogger
 from datetime import datetime
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
@@ -79,7 +80,7 @@ class Training:
             self.ignore_index = -1 
         else:
             self.ignore_index = -100
-
+            
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
@@ -115,6 +116,13 @@ class Training:
         
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
+        self.logger = TrainingLogger(save_directory=self.save_directory,
+                                    num_classes=self.num_classes,
+                                    model_params=self.model_params,
+                                    optimizer_params=self.optimizer_params,
+                                    scheduler_params=self.scheduler_params,
+                                    training_params=self.training_params,
+                                    data=self.data)
 
     def create_metric(self, binary_metric, multiclass_metric):
         """Helper function to initialize metrics based on task type (binary/multiclass)."""
@@ -298,25 +306,6 @@ class Training:
                 print(f"Error loading data stats from {json_file_path}: {e}. Using default normalization stats.")
                 return {"default": neutral_stats}
 
-
-        def save_indices_to_file(indices_list):
-            """
-            Saves the indices of the training, validation, and test sets to text files.
-
-            Args:
-                indices_list (list): A list containing the indices for training, validation, and test sets.
-            """
-            indices_map = {
-                "train": indices_list[0],
-                "val": indices_list[1],
-                "test": indices_list[2],
-            }
-            for idx_type, idx_list in indices_map.items():
-                file_path = os.path.join(self.save_directory, f'{idx_type}_indices.txt')
-                with open(file_path, 'w') as f:
-                    for subfolder_name, sample_idx in idx_list:
-                        f.write(f"{subfolder_name}, {sample_idx}\n")
-
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
             """
             Generates random indices for splitting the dataset into training, validation, and test sets.
@@ -374,6 +363,7 @@ class Training:
             subfolders=self.subfolders,
             num_sample_subfolder=num_sample_per_subfolder,
         )
+        
         indices = [train_indices, val_indices, test_indices]
 
         train_dataset = TiffDatasetLoader(
@@ -412,7 +402,7 @@ class Training:
         val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, drop_last=True)
         test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False, num_workers=2, drop_last=True)
 
-        save_indices_to_file([train_indices, val_indices, test_indices])
+        self.logger.save_indices_to_file([train_indices, val_indices, test_indices])
 
         self.dataloaders = {
             'train': train_loader,
@@ -421,207 +411,19 @@ class Training:
             'indices': indices,
         }
 
-    def save_data_stats(self, data_stats):
-        """
-        Saves the data statistics to a JSON file.
-
-        Args:
-            data_stats (dict): A dictionary containing the data statistics to save.
-        """
-        # Ensure default stats are not saved unless they are the only stats
-        data_stats_serializable = {
-            key: [value[0].tolist(), value[1].tolist()]
-            for key, value in data_stats.items()
-            if key != "default" or len(data_stats) == 1
-        }
-
-        json_file_path = os.path.join(self.save_directory, 'data_stats.json')
-        with open(json_file_path, 'w') as json_file:
-            json.dump(data_stats_serializable, json_file, indent=4)
-
-    def save_hyperparameters(self):
-        """
-        Saves the hyperparameters to an INI file in the save directory.
-        """
-        config = configparser.ConfigParser()
-
-        config.add_section('Model')
-        for key, value in self.model_params.items():
-            config.set('Model', key, str(value))
-        
-        config.add_section('Optimizer')
-        for key, value in self.optimizer_params.items():
-            config.set('Optimizer', key, str(value))
-
-        config.add_section('Scheduler')
-        for key, value in self.scheduler_params.items():
-            config.set('Scheduler', key, str(value))
-
-        config.add_section('Training')
-        for key, value in self.training_params.items():
-            config.set('Training', key, str(value))
-
-        config.add_section('Data')
-        for key, value in self.data.items():
-            config.set('Data', key, str(value))
-
-        with open(os.path.join(self.save_directory, 'hyperparameters.ini'), 'w') as configfile:
-            config.write(configfile)
-
-    def save_best_metrics(self, loss_dict, metrics_dict):
-        """
-        Saves the full history of validation loss and metrics for each epoch in a readable format.
-        
-        Args:
-            loss_dict (dict): Dictionary containing loss values for training and validation.
-            metrics_dict (dict): Dictionary containing metric values for training and validation.
-        """
-        file_path = os.path.join(self.save_directory, "val_metrics_history.txt")
-        
-        with open(file_path, "w") as f:
-            f.write("Validation Metrics History\n")
-            f.write("=" * 30 + "\n\n")
-    
-            for epoch in sorted(loss_dict['val'].keys()):
-                f.write(f"Epoch {epoch}:\n")
-                f.write(f"  - Loss: {loss_dict['val'][epoch]:.4f}\n")
-                for metric, values in metrics_dict['val'].items():
-                    f.write(f"  - {metric}: {values[epoch - 1]:.4f}\n")
-                f.write("\n" + "-" * 30 + "\n\n")
-        
-        print(f"Validation metrics history saved to {file_path}")
-        
-    def plot_learning_curves(self, _param, metrics_dict_param):
-        """
-        Plots the learning curves for loss and metrics over epochs.
-
-        Args:
-            _param (dict): A dictionary containing loss values for training and validation.
-            metrics_dict_param (dict): A dictionary containing metric values for training and validation.
-        """
-        epochs = list(_param['train'].keys())
-        train_loss_values = [_param['train'][epoch_train] for epoch_train in epochs]
-        val_loss_values = [_param['val'][epoch_val] for epoch_val in epochs]
-
-        fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-
-        ax0 = axes[0]
-        ax0.plot(epochs, train_loss_values, 'b-', label='Train Loss')
-        ax0.plot(epochs, val_loss_values, 'r-', label='Val Loss')
-        ax0.set_title('Loss')
-        ax0.set_xlabel('Epochs')
-        ax0.set_ylabel('Loss Value')
-        ax0.legend()
-
-        ax1 = axes[1]
-        for metric in metrics_dict_param['train']:
-            train_metric_values = [metrics_dict_param['train'][metric][epoch_train - 1] for epoch_train in epochs]
-            val_metric_values = [metrics_dict_param['val'][metric][epoch_val - 1] for epoch_val in epochs]
-            ax1.plot(epochs, train_metric_values, label=f'Train {metric}')
-            ax1.plot(epochs, val_metric_values, label=f'Val {metric}')
-
-        ax1.set_title('Metrics')
-        ax1.set_xlabel('Epochs')
-        ax1.set_ylabel('Metric Values')
-        ax1.legend()
-
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
-
-    def save_confusion_matrix(self, metrics):
-        """
-        Runs a final validation pass using the best validation model (saved by lowest loss),
-        computes the confusion matrix using the pre-initialized ConfusionMatrix metric instance,
-        converts the values to percentages (row-normalized), and saves a matplotlib plot.
-        
-        Args:
-            metrics (list): List of metric instances as returned by self.initialize_metrics().
-        """
-        
-        # Load the best model weights (assumed to be saved by lowest validation loss)
-        best_model_path = os.path.join(self.save_directory, "model_best_loss.pth")
-        if not os.path.exists(best_model_path):
-            print("Best model not found. Skipping confusion matrix generation.")
-            return
-    
-        self.model.load_state_dict(torch.load(best_model_path))
-        self.model.eval()
-        
-        # Retrieve the pre-initialized ConfusionMatrix metric instance from metrics
-        conf_idx = self.metrics.index("ConfusionMatrix")
-        conf_metric = metrics[conf_idx]
-        conf_metric.reset()  # Reset state before final update
-        
-        final_all_preds = []
-        final_all_labels = []
-        with torch.no_grad():
-            for inputs, labels, _, _ in self.dataloaders["val"]:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                outputs = self.model(inputs)
-                
-                # For multi-class segmentation
-                if self.num_classes > 1:
-                    preds = torch.argmax(outputs, dim=1)  # Get the class with the highest probability
-                else:
-                    preds = (outputs > 0.5).to(torch.uint8)  # For binary segmentation
-    
-                final_all_preds.append(preds.cpu())
-                final_all_labels.append(labels.cpu())
-    
-        if final_all_preds and final_all_labels:
-            # Concatenate and ensure tensors are on the same device as conf_metric
-            all_preds_tensor = torch.cat(final_all_preds).to(self.device)
-            all_labels_tensor = torch.cat(final_all_labels).to(self.device)
-            
-            # Ensure both tensors are the same shape and have the right dtype
-            all_preds_tensor = all_preds_tensor.long()
-            all_labels_tensor = all_labels_tensor.long()
-        
-            # Check for binary task: in binary tasks, predictions and labels should be 2D (batch_size, height, width)
-            if self.num_classes == 1:
-                # Squeeze extra dimensions for binary classification
-                all_preds_tensor = all_preds_tensor.squeeze(1)  # Remove the channel dimension for binary tasks
-                all_labels_tensor = all_labels_tensor.squeeze(1)
-                
-            # Compute confusion matrix using the pre-initialized metric
-            cm = conf_metric(all_preds_tensor, all_labels_tensor)
-    
-            cm_np = cm.cpu().numpy()
-        
-            # Normalize the confusion matrix row-wise and convert to percentages
-            cm_percent = (cm_np.astype(np.float32) / (cm_np.sum(axis=1, keepdims=True) + 1e-6)) * 100
-        
-            # Plot the normalized confusion matrix using matplotlib
-            plt.figure(figsize=(8, 6))
-            plt.imshow(cm_percent, interpolation='nearest', cmap=plt.cm.Blues)
-            plt.colorbar()
-            
-            # Adjust labels for binary classification
-            if self.num_classes == 1:
-                tick_marks = [0, 1]
-                plt.xticks(tick_marks)
-                plt.yticks(tick_marks)
-            else:
-                tick_marks = list(range(self.num_classes))
-                plt.xticks(tick_marks)
-                plt.yticks(tick_marks)
-            
-            plt.xlabel("Predicted Label")
-            plt.ylabel("True Label")
-        
-            thresh = cm_percent.max() / 2.0
-            for i in range(cm_percent.shape[0]):
-                for j in range(cm_percent.shape[1]):
-                    plt.text(j, i, f"{cm_percent[i, j]:.1f}%",
-                             horizontalalignment="center",
-                             color="white" if cm_percent[i, j] > thresh else "black")
-        
-            save_path = os.path.join(self.save_directory, "confusion_matrix.png")
-            plt.savefig(save_path, dpi=300)
-            plt.close()
-            print(f"Confusion matrix saved to {save_path}")
-        
     def training_loop(self, optimizer, scheduler):
+        
+        def print_epoch_box(epoch, total_epochs):
+            # Generate the epoch string
+            epoch_str = f" Epoch {epoch}/{total_epochs} "
+        
+            # Determine the width of the box based on the string length
+            box_width = len(epoch_str) + 4  # Add padding for the box
+        
+            # Create the box
+            print(f"╔{'═' * (box_width - 2)}╗")
+            print(f"║{epoch_str.center(box_width - 2)}║")
+            print(f"╚{'═' * (box_width - 2)}╝")
     
         scaler = None
         if self.device == "cuda":
@@ -640,7 +442,8 @@ class Training:
         best_val_metrics = {metric: 0 for metric in display_metrics}
             
         for epoch in range(1, self.epochs + 1):
-            print(f"\n{'-' * 18}\n--- Epoch {epoch}/{self.epochs} ---")
+            
+            print_epoch_box(epoch, self.epochs)
         
             for phase in ["train", "val"]:
                 is_training = (phase == "train")
@@ -737,14 +540,23 @@ class Training:
         
         print(f"Best Validation Metrics: {best_val_metrics}")
         
-        self.save_best_metrics(loss_dict, metrics_dict)
-        self.plot_learning_curves(loss_dict, metrics_dict)
-        self.save_hyperparameters()
-        self.save_data_stats(self.dataloaders["train"].dataset.data_stats)
-        if "ConfusionMatrix" in self.metrics:
-            self.save_confusion_matrix(metrics)
+        return loss_dict, metrics_dict, metrics
 
     def train(self):
             optimizer = self.initialize_optimizer()
-            scheduler = self.initialize_scheduler(optimizer)
-            self.training_loop(optimizer, scheduler)
+            scheduler = self.initialize_scheduler(optimizer=optimizer)
+            loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer, 
+                                                                scheduler=scheduler)
+            
+            #plot and metric saving
+            self.logger.save_best_metrics(loss_dict=loss_dict, 
+                                        metrics_dict=metrics_dict)
+            self.logger.plot_learning_curves(loss_dict=loss_dict, 
+                                            metrics_dict=metrics_dict)
+            self.logger.save_hyperparameters()
+            self.logger.save_data_stats(self.dataloaders["train"].dataset.data_stats)
+            if "ConfusionMatrix" in self.metrics:
+                self.logger.save_confusion_matrix(conf_metric=metrics[self.metrics.index("ConfusionMatrix")], 
+                                                model=self.model, 
+                                                val_dataloader=self.dataloaders["val"], 
+                                                device=self.device)
