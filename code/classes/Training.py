@@ -1,6 +1,5 @@
 import sys
 import os
-import configparser
 import torch
 import torch.nn as nn
 import numpy as np
