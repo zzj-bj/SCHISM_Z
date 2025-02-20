@@ -7,6 +7,7 @@ Created on Wed Nov 13 13:57:46 2024
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class UnetVanilla(nn.Module):
     REQUIRED_PARAMS = {
@@ -38,7 +39,7 @@ class UnetVanilla(nn.Module):
         self.max_pools = nn.ModuleList()
         for i in range(n_block):
             self.encoder_blocks.append(self.encoder_block(channels * (2 ** i)))
-            self.max_pools.append(nn.MaxPool2d(kernel_size=2))
+            self.max_pools.append(nn.MaxPool2d(kernel_size=2, ceil_mode=True))
 
         # Define up sampling path
         self.decoder_blocks = nn.ModuleList()
@@ -46,12 +47,10 @@ class UnetVanilla(nn.Module):
         for i in range(n_block, -1, -1):
             if i > 0:
                 self.decoder_blocks.append(self.decoder_block(channels * (2 ** i)))
-                self.up_convs.append(nn.ConvTranspose2d(channels * (2 ** i),
-                                                        channels * (2 ** i) // 2,
-                                                        kernel_size=3,
-                                                        stride=2,
-                                                        padding=1,
-                                                        output_padding=1))
+                self.up_convs.append(nn.ConvTranspose2d(
+                    channels * (2 ** i), channels * (2 ** i) // 2,
+                    kernel_size=3, stride=2, padding=1, output_padding=1  # Allow a small correction
+                ))
 
         # Define output layer
         self.output_conv = nn.Conv2d(self.channels, self.num_classes, kernel_size=1)
@@ -102,11 +101,13 @@ class UnetVanilla(nn.Module):
                 x = self.encoder_blocks[i](x)
                 encodings.append(x)
 
+        print("before bridge ", x.shape)
         x = self.bridge(x)
 
         for i in range(self.n_block):
             x = self.up_convs[i](x)
-            x = torch.cat([x, encodings[-(i + 1)]], dim=1)
+            enc = F.interpolate(encodings[-(i + 1)], size=(x.shape[2], x.shape[3]), mode='bilinear', align_corners=True)
+            x = torch.cat([x, enc], dim=1)
             x = self.decoder_blocks[i](x)
 
         x = self.output_conv(x)
