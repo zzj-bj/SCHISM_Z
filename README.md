@@ -133,7 +133,7 @@ data <--- Select this folder for data input during training or inference.
 - **data_stats.json**: The standard deviation and mean values used to normalize the images.
 - **hyperparameters.ini**: A copy of the INI file used for the training session.
 - **learning_curves.png**: Displays the loss and metrics values as a function of the epochs.
-- **model_best{metric(s)}.pth**: Contains the best model weights based on each metric specified in the INI file.
+- **model_best_{metric(s)}.pth**: Contains the best model weights based on each metric specified in the INI file.
 - **model_best_loss.pth**: Contains the best model weights based on the loss value.
 - **test/train/val_indices.txt**: Records the indices of images and masks used for training, validation, and testing. These indices are formatted as `[dataset subfolder][image or mask number in the folder]`. For example, if you have 5,000 image/mask pairs, but `num_samples` is set to 3,000 and `val_split` is 0.8, then 2,400 indices will be recorded in `train_indices.txt`, 600 in `val_indices.txt`, and the remaining 2,000 in `test_indices.txt`.
 
