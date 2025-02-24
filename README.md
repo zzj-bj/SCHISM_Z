@@ -67,6 +67,9 @@ lr=0.0001
 scheduler = MultiStepLR
 gamma = 0.5
 milestones = [10,30]
+
+[Loss]
+loss= PoissonNLLLoss
  
 [Training]
 batch_size=4
