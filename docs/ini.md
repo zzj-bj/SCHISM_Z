@@ -45,6 +45,17 @@ Specifies the learning rate scheduler. Options include:
 
 These options are derived from `torch.optim.lr_scheduler`. Parameters, if any, should match the library's documentation.
 
+## [Loss]
+Specifies the loss. Choices include:
+
+- `PoissonNLLLoss`
+- `CrossEntropyLoss`
+- `BCEWithLogitsLoss`
+- `GaussianNLLLoss`
+- `NLLLoss`
+
+These options are derived from `torch.nn`. Parameters, if any, should match the library's documentation.
+
 ## [Training]
 Configures training parameters.
 
