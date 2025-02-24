@@ -16,7 +16,7 @@ from datetime import datetime
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
-from torch.nn import L1Loss, MSELoss, CrossEntropyLoss, BCEWithLogitsLoss, SmoothL1Loss
+from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
 from torch.utils.data import DataLoader
 from classes.model_registry import model_mapping
 import torch.backends.cudnn as cudnn
@@ -59,6 +59,7 @@ class Training:
         self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
         self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
         self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
+        self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
         self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
         self.num_classes = int(self.model_params.get('num_classes'))
@@ -94,6 +95,13 @@ class Training:
             'RAdam' : RAdam, 
             'SGD' : SGD
         }
+        self.loss_mapping = {
+            'PoissonNLLLoss' : PoissonNLLLoss, 
+            'CrossEntropyLoss' : CrossEntropyLoss, 
+            'BCEWithLogitsLoss' : BCEWithLogitsLoss, 
+            'GaussianNLLLoss' : GaussianNLLLoss, 
+            'NLLLoss' : NLLLoss, 
+        }
 
         self.scheduler_mapping = {
             'LRScheduler': LRScheduler,
@@ -120,6 +128,7 @@ class Training:
                                     model_params=self.model_params,
                                     optimizer_params=self.optimizer_params,
                                     scheduler_params=self.scheduler_params,
+                                    loss_params=self.loss_params,
                                     training_params=self.training_params,
                                     data=self.data)
 
@@ -164,34 +173,16 @@ class Training:
     
         return selected_metrics
 
-    def initialize_losses(self):
-        """
-        Retrieves the appropriate loss function based on the model's output.
-
-        Returns:
-            callable: The loss function to be used during training.
-        """
-
-        if self.num_classes > 1:
-            loss = CrossEntropyLoss
-            if self.ignore_background:
-                return loss(ignore_index=self.ignore_index)
-            else:
-                return loss()
-        else:
-            loss = BCEWithLogitsLoss
-            return loss()
-
     def initialize_optimizer(self):
-            optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
-            optimizer_class = self.optimizer_mapping.get(optimizer_name)
+        optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
+        optimizer_class = self.optimizer_mapping.get(optimizer_name)
 
-            if not optimizer_class:
-                raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
+        if not optimizer_class:
+            raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
-            converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
+        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
-            return optimizer_class(self.model.parameters(), **converted_params)
+        return optimizer_class(self.model.parameters(), **converted_params)
 
     def initialize_scheduler(self, optimizer):
         scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
@@ -206,6 +197,17 @@ class Training:
             return scheduler_class(optimizer)
         else:
             return scheduler_class(optimizer, **converted_params)
+
+    def initialize_loss(self):
+        loss_name = self.loss_mapping.get('loss', 'CrossEntropyLoss')
+        loss_class = self.loss_mapping.get(loss_name)
+
+        if not loss_class:
+            raise ValueError(f"loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
+
+        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.loss_params.items() if k != 'loss'}
+       
+        return loss_class(ignore_index=self.ignore_index, **converted_params)
 
     def initialize_model(self) -> nn.Module:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
@@ -410,7 +412,7 @@ class Training:
             'indices': indices,
         }
 
-    def training_loop(self, optimizer, scheduler):
+    def training_loop(self, optimizer, scheduler, loss_fn):
         
         def print_epoch_box(epoch, total_epochs):
             # Generate the epoch string
@@ -431,7 +433,6 @@ class Training:
     
         # Initialize metric instances and losses
         metrics = self.initialize_metrics()  # This list includes your ConfusionMatrix instance if enabled
-        loss_fn = self.initialize_losses()
         loss_dict = {"train": {}, "val": {}}
     
         # Build a list of display metric names (excluding "ConfusionMatrix")
@@ -544,8 +545,10 @@ class Training:
     def train(self):
             optimizer = self.initialize_optimizer()
             scheduler = self.initialize_scheduler(optimizer=optimizer)
+            loss = self.initialize_loss()
             loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer, 
-                                                                scheduler=scheduler)
+                                                                scheduler=scheduler,
+                                                                loss_fn=loss)
             
             #plot and metric saving
             self.logger.save_best_metrics(loss_dict=loss_dict, 

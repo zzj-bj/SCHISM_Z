@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 class TrainingLogger:
-    def __init__(self, save_directory, num_classes, model_params, optimizer_params, scheduler_params, training_params, data):
+    def __init__(self, save_directory, num_classes, model_params, optimizer_params, scheduler_params, loss_params, training_params, data):
         """
         Initializes the TrainingLogger.
 
@@ -25,6 +25,7 @@ class TrainingLogger:
         self.model_params = model_params
         self.optimizer_params = optimizer_params
         self.scheduler_params = scheduler_params
+        self.loss_params = loss_params
         self.training_params = training_params
         self.data = data
 
@@ -85,6 +86,10 @@ class TrainingLogger:
         config.add_section('Scheduler')
         for key, value in self.scheduler_params.items():
             config.set('Scheduler', key, str(value))
+
+        config.add_section('Loss')
+        for key, value in self.loss_params.items():
+            config.set('Loss', key, str(value))
 
         config.add_section('Training')
         for key, value in self.training_params.items():
