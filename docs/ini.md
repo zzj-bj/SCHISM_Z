@@ -15,7 +15,7 @@ More models will be added in the future.
 Specifies the optimizer. Choices include:
 
 - `Adagrad`
-- `Adam`
+- `Adam` (preset by default)
 - `AdamW`
 - `NAdam`
 - `RMSprop`
@@ -32,7 +32,7 @@ Specifies the learning rate scheduler. Options include:
 - `MultiplicativeLR`
 - `StepLR`
 - `MultiStepLR`
-- `ConstantLR`
+- `ConstantLR` (preset by default)
 - `LinearLR`
 - `ExponentialLR`
 - `PolynomialLR`
@@ -49,7 +49,7 @@ These options are derived from `torch.optim.lr_scheduler`. Parameters, if any, s
 Specifies the loss. Choices include:
 
 - `PoissonNLLLoss`
-- `CrossEntropyLoss`
+- `CrossEntropyLoss` (preset by default)
 - `BCEWithLogitsLoss`
 - `GaussianNLLLoss`
 - `NLLLoss`
@@ -60,8 +60,9 @@ These options are derived from `torch.nn`. Parameters, if any, should match the 
 Configures training parameters.
 
 - `batch_size`, `val_split`, and `epochs` are required.
-- Metrics: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, simply add `ConfusionMatrix` to the list of metrics.
-- Note that the loss functions in use are `CategoricalCrossEntropy` for multiclass, and `BinaryCrossEntropy` for binary. Users don't need to specify it.
+- `metrics`: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, add `ConfusionMatrix` to the list of metrics.
+- `weights`: the class weight of each present class will be calculated if set to `True`. Presets to `False` by default.
+- `ignore_background`: Set whether the background class be ignored during training and inference. If set to True, `num_classes` should be decreased by one.
 
 
 ## [Data]
@@ -70,7 +71,6 @@ Configures data handling.
 - `crop_size`: Size of image crops. The default value is 224px.
 - `img_res`: Resolution to resize crops during training and inference. The default value is 560px.
 - `num_samples`: Number of samples to use. The default value is 500 samples.
-- `ignore_background`: Set whether the background class be ignored during training and inference. If set to True, `num_classes` should be decreased by one.
 
 During training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail. The same process is applied during inference, with patches reassembled into the original image.
 
