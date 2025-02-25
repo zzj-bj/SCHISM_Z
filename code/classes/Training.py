@@ -69,12 +69,13 @@ class Training:
         self.batch_size = int(self.training_params.get('batch_size', 8))
         self.val_split = float(self.training_params.get('val_split', 0.8))
         self.epochs = int(self.training_params.get('epochs', 10))
+        self.weights = bool(self.training_params.get('weights', False))
 
         # Data parameters
         self.img_res = int(self.data.get('img_res', 560))
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
-        self.ignore_background = self.param_converter._convert_param(self.data.get('ignore_background', "False"))
+        self.ignore_background = bool(self.data.get('ignore_background', "False"))
         
         if self.ignore_background:
             self.ignore_index = -1 
@@ -95,6 +96,7 @@ class Training:
             'RAdam' : RAdam, 
             'SGD' : SGD
         }
+
         self.loss_mapping = {
             'PoissonNLLLoss' : PoissonNLLLoss, 
             'CrossEntropyLoss' : CrossEntropyLoss, 
@@ -133,7 +135,6 @@ class Training:
                                     data=self.data)
 
     def create_metric(self, binary_metric, multiclass_metric):
-        """Helper function to initialize metrics based on task type (binary/multiclass)."""
         return (
             binary_metric(ignore_index=self.ignore_index).to(self.device)
             if self.num_classes == 1
@@ -198,16 +199,20 @@ class Training:
         else:
             return scheduler_class(optimizer, **converted_params)
 
-    def initialize_loss(self):
+    def initialize_loss(self, **dynamic_params):
         loss_name = self.loss_mapping.get('loss', 'CrossEntropyLoss')
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
-            raise ValueError(f"loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
+            raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
+        # Convert static parameters from config
         converted_params = {k: self.param_converter._convert_param(v) for k, v in self.loss_params.items() if k != 'loss'}
-       
-        return loss_class(ignore_index=self.ignore_index, **converted_params)
+
+        # Merge with dynamic parameters (e.g., batch-specific weights)
+        final_params = {**converted_params, **dynamic_params}
+
+        return loss_class(ignore_index=self.ignore_index, **final_params)
 
     def initialize_model(self) -> nn.Module:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
@@ -412,7 +417,7 @@ class Training:
             'indices': indices,
         }
 
-    def training_loop(self, optimizer, scheduler, loss_fn):
+    def training_loop(self, optimizer, scheduler):
         
         def print_epoch_box(epoch, total_epochs):
             # Generate the epoch string
@@ -454,29 +459,22 @@ class Training:
                 total_samples = 0
         
                 with tqdm(total=len(self.dataloaders[phase]), unit="batch") as pbar:
-                    for inputs, labels, _, _ in self.dataloaders[phase]:
+                    for inputs, labels, weights in self.dataloaders[phase]:
                         
-                        inputs, labels = inputs.to(self.device), labels.to(self.device)
+                        inputs, labels, weights = inputs.to(self.device), labels.to(self.device), weights.to(self.device)
                         optimizer.zero_grad()
-                        
+                        batch_weights = torch.mean(weights, dim=0)
+
                         with torch.set_grad_enabled(is_training):
                             with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
                                 outputs = self.model(inputs)
         
                                 if self.num_classes == 1:
-                                    outputs = outputs.squeeze() # Squeeze for binary segmentation
-        
-                                # Debug: Check for NaN or Inf
-                                if torch.isnan(outputs).any() or torch.isinf(outputs).any():
-                                    print(f"Outputs contain NaN or Inf! Min: {outputs.min().item()}, Max: {outputs.max().item()}")
-                                if torch.isnan(labels).any() or torch.isinf(labels).any():
-                                    print(f"Labels contain NaN or Inf! Min: {labels.min().item()}, Max: {labels.max().item()}")
-        
-                                # Compute loss (adjust labels as needed)
-                                loss = loss_fn(
-                                    outputs,
-                                    labels.squeeze().long() if self.num_classes > 1 else labels.squeeze().float()
-                                )
+                                    outputs = outputs.squeeze() 
+                                
+                                loss_fn = self.initialize_loss(weight=batch_weights) if self.weights else self.initialize_loss()
+                                loss = loss_fn(outputs,
+                                                labels.squeeze().long() if self.num_classes > 1 else labels.squeeze().float())
         
                             if is_training:
                                 if scaler:
@@ -545,10 +543,8 @@ class Training:
     def train(self):
             optimizer = self.initialize_optimizer()
             scheduler = self.initialize_scheduler(optimizer=optimizer)
-            loss = self.initialize_loss()
             loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer, 
-                                                                scheduler=scheduler,
-                                                                loss_fn=loss)
+                                                                scheduler=scheduler)
             
             #plot and metric saving
             self.logger.save_best_metrics(loss_dict=loss_dict, 
