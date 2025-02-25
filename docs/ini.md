@@ -61,7 +61,7 @@ Configures training parameters.
 
 - `batch_size`, `val_split`, and `epochs` are required.
 - `metrics`: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, add `ConfusionMatrix` to the list of metrics.
-- `weights`: the class weight of each present class will be calculated if set to `True`. Presets to `False` by default.
+- `weights`: The class weights for each present class will be calculated if this option is set to `True`. By default, it is set to `False`.
 - `ignore_background`: Set whether the background class be ignored (`True`) during training and inference, or not (`False`). If set to `True`, `num_classes` should be decreased by one.
 
 
