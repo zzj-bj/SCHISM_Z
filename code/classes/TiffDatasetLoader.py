@@ -6,7 +6,6 @@ import torchvision.transforms.functional as func_torch
 from torchvision.datasets import VisionDataset
 import torch.nn.functional as nn_func
 from patchify import patchify
-import torchvision.transforms as T
 
 class TiffDatasetLoader(VisionDataset):
 
@@ -38,6 +37,8 @@ class TiffDatasetLoader(VisionDataset):
         self.p = p
         self.ignore_background = ignore_background
         self.image_dims = self.get_image_dimensions()
+        if not self.inference_mode:
+            self.class_values = self._compute_class_values()
 
     def get_image_dimensions(self):
         """
@@ -138,6 +139,52 @@ class TiffDatasetLoader(VisionDataset):
         patches = patchify(img_np, (img_np.shape[0], patch_h, patch_h), step=patch_h)
         patches = patches.reshape(-1, img_np.shape[0], patch_h, patch_w)  # [num_patches, C, patch_h, patch_w]
         return patches
+    
+    def _compute_class_values(self):
+        """
+        Computes unique class values from all available masks.
+
+        Returns:
+            list: Sorted list of unique class values in the dataset.
+        """
+        unique_values = set()
+        for dataset_id, sample_id in self.indices[:10]:  # Checking a subset for efficiency
+            mask_path = self.mask_data[dataset_id][sample_id]
+            mask = np.array(Image.open(mask_path).convert("L"))
+            unique_values.update(np.unique(mask))
+            sorted_values = sorted(unique_values)
+
+        if self.ignore_background and len(sorted_values) > 1:
+            sorted_values.pop(0)  # Remove the first value assuming it's the background
+        
+        return sorted_values
+    
+    def _weights_calc(self, mask, temperature=50.0):
+        """
+        Computes class weights based on mask pixel frequencies.
+
+        Args:
+            mask (np.array): The segmentation mask.
+            temperature (float): Temperature parameter for softmax scaling.
+
+        Returns:
+            torch.Tensor: Computed class weights.
+        """
+        counts = np.bincount(mask.astype(int).ravel(), minlength=max(self.class_values) + 1)
+        counts = counts[self.class_values]  # Select only relevant class counts
+
+        class_ratio = counts / np.sum(counts)
+        u_weights = 1 / class_ratio
+        weights = np.nan_to_num(u_weights, posinf=-np.inf)
+        weights = nn_func.softmax(torch.from_numpy(weights).float() / temperature, dim=-1)
+        
+        if torch.any(torch.isnan(weights)):
+            print("NaN encountered in weights:", weights)
+            print("Class ratios:", class_ratio)
+            print("Unnormalized weights:", u_weights)
+            raise ValueError("Invalid weights calculation")
+        
+        return weights
 
     def __getitem__(self, idx):
         """
@@ -180,17 +227,21 @@ class TiffDatasetLoader(VisionDataset):
 
         mask_path = self.mask_data[dataset_id][sample_id]
         img = np.array(Image.open(img_path).convert("RGB"))
-        mask = np.array(Image.open(mask_path).convert("L"))
+        mask = np.array(Image.open(mask_path).convert("L"))            
 
         assert img.shape[:2] == mask.shape, (
             f"Mismatch in dimensions: Image {img.shape} vs Mask {mask.shape} for {img_path}"
         )
-
+        
         img, mask = self.get_valid_crop(img, mask, threshold=0.8, max_attempts=20)
 
-        img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255.0
-        mask_tensor = torch.from_numpy(mask).contiguous() / 255.0
-
+        img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255
+        unique_vals = np.unique(mask)
+        mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min()) # Normalize all values between 0 and 1
+        mask_tensor = torch.from_numpy(mask).contiguous()
+        
+        weights = self._weights_calc(np.array(mask_tensor))
+        print(weights)
         img_resized = nn_func.interpolate(img_tensor.unsqueeze(0), size=(self.img_res, self.img_res),
                                           mode="bicubic", align_corners=False).squeeze()
         mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0), size=(self.img_res, self.img_res),
@@ -216,7 +267,7 @@ class TiffDatasetLoader(VisionDataset):
                 # no ignore index but rescale to int
                 mask_resized = (mask_resized * (self.num_classes- 1)).long()
 
-        return img_normalized, mask_resized, dataset_id, img_path
+        return img_normalized, mask_resized, weights
 
     def __len__(self):
         """
