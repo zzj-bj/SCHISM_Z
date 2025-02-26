@@ -69,13 +69,13 @@ class Training:
         self.batch_size = int(self.training_params.get('batch_size', 8))
         self.val_split = float(self.training_params.get('val_split', 0.8))
         self.epochs = int(self.training_params.get('epochs', 10))
-        self.weights = bool(self.training_params.get('weights', False))
+        self.weights = self.param_converter._convert_param(self.training_params.get('weights', "False"))
 
         # Data parameters
         self.img_res = int(self.data.get('img_res', 560))
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
-        self.ignore_background = bool(self.data.get('ignore_background', "False"))
+        self.ignore_background = self.param_converter._convert_param(self.data.get('ignore_background', "False"))
         
         if self.ignore_background:
             self.ignore_index = -1 
@@ -200,7 +200,7 @@ class Training:
             return scheduler_class(optimizer, **converted_params)
 
     def initialize_loss(self, **dynamic_params):
-        loss_name = self.loss_mapping.get('loss', 'CrossEntropyLoss')
+        loss_name = self.loss_params.get('loss', 'CrossEntropyLoss')
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
@@ -212,7 +212,14 @@ class Training:
         # Merge with dynamic parameters (e.g., batch-specific weights)
         final_params = {**converted_params, **dynamic_params}
 
-        return loss_class(ignore_index=self.ignore_index, **final_params)
+        # Check if ignore_index should be included (for all losses except BCEWithLogitsLoss)
+        if loss_name != 'BCEWithLogitsLoss':
+            if self.num_classes > 1:
+                final_params['ignore_index'] = self.ignore_index
+            else:
+                final_params.pop('ignore_index', None)  # Remove ignore_index if not needed
+
+        return loss_class(**final_params)
 
     def initialize_model(self) -> nn.Module:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
@@ -247,7 +254,6 @@ class Training:
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
-
 
     def create_unique_folder(self):
         """
@@ -460,7 +466,7 @@ class Training:
         
                 with tqdm(total=len(self.dataloaders[phase]), unit="batch") as pbar:
                     for inputs, labels, weights in self.dataloaders[phase]:
-                        
+
                         inputs, labels, weights = inputs.to(self.device), labels.to(self.device), weights.to(self.device)
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
@@ -468,14 +474,24 @@ class Training:
                         with torch.set_grad_enabled(is_training):
                             with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
                                 outputs = self.model(inputs)
-        
+
                                 if self.num_classes == 1:
-                                    outputs = outputs.squeeze() 
+                                    outputs = outputs.squeeze()  
+                                    labels = labels.squeeze().float() 
+                                else:
+                                    labels = labels.squeeze().long()  
+
+                                #only apply class weights to multiclass segmentation
+                                if self.num_classes > 1:
+                                    if self.weights:
+                                        loss_fn = self.initialize_loss(weight=batch_weights)
+                                    else:
+                                        loss_fn = self.initialize_loss()
+                                else:
+                                    loss_fn = self.initialize_loss()
+
+                                loss = loss_fn(outputs, labels)
                                 
-                                loss_fn = self.initialize_loss(weight=batch_weights) if self.weights else self.initialize_loss()
-                                loss = loss_fn(outputs,
-                                                labels.squeeze().long() if self.num_classes > 1 else labels.squeeze().float())
-        
                             if is_training:
                                 if scaler:
                                     scaler.scale(loss).backward()

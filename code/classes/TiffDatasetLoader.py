@@ -148,42 +148,44 @@ class TiffDatasetLoader(VisionDataset):
             list: Sorted list of unique class values in the dataset.
         """
         unique_values = set()
-        for dataset_id, sample_id in self.indices[:10]:  # Checking a subset for efficiency
+        for dataset_id, sample_id in self.indices[:10]: 
             mask_path = self.mask_data[dataset_id][sample_id]
             mask = np.array(Image.open(mask_path).convert("L"))
+            
+            # Normalize the mask to [0, 1] only if binary classification (self.num_classes == 1)
+            if self.num_classes == 1:
+                unique_vals = np.unique(mask)
+                mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())  # Scale to [0, 1]
+            
+            # Update the set of unique class values
             unique_values.update(np.unique(mask))
-            sorted_values = sorted(unique_values)
+        
+        # Convert the set of unique values to a sorted list
+        sorted_values = sorted(unique_values)
 
-        if self.ignore_background and len(sorted_values) > 1:
-            sorted_values.pop(0)  # Remove the first value assuming it's the background
+        # Handle binary classification (ensure only 0 and 1)
+        if self.num_classes == 1:
+            sorted_values = [0, 1]  # Binary classification, classes should be 0 and 1
+        elif self.ignore_background and len(sorted_values) > 1:
+            sorted_values.pop(0)  # Remove the background class (usually class 0)
         
         return sorted_values
     
     def _weights_calc(self, mask, temperature=50.0):
-        """
-        Computes class weights based on mask pixel frequencies.
-
-        Args:
-            mask (np.array): The segmentation mask.
-            temperature (float): Temperature parameter for softmax scaling.
-
-        Returns:
-            torch.Tensor: Computed class weights.
-        """
-        counts = np.bincount(mask.astype(int).ravel(), minlength=max(self.class_values) + 1)
-        counts = counts[self.class_values]  # Select only relevant class counts
-
-        class_ratio = counts / np.sum(counts)
-        u_weights = 1 / class_ratio
-        weights = np.nan_to_num(u_weights, posinf=-np.inf)
-        weights = nn_func.softmax(torch.from_numpy(weights).float() / temperature, dim=-1)
+        mask = mask.astype(np.int64)  
+        counts = np.bincount(mask.ravel(), minlength=self.num_classes)[self.class_values]
         
+        class_ratio = counts / (np.sum(counts) + 1e-8)  # Avoid divide by zero
+        u_weights = 1 / (class_ratio + 1e-8)  # Avoid division by zero
+
+        weights = nn_func.softmax(torch.from_numpy(u_weights).float() / temperature, dim=-1)
+
         if torch.any(torch.isnan(weights)):
-            print("NaN encountered in weights:", weights)
-            print("Class ratios:", class_ratio)
-            print("Unnormalized weights:", u_weights)
-            raise ValueError("Invalid weights calculation")
-        
+            print(weights)
+            print(class_ratio)
+            print(u_weights)
+            raise RuntimeError("NaN detected in weights calculation.")
+
         return weights
 
     def __getitem__(self, idx):
@@ -216,7 +218,7 @@ class TiffDatasetLoader(VisionDataset):
             patches = self.extract_patches(img_normalized)
             processed_patches = []
 
-            for i in range(patches.shape[0]):  # Loop through patch grid
+            for i in range(patches.shape[0]):  
                 patch = patches[i]
                 patch_tensor = torch.tensor(patch).unsqueeze(0)
                 patch_resized = nn_func.interpolate(patch_tensor, size=(self.img_res, self.img_res),
@@ -236,16 +238,22 @@ class TiffDatasetLoader(VisionDataset):
         img, mask = self.get_valid_crop(img, mask, threshold=0.8, max_attempts=20)
 
         img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255
-        unique_vals = np.unique(mask)
-        mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min()) # Normalize all values between 0 and 1
-        mask_tensor = torch.from_numpy(mask).contiguous()
-        
-        weights = self._weights_calc(np.array(mask_tensor))
-        print(weights)
+
+        if self.num_classes > 1:
+            mask_tensor = torch.from_numpy(mask).contiguous() / 255
+            weights = self._weights_calc(mask)
+        else:
+            unique_vals = np.unique(mask)
+            mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())
+            mask = mask.astype(np.int64)  
+            mask_tensor = torch.from_numpy(mask).contiguous()
+            weights = torch.zeros(self.num_classes) #Avoid setting to None
+
         img_resized = nn_func.interpolate(img_tensor.unsqueeze(0), size=(self.img_res, self.img_res),
                                           mode="bicubic", align_corners=False).squeeze()
-        mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0), size=(self.img_res, self.img_res),
-                                           mode="nearest").squeeze()
+        mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0).float(), size=(self.img_res, self.img_res),
+                                        mode="nearest").squeeze()
+
         if torch.rand(1).item() < self.p:
             img_resized = torchvision.transforms.functional.hflip(img_resized)
             mask_resized = torchvision.transforms.functional.hflip(mask_resized)
@@ -259,7 +267,7 @@ class TiffDatasetLoader(VisionDataset):
         
         img_normalized = torchvision.transforms.functional.normalize(img_resized, mean=m, std=s).float()
  
-        if self.num_classes >= 2:
+        if self.num_classes > 1:
             if self.ignore_background:
                 # ignore index is -1
                 mask_resized = (mask_resized * self.num_classes).long() - 1

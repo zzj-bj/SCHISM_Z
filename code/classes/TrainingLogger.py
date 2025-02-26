@@ -182,7 +182,7 @@ class TrainingLogger:
 
         final_preds, final_labels = [], []
         with torch.no_grad():
-            for inputs, labels, _, _ in val_dataloader:
+            for inputs, labels, _ in val_dataloader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
 
