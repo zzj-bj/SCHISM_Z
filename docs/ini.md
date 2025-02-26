@@ -61,7 +61,7 @@ Configures training parameters.
 
 - `batch_size`, `val_split`, and `epochs` are required.
 - `metrics`: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, add `ConfusionMatrix` to the list of metrics.
-- `weights`: The class weights for each present class will be calculated if this option is set to `True`. By default, it is set to `False`.
+- `weights`: If set to `True`, class weights will be computed for each present class. By default, this is `False`. For binary classification, class weighting is not supported and will be automatically disabled, even if explicitly set to `True`.
 
 
 ## [Data]
