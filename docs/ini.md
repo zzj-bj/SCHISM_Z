@@ -52,6 +52,7 @@ Specifies the loss. Choices include:
 - `BCEWithLogitsLoss`
 - `NLLLoss`
 
+All parameters in the `torch.nn` library should be configurable as described in the official documentation. Regarding `ignore_index` and `weight`, please see the details below:
 - `ignore_background`: Set whether the background class be ignored (`True`) during training and inference, or not (`False`). If set to `True`, `num_classes` should be decreased by one. Should be kept at `False` for binary data. This would correspond to the ignore_index attribute of the torch.nn background.
 - `weights`: If set to `True`, class weights will be computed for each present class. By default, this is `False`. Class weighting is not supported for binary classification and will be automatically disabled, even if explicitly set to `True`.
 
