@@ -66,7 +66,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="SCHISM",
-    version="0.1.2",
+    version="0.2.5",
     author="Florent Brondolo",
     author_email="florent.brondolo@akkodis.com",
     description="Simple framework for computer vision",
