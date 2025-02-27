@@ -81,7 +81,6 @@ metrics=Jaccard, ConfusionMatrix
 crop_size=128
 img_res=560
 num_samples=7000
-
 ```
 
 For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
