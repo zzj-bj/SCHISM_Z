@@ -7,7 +7,6 @@ import glob
 import json
 import matplotlib
 matplotlib.use('Agg') 
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.ParamConverter import ParamConverter
@@ -18,6 +17,7 @@ from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, St
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
 from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
 from torch.utils.data import DataLoader
+import torch.nn.functional as nn_func
 from classes.model_registry import model_mapping
 import torch.backends.cudnn as cudnn
 
@@ -98,10 +98,8 @@ class Training:
         }
 
         self.loss_mapping = {
-            'PoissonNLLLoss' : PoissonNLLLoss, 
             'CrossEntropyLoss' : CrossEntropyLoss, 
             'BCEWithLogitsLoss' : BCEWithLogitsLoss, 
-            'GaussianNLLLoss' : GaussianNLLLoss, 
             'NLLLoss' : NLLLoss, 
         }
 
@@ -213,7 +211,9 @@ class Training:
         final_params = {**converted_params, **dynamic_params}
 
         # Check if ignore_index should be included (for all losses except BCEWithLogitsLoss)
-        if loss_name != 'BCEWithLogitsLoss':
+        if loss_name == 'BCEWithLogitsLoss':
+            final_params.pop('ignore_index', None)  # Remove ignore_index if not needed
+        else:
             if self.num_classes > 1:
                 final_params['ignore_index'] = self.ignore_index
             else:
@@ -474,6 +474,8 @@ class Training:
                         with torch.set_grad_enabled(is_training):
                             with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
                                 outputs = self.model(inputs)
+                                if self.loss_params.get('loss') in ['NLLLoss']:
+                                    outputs = nn_func.log_softmax(outputs, dim=1)
 
                                 if self.num_classes == 1:
                                     outputs = outputs.squeeze()  
@@ -491,7 +493,7 @@ class Training:
                                     loss_fn = self.initialize_loss()
 
                                 loss = loss_fn(outputs, labels)
-                                
+                               
                             if is_training:
                                 if scaler:
                                     scaler.scale(loss).backward()

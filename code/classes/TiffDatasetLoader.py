@@ -213,7 +213,7 @@ class TiffDatasetLoader(VisionDataset):
         if self.inference_mode:
             img = np.array(Image.open(img_path).convert("RGB"))
             img_tensor = torch.from_numpy(img).float() 
-            img_tensor = img_tensor.permute(2, 0, 1).contiguous() / 255.0
+            img_tensor = img_tensor.permute(2, 0, 1).contiguous() / 255
             img_normalized = torchvision.transforms.functional.normalize(img_tensor, mean=m, std=s)
             patches = self.extract_patches(img_normalized)
             processed_patches = []

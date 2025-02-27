@@ -101,7 +101,6 @@ class UnetVanilla(nn.Module):
                 x = self.encoder_blocks[i](x)
                 encodings.append(x)
 
-        print("before bridge ", x.shape)
         x = self.bridge(x)
 
         for i in range(self.n_block):
