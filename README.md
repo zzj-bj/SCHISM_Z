@@ -69,8 +69,10 @@ gamma = 0.5
 milestones = [10,30]
 
 [Loss]
-loss= PoissonNLLLoss
- 
+loss= CrossEntropyLoss
+ignore_background=True
+weights=True
+
 [Training]
 batch_size=4
 val_split=0.8
@@ -81,7 +83,7 @@ metrics=DiceScore, GeneralizedDiceScore
 crop_size=128
 img_res=560
 num_samples=700
-ignore_background=False
+
 ```
 
 For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
