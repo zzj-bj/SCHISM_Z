@@ -53,34 +53,46 @@ Below is an example of an INI file:
 ```
 [Model]
 n_block=4
-channels=8
+channels=16
 num_classes=3
 model_type=UnetSegmentor
 k_size=3
 activation=leakyrelu
+channel=16
  
 [Optimizer]
-optimizer=Adam
-lr=0.01
+optimizer=RAdam
+lr=0.001
+eps=1e-6
+weight_decay=0.001
 
 [Scheduler]
-scheduler = ConstantLR
+scheduler=ReduceLROnPlateau
+mode=min
+factor=0.5
+patience=5
+threshold=1e-4
+threshold_mode=rel
+cooldown=2
+min_lr=1e-6
+eps=1e-8
+verbose=True
 
 [Loss]
-loss= CrossEntropyLoss
+loss=CrossEntropyLoss
 ignore_background=True
 weights=True
 
 [Training]
 batch_size=4
 val_split=0.8
-epochs=50
-metrics=Jaccard, ConfusionMatrix
+epochs=40
+metrics=Jaccard, F1, Recall, Accuracy, Precision, ConfusionMatrix
  
 [Data]
-crop_size=128
-img_res=560
-num_samples=7000
+crop_size=225
+img_res=512
+num_samples=1500
 ```
 
 For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
