@@ -207,7 +207,11 @@ class Training:
             raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
         # Convert static parameters from config
-        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.loss_params.items() if k != 'loss'}
+        converted_params = {
+            k: self.param_converter._convert_param(v) 
+            for k, v in self.loss_params.items() 
+            if k not in {'loss', 'ignore_background', 'weights'}  # Exclude unwanted params
+        }
 
         # Merge with dynamic parameters (e.g., batch-specific weights)
         final_params = {**converted_params, **dynamic_params}
