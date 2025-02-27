@@ -52,6 +52,10 @@ Specifies the loss. Choices include:
 - `BCEWithLogitsLoss`
 - `NLLLoss`
 
+- `ignore_background`: Set whether the background class be ignored (`True`) during training and inference, or not (`False`). If set to `True`, `num_classes` should be decreased by one. Should be kept at `False` for binary data. This would correspond to the ignore_index attribute of the torch.nn background.
+- `weights`: If set to `True`, class weights will be computed for each present class. By default, this is `False`. Class weighting is not supported for binary classification and will be automatically disabled, even if explicitly set to `True`.
+
+
 These options are derived from `torch.nn`. Parameters, if any, should match the library's documentation.
 
 ## [Training]
@@ -59,7 +63,7 @@ Configures training parameters.
 
 - `batch_size`, `val_split`, and `epochs` are required.
 - `metrics`: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, add `ConfusionMatrix` to the list of metrics.
-- `weights`: If set to `True`, class weights will be computed for each present class. By default, this is `False`. Class weighting is not supported for binary classification and will be automatically disabled, even if explicitly set to `True`.
+
 
 
 ## [Data]
@@ -68,7 +72,6 @@ Configures data handling.
 - `crop_size`: Size of image crops. The default value is 224px.
 - `img_res`: Resolution to resize crops during training and inference. The default value is 560px.
 - `num_samples`: Number of samples to use. The default value is 500 samples.
-- `ignore_background`: Set whether the background class be ignored (`True`) during training and inference, or not (`False`). If set to `True`, `num_classes` should be decreased by one. Should be kept at `False` for binary data.
 
 During training, images are split into crops of user-defined size (`crop_size`), then resized to `img_res` to ensure compatibility with various machines and GPUs while preserving detail. The same process is applied during inference, with patches reassembled into the original image.
 
