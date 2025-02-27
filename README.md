@@ -61,12 +61,10 @@ activation=leakyrelu
  
 [Optimizer]
 optimizer=Adam
-lr=0.0001
+lr=0.01
 
 [Scheduler]
-scheduler = MultiStepLR
-gamma = 0.5
-milestones = [10,30]
+scheduler = ConstantLR
 
 [Loss]
 loss= CrossEntropyLoss
@@ -76,13 +74,13 @@ weights=True
 [Training]
 batch_size=4
 val_split=0.8
-epochs=40
-metrics=DiceScore, GeneralizedDiceScore
+epochs=50
+metrics=Jaccard, ConfusionMatrix
  
 [Data]
 crop_size=128
 img_res=560
-num_samples=700
+num_samples=7000
 
 ```
 
