@@ -48,10 +48,8 @@ These options are derived from `torch.optim.lr_scheduler`. Parameters, if any, s
 ## [Loss]
 Specifies the loss. Choices include:
 
-- `PoissonNLLLoss`
 - `CrossEntropyLoss` (preset by default)
 - `BCEWithLogitsLoss`
-- `GaussianNLLLoss`
 - `NLLLoss`
 
 These options are derived from `torch.nn`. Parameters, if any, should match the library's documentation.
@@ -61,7 +59,7 @@ Configures training parameters.
 
 - `batch_size`, `val_split`, and `epochs` are required.
 - `metrics`: `Jaccard` (preset by default), `F1`, `Accuracy`, `Precision` and `Recall`. To include a confusion matrix plot at the end of training, add `ConfusionMatrix` to the list of metrics.
-- `weights`: If set to `True`, class weights will be computed for each present class. By default, this is `False`. For binary classification, class weighting is not supported and will be automatically disabled, even if explicitly set to `True`.
+- `weights`: If set to `True`, class weights will be computed for each present class. By default, this is `False`. Class weighting is not supported for binary classification and will be automatically disabled, even if explicitly set to `True`.
 
 
 ## [Data]
