@@ -65,23 +65,25 @@ class Training:
         self.num_classes = int(self.model_params.get('num_classes'))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
-        # Training parameters
-        self.batch_size = int(self.training_params.get('batch_size', 8))
-        self.val_split = float(self.training_params.get('val_split', 0.8))
-        self.epochs = int(self.training_params.get('epochs', 10))
-        self.weights = self.param_converter._convert_param(self.training_params.get('weights', "False"))
-
-        # Data parameters
-        self.img_res = int(self.data.get('img_res', 560))
-        self.crop_size = int(self.data.get('crop_size', 224))
-        self.num_samples = int(self.data.get('num_samples', 500))
-        self.ignore_background = self.param_converter._convert_param(self.data.get('ignore_background', "False"))
+        #Loss parameters
+        self.weights = self.param_converter._convert_param(self.loss_params.get('weights', "False"))
+        self.ignore_background = self.param_converter._convert_param(self.loss_params.get('ignore_background', "False"))
         
         if self.ignore_background:
             self.ignore_index = -1 
         else:
             self.ignore_index = -100
             
+        # Training parameters
+        self.batch_size = int(self.training_params.get('batch_size', 8))
+        self.val_split = float(self.training_params.get('val_split', 0.8))
+        self.epochs = int(self.training_params.get('epochs', 10))
+
+        # Data parameters
+        self.img_res = int(self.data.get('img_res', 560))
+        self.crop_size = int(self.data.get('crop_size', 224))
+        self.num_samples = int(self.data.get('num_samples', 500))
+
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')        
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
