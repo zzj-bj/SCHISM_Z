@@ -2,7 +2,7 @@
 ## [Model]
 Defines the model architecture and hyperparameters.
 
-- Supported models:
+- `model_type` supports the following models:
   - `UnetVanilla` --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetVanilla.md) (preset by default)
   - `UnetSegmentor` (our adaptation of Liang et al. 2022) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetSegmentor.md)
   - `DINOv2` (our own implementation; see [this link](https://github.com/FloFive) for the related paper) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/DINOv2.md)
