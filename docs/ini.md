@@ -3,7 +3,11 @@
 Defines the model architecture and hyperparameters.
 
 - `num_classes` is mandatory.
-- Optional parameters like `k_size`, `activation`, `n_block`, and `channels` have predefined default values. These parameters vary depending on the specific network. Please look at the network's documentation or file for detailed guidance on parameter configuration.
+- Optional parameters have predefined default values that vary depending on the specific network. Please look at the network's documentation or file for detailed guidance on parameter configuration. These are:
+  - `k_size`
+  - `activation`
+  - `n_block`
+  - `channels` 
 - Supported models:
   - `UnetVanilla` --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetVanilla.md) (preset by default)
   - `UnetSegmentor` (our adaptation of Liang et al. 2022) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetSegmentor.md)
