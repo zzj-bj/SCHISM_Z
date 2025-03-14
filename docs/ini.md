@@ -3,9 +3,9 @@
 Defines the model architecture and hyperparameters.
 
 - `model_type` supports the following models:
-  - `UnetVanilla` --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetVanilla.md): A simplistic UNet (preset by default)
-  - `UnetSegmentor` (our adaptation of Liang et al. 2022) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetSegmentor.md): A more robust UNet for more complex tasks.
-  - `DINOv2` (our own implementation; see [this link](https://github.com/FloFive) for the related paper) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/DINOv2.md): A powerful pretrained vision transformer for very precise tasks.
+  - `UnetVanilla`:  A simplistic UNet (preset by default) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetVanilla.md)
+  - `UnetSegmentor`: A more robust UNet for more complex tasks (our adaptation of Liang et al. 2022) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/UnetSegmentor.md)
+  - `DINOv2`: A powerful pretrained vision transformer for very precise tasks (our own implementation; see [this link](https://github.com/FloFive) for the related paper) --> [more info here](https://github.com/FloFive/SCHISM/blob/main/docs/DINOv2.md)
 
 - `num_classes` is mandatory.
 - Optional parameters have predefined default values that vary depending on the specific network. Please look at the network's documentation or file for detailed guidance on parameter configuration. These are:
