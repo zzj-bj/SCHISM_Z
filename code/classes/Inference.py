@@ -1,19 +1,26 @@
 import sys
 import os
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+
+
 import torch
 import torch.nn as nn
-import numpy as np
+from torch.utils.data import DataLoader
+import torchvision.transforms as Tc
+import torch.nn.functional as nn_func
+
+from patchify import unpatchify
+
 import glob
 import json
-from tqdm import tqdm
-from torch.utils.data import DataLoader
-from PIL import Image
+
+
 from classes.TiffDatasetLoader import TiffDatasetLoader
 from classes.model_registry import model_mapping
 from classes.ParamConverter import ParamConverter
-import torch.nn.functional as nn_func
 from patchify import unpatchify
-import torchvision.transforms as Tc
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -39,7 +46,7 @@ class Inference:
                 - hyperparameters (Hyperparameters): An object containing model and training parameters.
                 - selected_metric (str): Metric used for model evaluation.
         """
-        self.param_converter = ParamConverter()  
+        self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
@@ -60,7 +67,7 @@ class Inference:
         self.model_mapping = model_mapping
 
         self.model = self.initialize_model()
-    
+
     def initialize_model(self) -> nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
@@ -74,7 +81,7 @@ class Inference:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
-        
+
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
 
@@ -108,7 +115,7 @@ class Inference:
         checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"Checkpoint not found at '{checkpoint_path}'. Ensure the path is correct.")
-        
+
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)
         model.eval()  # Set the model to evaluation mode
@@ -136,7 +143,7 @@ class Inference:
                 glob.glob(os.path.join(img_folder, "*.*"))
             )
             for i in range(len(img_data[subfolder])):
-                indices.append((subfolder, i)) 
+                indices.append((subfolder, i))
 
             preds_folder = os.path.join(self.data_dir, subfolder, "preds")
             os.makedirs(preds_folder, exist_ok=True)
@@ -191,18 +198,27 @@ class Inference:
         dataloader = self.load_dataset()
         total_images = len(dataloader)
         print("total_images : ", total_images)
-        for i, (img, dataset_id, img_path) in enumerate(tqdm(dataloader, desc="Predicting")):
 
-            with torch.no_grad():
-                # Perform patch-based prediction
-                full_pred = self._patch_based_prediction(img)
+        # for i, (img, dataset_id, img_path) in enumerate(tqdm(dataloader, desc="Predicting")):
 
-            # Save the reconstructed prediction
-            base_name = os.path.basename(img_path[0])
-            subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
-            pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
-            self._save_mask(full_pred, pred_save_path)
-            
+        with tqdm(total=len(dataloader), unit="batch",
+          bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
+          ncols=100, desc="Predicting") as pbar:
+
+            for i, (img, dataset_id, img_path) in enumerate(dataloader):
+
+                with torch.no_grad():
+                    # Perform patch-based prediction
+                    full_pred = self._patch_based_prediction(img)
+
+                # Save the reconstructed prediction
+                base_name = os.path.basename(img_path[0])
+                subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
+                pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
+                self._save_mask(full_pred, pred_save_path)
+
+                # Mettez à jour la barre de progression
+                pbar.update(1)
 
     def _patch_based_prediction(self, patches):
         """
@@ -215,7 +231,7 @@ class Inference:
         Returns:
             torch.Tensor: Final prediction map (class indices) of the full image.
         """
-    
+
         # Calculate the grid size (number of patches per dimension)
         num_patches = len(patches)
         grid_size = int(num_patches ** 0.5)  # Assuming square grid of patches (e.g., 5x5)
@@ -227,25 +243,25 @@ class Inference:
         patch_index = 0
         predicted_patches = []
 
-        for i in range(grid_size):  
-            for j in range(grid_size):  
+        for i in range(grid_size):
+            for j in range(grid_size):
                 patch = patches[patch_index]
                 with torch.no_grad():
                     # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
-                    patch_pred = self.model(patch.to(self.device))  
+                    patch_pred = self.model(patch.to(self.device))
 
                     if self.num_classes > 1:
                         # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
-                        patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)   
+                        patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)
                     else:
                         # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
-                        patch_pred = torch.sigmoid(patch_pred).squeeze(0)  
-                        patch_pred = (patch_pred > 0.5).to(torch.uint8) 
-                        
+                        patch_pred = torch.sigmoid(patch_pred).squeeze(0)
+                        patch_pred = (patch_pred > 0.5).to(torch.uint8)
 
-                patch_pred = self._scale_mask_to_class_values(patch_pred)  
-                patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0), 
-                                                            size=(self.crop_size, self.crop_size), 
+
+                patch_pred = self._scale_mask_to_class_values(patch_pred)
+                patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0),
+                                                            size=(self.crop_size, self.crop_size),
                                                             mode='nearest-exact').squeeze(0)
 
                 predicted_patches.append(patch_pred_resized.cpu())
@@ -268,11 +284,11 @@ class Inference:
         Returns:
             torch.Tensor: A tensor containing the scaled mask with class values.
         """
-        if self.num_classes > 1:  
+        if self.num_classes > 1:
             class_values = torch.linspace(0, 255, self.num_classes, device=mask_tensor.device).round()
             scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
             return scaled_mask
-        else:  
+        else:
             return mask_tensor * 255  # Converts 0 to 0 and 1 to 255
 
     def _save_mask(self, mask_tensor, save_path):

@@ -53,47 +53,34 @@ Below is an example of an INI file:
 ```
 [Model]
 n_block=4
-channels=16
+channels=8
 num_classes=3
 model_type=UnetSegmentor
 k_size=3
 activation=leakyrelu
-channel=16
  
 [Optimizer]
-optimizer=RAdam
-lr=0.001
-eps=1e-6
-weight_decay=0.001
+optimizer=Adam
+lr=0.01
 
 [Scheduler]
-scheduler=ReduceLROnPlateau
-mode=min
-factor=0.5
-patience=5
-threshold=1e-4
-threshold_mode=rel
-cooldown=2
-min_lr=1e-6
-eps=1e-8
-verbose=True
+scheduler = ConstantLR
 
 [Loss]
-loss=CrossEntropyLoss
+loss= CrossEntropyLoss
 ignore_background=True
 weights=True
 
 [Training]
 batch_size=4
 val_split=0.8
-epochs=40
-metrics=Jaccard, F1, Recall, Accuracy, Precision, ConfusionMatrix
-early_stopping=True
-
+epochs=50
+metrics=Jaccard, ConfusionMatrix
+ 
 [Data]
-crop_size=225
-img_res=512
-num_samples=1500
+crop_size=128
+img_res=560
+num_samples=7000
 ```
 
 For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
@@ -117,8 +104,8 @@ data <--- Select this folder for data input during training or inference.
 |_data_stats.json <--- This file is optional.
 ```
 
-- **Images**: The directory containing the input images. Images must be in TIFF format and will be automatically converted to HWC (Height, Width, Channels) format.
-- **Masks**: The directory containing the corresponding segmentation masks. Masks will be converted to 8-bit format (uint8) with values set between 0 and 255.
+- **Images**: Directory containing the input images.
+- **Masks**: Directory containing the corresponding segmentation masks.
 - **data_stats.json**: (Optional) A JSON file containing mean and standard deviation values for normalization. Currently, this file must be set manually and should follow this format:
 
 ```

@@ -1,71 +1,68 @@
+# -*- coding: utf-8 -*-
+""" SCHISM """
+
 import os
 import sys
-from classes.Training import Training
+
+from Menu import selection as sl
+from Preprocessing import preprocessing  as pr
+
+
+from Training import lauch_training as tr
+# from classes.Training import Training
+
+
 from classes.Inference import Inference
-from classes.Hyperparameters import Hyperparameters
 
-ASCII_MENU = """
-╔══════════════════════════════════════════════════╗
-║  ███████╗ ██████╗██╗  ██╗██╗███████╗███╗   ███╗  ║
-║  ██╔════╝██╔════╝██║  ██║██║██╔════╝████╗ ████║  ║
-║  ███████╗██║     ███████║██║███████╗██╔████╔██║  ║
-║  ╚════██║██║     ██╔══██║██║╚════██║██║╚██╔╝██║  ║
-║  ███████║╚██████╗██║  ██║██║███████║██║ ╚═╝ ██║  ║
-║  ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝     ╚═╝  ║
-╠══════════════════════════════════════════════════╣
-║        -Let's do some cool segmentation-         ║
-╠══════════════════════════════════════════════════╣
-║ ▓▓▓▓▓▓ 1 -► Training       ░░░░░░░░░░░░░░░░██████║
-║ ▓▓▓▓ 2 -► Inference     ░░░░░░░░░░░░░░░░░████████║
-║ ▓▓ 3 -► Quit        ░░░░░░░░░░░░░░░░░░███████████║
-╚══════════════════════════════════════════════════╝
-"""
+from Commun import hyperparameters as hy
+# from classes.Hyperparameters import Hyperparameters
 
-def get_path(prompt):
-    """Requests a valid path from the user."""
-    while True:
-        path = input(f"[?] {prompt}: ").strip()
-        if os.path.exists(path):
-            return path
-        print("[X] Invalid path. Try again.")
+#=========================================================================
 
-def train_model():
-    """Executes the training process in CLI."""
-    print("\n[ Training Mode ]")
-    data_dir = get_path("Enter the data directory")
-    run_dir = get_path("Enter the directory to save runs")
-    hyperparameters_path = get_path("Enter the path to the hyperparameters INI file")
-    hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
+# def train_model():
+#     """Executes the training process in CLI."""
+#     data_dir = sl.get_path("Enter the data directory")
+#     run_dir = sl.get_path("Enter the directory to save runs")
+#     hyperparameters_path = sl.get_path("Enter the path to the hyperparameters INI file")
+#     hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
 
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    hyperparameters = Hyperparameters(hyperparameters_path)
+#     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+#     hyperparameters = hy.Hyperparameters(hyperparameters_path)
 
-    train_object = Training(
-        data_dir=data_dir,
-        subfolders=subfolders,
-        run_dir=run_dir,
-        hyperparameters=hyperparameters
-    )
+#     print("\n[ Training Mode ]")
+#     print("[!] Starting training. ")
 
-    print("\n[!] Starting training...")
-    train_object.load_segmentation_data()
-    train_object.train()
-    print("\n[√] Training completed successfully!")
+#     try:
+#         train_object = Training(
+#             data_dir=data_dir,
+#             subfolders=subfolders,
+#             run_dir=run_dir,
+#             hyperparameters=hyperparameters
+#         )
+#     except ValueError as e:
+#         print(e)
+
+#     train_object.load_segmentation_data()
+#     train_object.train()
+#     print("[√] Training completed successfully!\n")
+
+#=======================================================================
 
 def run_inference():
     """Executes the inference process in CLI."""
-    print("\n[ Inference Mode ]")
-    data_dir = get_path("Enter the directory containing data to predict")
-    run_dir = get_path("Enter the directory containing model weights")
+    # print("\n[ Inference Mode ]")
+    data_dir = sl.get_path("Enter the directory containing data to predict")
+    run_dir = sl.get_path("Enter the directory containing model weights")
 
     hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
         print("[X] The hyperparameters.ini file was not found in the weights directory.")
         return
 
-    hyperparameters = Hyperparameters(hyperparameters_path)
+    hyperparameters = hy.hyperparameters(hyperparameters_path)
     params = hyperparameters.get_parameters().get("Training", {})
-    metrics = [metric.strip() for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
+    metrics = [metric.strip()
+                for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
 
     if not metrics:
         print("[X] No metrics found in the hyperparameters.")
@@ -83,7 +80,8 @@ def run_inference():
         if choice.isdigit() and 1 <= int(choice) <= len(metrics):
             selected_metric = metrics[int(choice) - 1]
             break
-        print("[X] Invalid selection. Try again.")
+        sl.InvalidInput('Invalid selection.').invalid_input()
+
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
     pred_object = Inference(
@@ -97,24 +95,62 @@ def run_inference():
     print("\n[!] Starting inference...")
 
     pred_object.predict()
-    
+
     print("\n[√] Inference completed successfully!")
+
+
+
+def menu_preprocessing():
+    """
+    "This module allows for the following operations:
+        - Json generation   *** In development ***
+        - Normalization of masks in 8-bit grayscale format."
+    """
+    preprocessing_menu = sl.Menu('Preprocessing')
+    while True:
+        preprocessing_menu.display_menu()
+        choice = preprocessing_menu.selection()
+
+        #TODO In development
+        # **** Json generation ****
+        if choice == 1:
+            pr.launch_json_generation()
+
+        # **** Normalisation ****
+        elif choice == 2:
+            pr.launch_normalisation()
+
+        # **** Return main menu ****
+        elif choice == 3:
+            return
 
 def main():
     """Displays the CLI menu and handles user choices."""
+    main_menu = sl.Menu('MAIN')
     while True:
-        print("\n" + ASCII_MENU)
+        print(sl.LOGO) # "Display the logo SCHISM
 
-        choice = input("[?] Make your selection: ").strip()
-        if choice == "1":
-            train_model()
-        elif choice == "2":
+        main_menu.display_menu()
+        choice = main_menu.selection()
+
+        # Menu Preprocessing
+        if choice == 1:
+            menu_preprocessing()
+
+        # Training
+        elif choice == 2:
+            tr.train_model()
+            pass
+
+         # Inference
+        elif choice == 3:
             run_inference()
-        elif choice == "3":
-            print("\n[<3] Goodbye! o/")
+            # pass
+
+        # Fin de Programme
+        elif choice == 4:
+            print("[<3] Goodbye! o/")
             sys.exit()
-        else:
-            print("[X] Invalid choice. Try again.")
 
 if __name__ == "__main__":
     main()
