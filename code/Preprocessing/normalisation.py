@@ -32,14 +32,14 @@ class Normalisation:
 
         # Vérifier que les valeurs des masques sont dans la plage 0-255
         if not np.all((masques >= 0) & (masques <= 255)):
-            raise ValueError("Tous les masques doivent être compris entre 0 et 255.")
+            raise ValueError("All masks must be between 0 and 255.")
 
         # Obtenir les classes uniques dans l'image
         unique_classes = np.unique(masques)
         nombre_classes = len(unique_classes)
 
         if nombre_classes == 0:
-            raise ValueError("Il doit y avoir au moins une classe.")
+            raise ValueError("There must be at least one class.")
 
         # Créer un mapping des classes à des valeurs mises à l'échelle
         mise_a_echelle = np.linspace(0, 255, nombre_classes)
@@ -61,58 +61,53 @@ class Normalisation:
         if self.image_morme is not None:
             self.image_morme.save(output_path)
         else:
-            raise ValueError("Aucune image normalisée à sauvegarder.")
+            raise ValueError("No normalized image to save.")
 
 
 class ImageNormalizer:
     """
-    Cette classe permet de normaliser un groupe d'images.
-      .
-    Obligatoire : .
-    input_path : Répertoire où se trouve les masques à traiter.
+This class allows normalizing a group of images.
 
-    dest : Sous répertoire où les images normalisées seront stokées.
-    S'il n'est pas renseigné, on ajoutera "_Norm_" au nom du fichier.
-    ext : Extention ajouté au nom du masque.
-    image_formats : Formats des images à traiter par défaut 'TIF'.
+input_path  : Directory where the masks to be processed are located.
+output_path : Directory where the generated images will be stored.
+
     """
 
-    def __init__(self, input_path):
-        # Créer le répertoie avec les masques à traiter
-        self.input_path = os.path.join(input_path, 'masks')
+    def __init__(self, input_path, output_path, report):
 
-        # Créer le répertoire de sortie s'il n'existe pas
-        self.output_path = os.path.join(input_path, 'Normalized')
-        os.makedirs(self.output_path, exist_ok=True)
+        self.input_path = input_path
+        self.output_path = output_path
+        self.report = report
 
         self.traitement = Normalisation()
 
     def normalize_images(self):
         """Normalizes all images in the input directory."""
         # Recherche des fichiers images (*.tif)
-        try:
-            files = [f for f in os.listdir(self.input_path)
+        files = [f for f in os.listdir(self.input_path)
                  if f.endswith(".tif")]
-        except Exception:
-            raise ValueError("Le répertoire 'masques' n'existe pasz !!!")
 
         if len(files) == 0:
-            raise ValueError(" - !!! Pas de masques à traiter !!!")
+            aaa = self.input_path
+            fff = aaa.split("\\")
 
-        for filename in tqdm(files, unit="file",
-                      bar_format=" - Normalisation: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                      ncols=80):
-            file = os.path.join(self.input_path, filename)
+            self.report.ajouter_element(' - No files to process in : ',fff[-2])
+            # raise ValueError(" - !!! No files to process !!!")
+        else:
 
-            try:
-                self.traitement.set_image_path(file)
-                self.traitement.mise_en_conformite_image()
+            for filename in tqdm(files, unit="file",
+                          bar_format=" - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                          ncols=80):
+                file = os.path.join(self.input_path, filename)
 
-                # Créer le chemin de sortie pour l'image normalisée
-                name, ext = os.path.splitext(os.path.basename(file))
-                output_name = f"{name}{ext}"
-                output_file_path = os.path.join(self.output_path, output_name)
+                try:
+                    self.traitement.set_image_path(file)
+                    self.traitement.mise_en_conformite_image()
 
-                self.traitement.save_normalized_image(output_file_path)
-            except Exception as e:
-                print(f"\n{e}")
+                    name, ext = os.path.splitext(os.path.basename(file))
+                    output_name = f"{name}{ext}"
+                    output_file_path = os.path.join(self.output_path, output_name)
+
+                    self.traitement.save_normalized_image(output_file_path)
+                except Exception as e:
+                    print(f"\n{e}")

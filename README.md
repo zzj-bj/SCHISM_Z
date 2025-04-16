@@ -16,7 +16,8 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 ---
 ## :question: How to use
 
-SCHISM offers two main functionalities: **Training** and **Inference**.
+SCHISM offers three main functionalities: **Preprocesing** ,  **Training** and **Inference**.
+the module 'Preprocesing' has two menus 'Json generation' and 'Normalization' 
 
 ### General Steps
 1. Organize your data in the required structure (see Data Preparation).
@@ -24,8 +25,23 @@ SCHISM offers two main functionalities: **Training** and **Inference**.
 3. Run the main script:
    ``` python schism.py ```
 4. Navigate through the command-line menu:
-    - Option 1: Train a new model.
-    - Option 2: Make predictions using a trained model.
+    - Option 1: Preprocessing 
+    - Option 2: Train a new model.
+    - Option 3: Make predictions using a trained model.
+
+---
+### Preprocesing
+In this menu, we have access to two options that allow us to:
+    Json generation: in development
+    Normalization: creation of a grayscale image (0-255) in 8-bit format from a mask
+
+### - Json generation
+    This module is in development    
+
+###  - Normalization
+1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).    
+2. run the mormalization command: Launch the preprocessing process, then lauch the normalization and specify:
+    - The dataset directory (presented below).
 
 ---
 ### Training Workflow
@@ -92,20 +108,24 @@ The data should be organized as follows:
 
 ```
 data <--- Select this folder for data input during training or inference.
-|_dataset 1/
+|_dataset 1/ <--- Select this folder for data input during normalization
 |   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
 |   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
+|   |_Normalized/ <--- Contains images mormalized
 |_dataset 2/
 |   |_images/
 |   |_masks/
+|   |_Normalized/
 |_dataset n/
 |   |_images/
 |   |_masks/
+|   |_Normalized/
 |_data_stats.json <--- This file is optional.
 ```
 
 - **Images**: Directory containing the input images.
 - **Masks**: Directory containing the corresponding segmentation masks.
+- **Normalized**: Directory containing the corresponding images mormalized
 - **data_stats.json**: (Optional) A JSON file containing mean and standard deviation values for normalization. Currently, this file must be set manually and should follow this format:
 
 ```

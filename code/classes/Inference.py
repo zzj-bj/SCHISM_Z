@@ -4,6 +4,9 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
+import glob
+import json
+
 
 import torch
 import torch.nn as nn
@@ -13,14 +16,11 @@ import torch.nn.functional as nn_func
 
 from patchify import unpatchify
 
-import glob
-import json
 
+from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.paramconverter import ParamConverter
+from commun.model_registry import model_mapping
 
-from classes.TiffDatasetLoader import TiffDatasetLoader
-from classes.model_registry import model_mapping
-from classes.ParamConverter import ParamConverter
-from patchify import unpatchify
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -214,7 +214,9 @@ class Inference:
                 # Save the reconstructed prediction
                 base_name = os.path.basename(img_path[0])
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
-                pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
+
+                pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"{self.metric}_{base_name}")
+                # pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
                 self._save_mask(full_pred, pred_save_path)
 
                 # Mettez à jour la barre de progression

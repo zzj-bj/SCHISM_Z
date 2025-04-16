@@ -1,27 +1,36 @@
 import sys
 import os
-import torch
-import torch.nn as nn
+from datetime import datetime
+
 import numpy as np
 import glob
 import json
 import matplotlib
 matplotlib.use('Agg')
 from tqdm import tqdm
-from classes.TiffDatasetLoader import TiffDatasetLoader
-from classes.ParamConverter import ParamConverter
-from classes.TrainingLogger import TrainingLogger
-from datetime import datetime
+
+import torch
+import torch.nn as nn
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
 from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
 from torch.utils.data import DataLoader
 import torch.nn.functional as nn_func
-from classes.model_registry import model_mapping
 import torch.backends.cudnn as cudnn
 
+
+from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.paramconverter import ParamConverter
+from commun.model_registry import model_mapping
+
+from classes.TrainingLogger import TrainingLogger
+
+
+
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 class Training:
 
