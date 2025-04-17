@@ -4,13 +4,12 @@ Created on Fri Apr  4 11:14:12 2025
 
 @author: Pierre.FANCELLI
 """
-
 import sys
 
 from tools import menu as me
 
-BELL = "\a" # Son système pour Erreur
 #============================================================================
+BELL = "\a" # Son système pour Erreur
 
 class Menu :
     """
@@ -25,16 +24,18 @@ class Menu :
         # Check selec menu
         self.unknow_menu = False
         if self.sel_menu == 'Dynamic':
-            if self.menu_dynamique == None :
+            if self.menu_dynamique is None :
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
-                # Recover the menu and convert in 'str''
-                self.tableau = [str(element) for element in self.menu_dynamique]
+                tableau = [str(element) for element in self.menu_dynamique]
         elif self.sel_menu in me.MENUS:
-                self.tableau = me.MENUS[self.sel_menu]
+            tableau = [str(element) for element in me.MENUS[self.sel_menu]]
         else:
-                self.unknow_menu = True
+            self.unknow_menu = True
+
+        # convert all the nenu in 'str''
+        self.tableau = [str(element) for element in tableau]
 
         self.select = None
         self.ligne = None
@@ -43,17 +44,11 @@ class Menu :
     def display_menu(self):
         """ display the menu """
         if self.unknow_menu :
-            print(f" '{self.sel_menu}' : This menu doesn't existe !!!")
+            print(f" '{self.sel_menu}' : This menu doesn't existe in the dictionary !!!")
             sys.exit()
         else:
-            try:
-                longueur_max = max(len(chaine) for chaine in self.tableau)
-            except TypeError:
-                print("Format menu must be 'str !!!")
-                sys.exit()
-
+            longueur_max = max(len(chaine) for chaine in self.tableau)
             self.ligne = len(self.tableau)
-
             box_width = longueur_max + 6
 
             # Create the frame
@@ -68,7 +63,6 @@ class Menu :
                 print(f" '{self.tableau[0]}' : Menu without Choise !!!")
                 sys.exit()
 
-
     def selection(self):
         """
         Choise an option
@@ -82,13 +76,15 @@ class Menu :
                     print(f"[X] Invalid selection. Try again ! {BELL}")
             # Input is not a number
             except ValueError:
-                print(f"[X] Waiting a number. Try again ! {BELL}")
+                print(f"[X] Waiting for number. Try again ! {BELL}")
 
 
 def choiice_y_n(message):
     """
     This function retum.
-     True for Yes & False for No
+      True for yes, y, oui, o.
+      False for no, non n.
+     The input does not take uppercase letters into account."
     """
     while True:
         reponse = input(f"[?] {message} (Y/N) ? : ").strip().lower()
@@ -97,4 +93,4 @@ def choiice_y_n(message):
         elif reponse in ['no', 'non', 'n']:
             return False
         else:
-            print("Réponse invalide !!! ")
+            print("Incorrect answer !!! ")

@@ -8,36 +8,37 @@ Created on Mon Apr 14 14:49:41 2025
 class Rapport:
     def __init__(self):
         """
-        Initialise un dictionnaire vide.
+        Initialize an empty dictionary.
         """
-        self.dictionnaire = {}
+        self.dictionary = {}
         self.report = None
 
     def ajouter_element(self, cle, element):
         """
-        Ajoute un élément à la liste associée à la clé spécifiée.
-        Si la clé n'existe pas, elle est créée avec une nouvelle liste.
+        Add an element to the list associated with the specified key.
+        If the key does not exist, it is created with a new list.
 
-        :param cle: La clé à laquelle l'élément doit être ajouté
-        :param element: L'élément à ajouter à la liste
+        :param key: The key to which the element should be added
+        :param element: The element to add to the list
+
         """
-        if cle not in self.dictionnaire:
-            self.dictionnaire[cle] = []
-        self.dictionnaire[cle].append(element)
+        if cle not in self.dictionary:
+            self.dictionary[cle] = []
+        self.dictionary[cle].append(element)
 
-    def exsit_reppot(self):
+    def exist_reppot(self):
         self.report = False
-        if self.dictionnaire:
+        if self.dictionary:
             self.report =  True
         return self.report
 
     def afficher_rapport(self):
         """
-        Affiche le contenu du dictionnaire.
+        Display the contents of the dictionary..
         """
-        total_def = sum(len(liste)for liste in self.dictionnaire.values())
+        total_def = sum(len(liste)for liste in self.dictionary.values())
 
-        print(f"*** {total_def} Folders with problems :***")
-        for cle, elements in self.dictionnaire.items():
+        print(f"*** !!! {total_def} problems founds !!! :***")
+        for cle, elements in self.dictionary.items():
             print(f"{cle} {', '.join(elements)}")
         print("")

@@ -27,11 +27,40 @@ def train_model():
     hyperparameters = Hyperparameters(hyperparameters_path)
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    subfolders_t = subfolders.copy()
+
+    report_training = re.Rapport()
+
+    # subfolders_t = subfolders.copy()
+    # if len(subfolders_t) == 0 :
+    #         report_training.ajouter_element(" - No folder found in ", data_dir)
+    # else:
+    #     for f in subfolders_t:
+    #         images_path = fo.create_name_path(data_dir, f, 'images')
+    #         masks_path = fo.create_name_path(data_dir, f, 'masks')
+    #         if not os.path.isdir(images_path):
+    #             report_training.ajouter_element(" - No folder 'images' found :", f)
+    #             subfolders.remove(f)
+    #         else :
+    #             if not os.path.isdir(masks_path):
+    #                 report_training.ajouter_element(" - No folder 'mask' found :", f)
+    #                 subfolders.remove(f)
+    #             else:
+    #                 nb_f_image = fo.compter_files(images_path)
+    #                 nb_f_masks = fo.compter_files(masks_path)
+    #                 if nb_f_image == 0:
+    #                     report_training.ajouter_element(" - No file in folder 'image'  :", f)
+    #                     subfolders.remove(f)
+    #                 else:
+    #                     if nb_f_masks == 0:
+    #                         report_training.ajouter_element(" - No file in folder 'masks'  :", f)
+    #                         subfolders.remove(f)
+    #                     else:
+    #                         if nb_f_image != nb_f_masks :
+    #                             report_training.ajouter_element(" - 'images '  &'masks' : Size not equal :", f)
+    #                             subfolders.remove(f)
 
 
     print("[!] Starting training. ")
-    report_training = re.Rapport()
 
     train_object = Training(
         data_dir=data_dir,

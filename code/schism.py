@@ -6,7 +6,7 @@ import sys
 from tools import logo as lo
 from tools import selection as sl
 
-from preprocessing import preprocessing  as pr
+from preprocessing import preprocessing as pr
 from training import launch_training as tr
 from inference import launch_inference as li
 
@@ -28,6 +28,7 @@ def menu_preprocessing():
     """
     preprocessing_menu = sl.Menu('Preprocessing')
     while True:
+
         preprocessing_menu.display_menu()
         choice = preprocessing_menu.selection()
 
@@ -46,7 +47,8 @@ def menu_preprocessing():
 
 def main():
     """Displays the CLI menu and handles user choices."""
-    print(lo.LOGO_IN) # "Display the logo SCHISM
+    print(lo.LOGO_IN) # "Display the logo SCHISM_IN
+
     main_menu = sl.Menu('MAIN')
     while True:
 

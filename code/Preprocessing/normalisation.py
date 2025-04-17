@@ -12,6 +12,12 @@ import numpy as np
 from PIL import Image
 
 #============================================================================
+
+def name_parent(input_path):
+    fff = input_path.split("\\")
+    return fff[-2]
+
+
 class Normalisation:
     """
     A class to normalize image masks to a standard range.
@@ -29,10 +35,6 @@ class Normalisation:
         # Charger l'image et conversion en niveau de gris
         image = Image.open(self.image_brute).convert('L')
         masques = np.array(image)
-
-        # Vérifier que les valeurs des masques sont dans la plage 0-255
-        if not np.all((masques >= 0) & (masques <= 255)):
-            raise ValueError("All masks must be between 0 and 255.")
 
         # Obtenir les classes uniques dans l'image
         unique_classes = np.unique(masques)
@@ -88,15 +90,12 @@ output_path : Directory where the generated images will be stored.
                  if f.endswith(".tif")]
 
         if len(files) == 0:
-            aaa = self.input_path
-            fff = aaa.split("\\")
-
-            self.report.ajouter_element(' - No files to process in : ',fff[-2])
-            # raise ValueError(" - !!! No files to process !!!")
+            # Retrieving the name of the parent folder
+            parent = name_parent(self.input_path)
+            self.report.ajouter_element(' - No files to process in : ',parent)
         else:
-
             for filename in tqdm(files, unit="file",
-                          bar_format=" - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                          bar_format="  - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
                           ncols=80):
                 file = os.path.join(self.input_path, filename)
 
