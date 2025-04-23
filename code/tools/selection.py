@@ -9,11 +9,11 @@ import sys
 from tools import menu as me
 
 #============================================================================
-BELL = "\a" # Son système pour Erreur
+BELL = "\a" # Sound system for Error.
 
 class Menu :
     """
-    This class display the menu
+    This class allows displaying a menu and controlling the choice.
     """
 
     def __init__(self, sel_menu,  menu_dynamique = None):
@@ -65,7 +65,7 @@ class Menu :
 
     def selection(self):
         """
-        Choise an option
+        Choice an option
         """
         while True:
             try:
@@ -79,7 +79,7 @@ class Menu :
                 print(f"[X] Waiting for number. Try again ! {BELL}")
 
 
-def choiice_y_n(message):
+def answer_yes_or_non(message):
     """
     This function retum.
       True for yes, y, oui, o.
@@ -93,4 +93,4 @@ def choiice_y_n(message):
         elif reponse in ['no', 'non', 'n']:
             return False
         else:
-            print("Incorrect answer !!! ")
+            print("incorrect answer !!! ")

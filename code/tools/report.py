@@ -5,7 +5,7 @@ Created on Mon Apr 14 14:49:41 2025
 @author: Pierre.FANCELLI
 """
 
-class Rapport:
+class Error_Report:
     def __init__(self):
         """
         Initialize an empty dictionary.
@@ -13,7 +13,7 @@ class Rapport:
         self.dictionary = {}
         self.report = None
 
-    def ajouter_element(self, cle, element):
+    def add(self, cle, element):
         """
         Add an element to the list associated with the specified key.
         If the key does not exist, it is created with a new list.
@@ -26,13 +26,14 @@ class Rapport:
             self.dictionary[cle] = []
         self.dictionary[cle].append(element)
 
-    def exist_reppot(self):
+    def is_report(self):
+        """ check if there is a report. """
         self.report = False
         if self.dictionary:
             self.report =  True
         return self.report
 
-    def afficher_rapport(self):
+    def display_report(self):
         """
         Display the contents of the dictionary..
         """

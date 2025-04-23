@@ -10,11 +10,11 @@ class JsonGeneration:
     A class to generatz Json file from images.
     """
     def __init__(self):
-        self.image_brute = None
+        self.raw_image = None
 
 
-    def calcul(self):
-        """ A défir """
+    def process(self):
+        """ Processing to be defined """
 
         print("*** Development in progress ***")
         print("***      See you soon       ***")

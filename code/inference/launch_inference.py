@@ -8,6 +8,7 @@ import os
 
 from tools import selection as sl
 from tools import folder as fo
+from tools import report as re
 
 from classes.Inference import Inference
 from commun.hyperparameters import Hyperparameters
@@ -19,58 +20,73 @@ def run_inference():
     """Executes the inference process in CLI."""
     print("\n[ Inference Mode ]")
 
+    valid_subfolders = []
+
     data_dir = fo.get_path("Enter the directory containing data to predict")
     run_dir = fo.get_path("Enter the directory containing model weights")
 
+    report_inference = re.Error_Report()
+
     hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
-        print("[X] The hyperparameters.ini file was not found in the weights directory.")
-        return
+        report_inference.add("hyperparameters.ini file was not found", "")
+    else:
 
-    hyperparameters = Hyperparameters(hyperparameters_path)
-    params = hyperparameters.get_parameters().get("Training", {})
-    metrics = [metric.strip()
-                for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
+        hyperparameters = Hyperparameters(hyperparameters_path)
+        params = hyperparameters.get_parameters().get("Training", {})
+        metrics = [metric.strip()
+                    for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
 
-    if not metrics:
-        print("[X] No metrics found in the hyperparameters.")
-        return
+        if not metrics:
+            report_inference.add("No metrics found in the hyperparameters", "")
+            return
 
-    # Filter out 'ConfusionMatrix' if it's part of the metrics
-    available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
+        # Filter out 'ConfusionMatrix' if it's part of the metrics
+        available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
+
+        # Display the Metric available
+        menu_metric = ['Metric'] + available_metrics
+        main_menu = sl.Menu('Dynamic',menu_metric)
+        main_menu.display_menu()
+        choice = main_menu.selection()
+        selected_metric = metrics[int(choice) - 1]
+        print(f' - Metric selected = {selected_metric}')
+
+        subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+
+        if len(subfolders) == 0 :
+                report_inference.add(" - No folder found in ", data_dir)
+        else:
+            for f in subfolders:
+                images_path = fo.create_name_path(data_dir, f, 'images')
+
+                if not os.path.isdir(images_path):
+                    report_inference.add(" - No folder 'images' found :", f)
+                else:
+                    valid_subfolders.append(f)
 
 
-    menu_metric = ['Metric'] + available_metrics
-    main_menu = sl.Menu('Dynamic',menu_metric)
-    main_menu.display_menu()
-    choice = main_menu.selection()
-    selected_metric = metrics[int(choice) - 1]
-    print(f' - Metric selected = {selected_metric}')
+    if len(valid_subfolders) != 0 :
+        print("[!] Starting inference...")
 
-    # # Display the available metrics for inference
-    # for i, metric in enumerate(available_metrics, start=1):
-    #     print(f" {i} --> {metric}")
+        pred_object = Inference(
+            data_dir=data_dir,
+            subfolders=valid_subfolders,
+            run_dir=run_dir,
+            selected_metric=selected_metric,
+            hyperparameters=hyperparameters
+        )
 
-    # while True:
-    #     choice = input("\n[?] Enter the metric number: ").strip()
-    #     if choice.isdigit() and 1 <= int(choice) <= len(metrics):
-    #         selected_metric = metrics[int(choice) - 1]
-    #         break
-    #     fo.InvalidInput('Invalid selection.').invalid_input()
+        try:
+            pred_object.predict()
+        except ValueError as e:
+            print(e)
+
+    if report_inference.is_report():
+        print("[X] Inference finished with error")
+        report_inference.display_report()
+    else:
+        print("[√] Inference completed successfully!\n")
 
 
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    pred_object = Inference(
-        data_dir=data_dir,
-        subfolders=subfolders,
-        run_dir=run_dir,
-        selected_metric=selected_metric,
-        hyperparameters=hyperparameters
-    )
 
-    print("[!] Starting inference...")
-    try:
-        pred_object.predict()
-        print("[√] Inference completed successfully!")
-    except ValueError as e:
-        print(e)

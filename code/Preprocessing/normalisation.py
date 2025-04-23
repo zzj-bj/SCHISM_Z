@@ -23,45 +23,41 @@ class Normalisation:
     A class to normalize image masks to a standard range.
     """
     def __init__(self):
-        self.image_brute = None
-        self.image_morme = None
+        self.raw_image = None
+        self.normalized_image = None
 
     def set_image_path(self, image_path):
         """Set the path of the input image."""
-        self.image_brute = image_path
+        self.raw_image = image_path
 
-    def mise_en_conformite_image(self):
+    def image_compliance(self):
         """Normalize the image to a standard range."""
-        # Charger l'image et conversion en niveau de gris
-        image = Image.open(self.image_brute).convert('L')
-        masques = np.array(image)
+        # Load the image and convert it to grayscale
+        image = Image.open(self.raw_image).convert('L')
+        masks = np.array(image)
 
-        # Obtenir les classes uniques dans l'image
-        unique_classes = np.unique(masques)
-        nombre_classes = len(unique_classes)
+        # Retrieve the unique classes in the image
+        unique_classes = np.unique(masks)
+        num_classes = len(unique_classes)
 
-        if nombre_classes == 0:
-            raise ValueError("There must be at least one class.")
+        # Create a mapping of classes to scaled values
+        scaling = np.linspace(0, 255, num_classes)
 
-        # Créer un mapping des classes à des valeurs mises à l'échelle
-        mise_a_echelle = np.linspace(0, 255, nombre_classes)
+        # Create a mapping dictionary
+        class_mapping = {value: int(scaling[i]) for i, value in enumerate(unique_classes)}
 
-        # Créer un dictionnaire de mapping
-        mapping_classes = {valeur: int(mise_a_echelle[i])
-                           for i, valeur in enumerate(unique_classes)}
+        # Apply the mapping
+        compliant_masks = np.vectorize(class_mapping.get)(masks)
 
-        # Appliquer le mapping
-        masques_conformes = np.vectorize(mapping_classes.get)(masques)
+        # Create a new image from the compliant masks
+        self.normalized_image = Image.fromarray(compliant_masks.astype(np.uint8))
 
-        # Créer une nouvelle image à partir des masques conformes
-        self.image_morme = Image.fromarray(masques_conformes.astype(np.uint8))
-
-        return self.image_morme
+        return self.normalized_image
 
     def save_normalized_image(self, output_path):
         """Save the normalized image to the specified path."""
-        if self.image_morme is not None:
-            self.image_morme.save(output_path)
+        if self.normalized_image is not None:
+            self.normalized_image.save(output_path)
         else:
             raise ValueError("No normalized image to save.")
 
@@ -74,25 +70,24 @@ input_path  : Directory where the masks to be processed are located.
 output_path : Directory where the generated images will be stored.
 
     """
-
     def __init__(self, input_path, output_path, report):
 
         self.input_path = input_path
         self.output_path = output_path
         self.report = report
 
-        self.traitement = Normalisation()
+        self.processing = Normalisation()
 
     def normalize_images(self):
         """Normalizes all images in the input directory."""
-        # Recherche des fichiers images (*.tif)
+        # Searching for image files (*.tif)
         files = [f for f in os.listdir(self.input_path)
                  if f.endswith(".tif")]
 
         if len(files) == 0:
             # Retrieving the name of the parent folder
             parent = name_parent(self.input_path)
-            self.report.ajouter_element(' - No files to process in : ',parent)
+            self.report.add(' - No files to process in : ',parent)
         else:
             for filename in tqdm(files, unit="file",
                           bar_format="  - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
@@ -100,13 +95,13 @@ output_path : Directory where the generated images will be stored.
                 file = os.path.join(self.input_path, filename)
 
                 try:
-                    self.traitement.set_image_path(file)
-                    self.traitement.mise_en_conformite_image()
+                    self.processing.set_image_path(file)
+                    self.processing.image_compliance()
 
                     name, ext = os.path.splitext(os.path.basename(file))
                     output_name = f"{name}{ext}"
                     output_file_path = os.path.join(self.output_path, output_name)
 
-                    self.traitement.save_normalized_image(output_file_path)
+                    self.processing.save_normalized_image(output_file_path)
                 except Exception as e:
                     print(f"\n{e}")
