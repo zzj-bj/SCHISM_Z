@@ -27,7 +27,6 @@ def run_inference():
     report_dir = fo.get_path("Enter the directory to save report")
     file_name_report = fo.create_name_path(report_dir, '', 'Inference')
 
-
     hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
         report_inference.add("hyperparameters.ini file was not found", "")
@@ -62,7 +61,7 @@ def run_inference():
                 images_path = fo.create_name_path(data_dir, f, 'images')
 
                 if not os.path.isdir(images_path):
-                    report_inference.add(" - No folder 'images' found :", f)
+                    report_inference.add(" - Folder 'images' missing in :", f)
                 else:
                     valid_subfolders.append(f)
 

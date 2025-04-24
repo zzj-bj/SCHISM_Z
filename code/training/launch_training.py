@@ -24,7 +24,7 @@ def check_folder(folder, root, report):
             report.add(" - Folder 'images' missing in :", f)
         else :
             if not os.path.isdir(masks_path):
-                report.add(" - Folder 'maskss' missing in :", f)
+                report.add(" - Folder 'masks' missing in :", f)
             else:
                 nb_f_image = fo.compter_tif_files(images_path)
                 nb_f_masks = fo.compter_tif_files(masks_path)
