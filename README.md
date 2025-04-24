@@ -60,7 +60,7 @@ To make predictions:
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
     - The folder containing trained weights.
     - The dataset for prediction.
-
+    - A directory will be created. The name of this directory will follow the logic: 'preds_Metric'. Metric is the name of the metric used for this generation. For example, for the metric 'Jaccard', the directory will be 'preds_Jaccard'.
 ---
 ## :scroll: INI File Setup
 

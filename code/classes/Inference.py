@@ -7,20 +7,17 @@ from tqdm import tqdm
 import glob
 import json
 
-
 import torch
 import torch.nn as nn
+import torch.nn.functional as nn_func
 from torch.utils.data import DataLoader
 import torchvision.transforms as Tc
-import torch.nn.functional as nn_func
 
 from patchify import unpatchify
-
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
-
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -145,7 +142,8 @@ class Inference:
             for i in range(len(img_data[subfolder])):
                 indices.append((subfolder, i))
 
-            preds_folder = os.path.join(self.data_dir, subfolder, "preds")
+            preds = f"preds_{self.metric}"
+            preds_folder = os.path.join(self.data_dir, subfolder, preds)
             os.makedirs(preds_folder, exist_ok=True)
 
         dataset = TiffDatasetLoader(
@@ -215,8 +213,8 @@ class Inference:
                 base_name = os.path.basename(img_path[0])
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
-                pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"{self.metric}_{base_name}")
-                # pred_save_path = os.path.join(self.data_dir, subfolder, "preds", f"pred_{base_name}")
+                preds = f"preds_{self.metric}"
+                pred_save_path = os.path.join(self.data_dir, subfolder, preds, f"{base_name}")
                 self._save_mask(full_pred, pred_save_path)
 
                 # Mettez à jour la barre de progression
