@@ -60,9 +60,19 @@ def compter_files(folder):
     return sum(1 for fichier in chemin.iterdir() if fichier.is_file())
 
 def compter_tif_files(folder):
+    """
+    Count the number of files with extention = '.tif' in the given directory.
 
+    Parameters
+    ----------
+    repertoire : str
+        directory where find the files.
+
+    Returns
+    -------
+    Numbers of files.
+
+    """
     files = [f for f in os.listdir(folder)
              if f.endswith(".tif")]
     return len(files)
-
-

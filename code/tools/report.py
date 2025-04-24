@@ -5,7 +5,16 @@ Created on Mon Apr 14 14:49:41 2025
 @author: Pierre.FANCELLI
 """
 
-class Error_Report:
+from datetime import datetime
+
+#============================================================================
+F_DATE = "%Y-%m-%d ::  %H:%M:%S"
+
+class ErrorReport:
+    """
+    This class allows for tracking errors during the execution of processes.
+    It also generates a file in 'txt' format based on the name of the process
+    """
     def __init__(self):
         """
         Initialize an empty dictionary.
@@ -43,3 +52,18 @@ class Error_Report:
         for cle, elements in self.dictionary.items():
             print(f"{cle} {', '.join(elements)}")
         print("")
+
+    def print_report(self, instance_name):
+        """ Write report into a file """
+        now = datetime.now()
+        total_def = sum(len(liste)for liste in self.dictionary.values())
+
+        filename = f"{instance_name}_report.txt"
+        with open(filename, 'a') as file:
+            file.write("\n*--------------------------------\n")
+            file.write(f"-- {now.strftime(F_DATE  )} -- \n")
+            file.write(f"*** !!! {total_def} problems founds !!! :***\n")
+            for cle, elements in self.dictionary.items():
+                file.write(f"{cle} {', '.join(elements)}\n")
+                # file.write("\n")
+            file.write("\n--------------------------------*\n")

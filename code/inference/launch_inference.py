@@ -20,18 +20,19 @@ def run_inference():
     """Executes the inference process in CLI."""
     print("\n[ Inference Mode ]")
 
-    valid_subfolders = []
+    report_inference = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the directory containing data to predict")
     run_dir = fo.get_path("Enter the directory containing model weights")
+    report_dir = fo.get_path("Enter the directory to save report")
+    file_name_report = fo.create_name_path(report_dir, '', 'Inference')
 
-    report_inference = re.Error_Report()
 
     hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
         report_inference.add("hyperparameters.ini file was not found", "")
     else:
-
+        valid_subfolders = []
         hyperparameters = Hyperparameters(hyperparameters_path)
         params = hyperparameters.get_parameters().get("Training", {})
         metrics = [metric.strip()
@@ -55,7 +56,7 @@ def run_inference():
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
         if len(subfolders) == 0 :
-                report_inference.add(" - No folder found in ", data_dir)
+            report_inference.add(" - No folder found in ", data_dir)
         else:
             for f in subfolders:
                 images_path = fo.create_name_path(data_dir, f, 'images')
@@ -64,7 +65,6 @@ def run_inference():
                     report_inference.add(" - No folder 'images' found :", f)
                 else:
                     valid_subfolders.append(f)
-
 
     if len(valid_subfolders) != 0 :
         print("[!] Starting inference...")
@@ -85,8 +85,6 @@ def run_inference():
     if report_inference.is_report():
         print("[X] Inference finished with error")
         report_inference.display_report()
+        report_inference.print_report(file_name_report)
     else:
         print("[√] Inference completed successfully!\n")
-
-
-
