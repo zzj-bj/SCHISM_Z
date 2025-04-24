@@ -107,8 +107,8 @@ For information on both the network configurations and the INI file setup, pleas
 The data should be organized as follows:
 
 ```
-data <--- Select this folder for data input during training or inference.
-|_dataset 1/ <--- Select this folder for data input during normalization
+data <--- Select this folder for data input during normalization, training or inference.
+|_dataset 1/ 
 |   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
 |   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
 |   |_Normalized/ <--- Contains images mormalized
@@ -125,7 +125,7 @@ data <--- Select this folder for data input during training or inference.
 
 - **Images**: Directory containing the input images.
 - **Masks**: Directory containing the corresponding segmentation masks.
-- **Normalized**: Directory containing the corresponding images mormalized
+- **Normalized**: Directory containing the corresponding images mormalized from the masks.
 - **data_stats.json**: (Optional) A JSON file containing mean and standard deviation values for normalization. Currently, this file must be set manually and should follow this format:
 
 ```
@@ -171,7 +171,7 @@ If you use our solution or find our work helpful, please consider citing it as f
 ```
 @misc{schism2025,
   title       = {SCHISM: Semantic Classification of High-resolution Imaging for Scanned Materials},
-  author      = {Florent Brondolo and Samuel Beaussant and Soufiane Elbouazaoui and Saïd Ezzedine},
+  author      = {Florent Brondolo and Samuel Beaussant and Soufiane Elbouazaoui and Saïd Ezzedine and Pierre Fancelli},
   year        = {2025},
   howpublished= {\url{https://github.com/FloFive/SCHISM}},
   note        = {GitHub repository}
