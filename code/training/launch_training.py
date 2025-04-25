@@ -86,6 +86,6 @@ def train_model():
     if report_training.is_report():
         print("[X] Training finished with error")
         report_training.display_report()
-        report_training.print_report(file_name_report)
     else:
         print("[√] Training completed successfully!\n")
+    report_training.print_report(file_name_report)

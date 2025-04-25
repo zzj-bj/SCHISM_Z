@@ -8,7 +8,7 @@ Created on Mon Apr 14 14:49:41 2025
 from datetime import datetime
 
 #============================================================================
-F_DATE = "%Y-%m-%d ::  %H:%M:%S"
+F_DATE = "%Y-%m-%d :: %H:%M:%S"
 
 class ErrorReport:
     """
@@ -22,7 +22,8 @@ class ErrorReport:
         self.dictionary = {}
         self.report = None
 
-    def add(self, cle, element):
+
+    def add(self, key, element):
         """
         Add an element to the list associated with the specified key.
         If the key does not exist, it is created with a new list.
@@ -31,9 +32,9 @@ class ErrorReport:
         :param element: The element to add to the list
 
         """
-        if cle not in self.dictionary:
-            self.dictionary[cle] = []
-        self.dictionary[cle].append(element)
+        if key not in self.dictionary:
+            self.dictionary[key] = []
+        self.dictionary[key].append(element)
 
     def is_report(self):
         """ check if there is a report. """
@@ -49,8 +50,8 @@ class ErrorReport:
         total_def = sum(len(liste)for liste in self.dictionary.values())
 
         print(f"*** !!! {total_def} problems founds !!! :***")
-        for cle, elements in self.dictionary.items():
-            print(f"{cle} {', '.join(elements)}")
+        for key, elements in self.dictionary.items():
+            print(f"{key} : {', '.join(elements)}")
         print("")
 
     def print_report(self, instance_name):
@@ -58,12 +59,17 @@ class ErrorReport:
         now = datetime.now()
         total_def = sum(len(liste)for liste in self.dictionary.values())
 
+        name = instance_name.split("\\")
+        gg = name[-1]
+
         filename = f"{instance_name}_report.txt"
         with open(filename, 'a') as file:
-            file.write("\n*--------------------------------\n")
-            file.write(f"-- {now.strftime(F_DATE  )} -- \n")
-            file.write(f"*** !!! {total_def} problems founds !!! :***\n")
-            for cle, elements in self.dictionary.items():
-                file.write(f"{cle} {', '.join(elements)}\n")
-                # file.write("\n")
-            file.write("\n--------------------------------*\n")
+            file.write("\n*-------------------------------------\n")
+            if total_def == 0:
+                file.write(f" - {gg}  \n finished whitout error\n")
+            else:
+                file.write(f"-- {now.strftime(F_DATE  )} -- \n")
+                file.write(f"*** !!! {total_def} problems founds !!! :***\n")
+                for key, elements in self.dictionary.items():
+                    file.write(f"{key} : {', '.join(elements)}\n")
+            file.write("-------------------------------------*\n")

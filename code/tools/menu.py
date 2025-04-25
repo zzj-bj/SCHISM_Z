@@ -11,12 +11,10 @@ MENUS = {
         "Preprocessing",
         "Training",
         "Inference",
-        "Quit"
-    ],
+        "Quit"    ],
     'Preprocessing': [
         "PREPROCESSING",
         "Json generation",
         "Normalisation",
-        "Return Main Menu"
-    ]
+        "Return Main Menu"]
 }

@@ -28,14 +28,11 @@ class Menu :
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
-                tableau = [str(element) for element in self.menu_dynamique]
+                self.tableau = [str(element) for element in self.menu_dynamique]
         elif self.sel_menu in me.MENUS:
-            tableau = [str(element) for element in me.MENUS[self.sel_menu]]
+            self.tableau = [str(element) for element in me.MENUS[self.sel_menu]]
         else:
             self.unknow_menu = True
-
-        # convert all the nenu in 'str''
-        self.tableau = [str(element) for element in tableau]
 
         self.select = None
         self.ligne = None

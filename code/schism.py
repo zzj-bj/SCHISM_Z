@@ -14,7 +14,7 @@ from inference import launch_inference as li
 #=======================================================================
 def exit_prog():
     print("\n[!! End of programme !!]")
-    select = sl.choiice_y_n("Are you sure")
+    select = sl.answer_yes_or_non("Are you sure")
     if select :
         print(f"[<3] Goodbye! o/{sl.BELL}")
         print(lo.LOGO_OUT)
@@ -28,7 +28,6 @@ def menu_preprocessing():
     """
     preprocessing_menu = sl.Menu('Preprocessing')
     while True:
-
         preprocessing_menu.display_menu()
         choice = preprocessing_menu.selection()
 
@@ -51,7 +50,6 @@ def main():
 
     main_menu = sl.Menu('MAIN')
     while True:
-
         main_menu.display_menu()
         choice = main_menu.selection()
 

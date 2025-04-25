@@ -8,6 +8,7 @@ import os
 
 from tools import folder as fo
 from tools import report as re
+
 from preprocessing import normalisation as no
 from preprocessing import json_generation as jg
 
@@ -39,8 +40,6 @@ def launch_json_generation():
     else:
         print("[√] Json Generation Mode finished without error\n")
 
-
-
 def launch_normalisation():
     """
     Normalization of masks in 8-bit grayscale format
@@ -62,7 +61,7 @@ def launch_normalisation():
             masks_path = fo.create_name_path(data_dir, f, 'masks')
 
             if not os.path.isdir(masks_path):
-                report_mormal.add(" - No folder 'Mask' found :", f)
+                report_mormal.add(" - Folder 'masks' missing in :", f)
             else:
                 nb_f_masks = fo.compter_files(masks_path)
                 if nb_f_masks == 0:
@@ -88,6 +87,8 @@ def launch_normalisation():
     if report_mormal.is_report():
         print("[X] Normalization finished with error")
         report_mormal.display_report()
-        report_mormal.print_report(file_name_report)
     else:
         print("[√] Normalization finished without error\n")
+    report_mormal.print_report(file_name_report)
+
+

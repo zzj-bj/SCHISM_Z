@@ -84,6 +84,6 @@ def run_inference():
     if report_inference.is_report():
         print("[X] Inference finished with error")
         report_inference.display_report()
-        report_inference.print_report(file_name_report)
     else:
         print("[√] Inference completed successfully!\n")
+    report_inference.print_report(file_name_report)
