@@ -6,17 +6,16 @@ Created on Fri Mar 28 13:47:48 2025
 """
 
 import os
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 
 from PIL import Image
 
+import torch
+
+from tools import folder as fo
+
 #============================================================================
-
-def name_parent(input_path):
-    fff = input_path.split("\\")
-    return fff[-2]
-
 
 class Normalisation:
     """
@@ -25,6 +24,7 @@ class Normalisation:
     def __init__(self):
         self.raw_image = None
         self.normalized_image = None
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def set_image_path(self, image_path):
         """Set the path of the input image."""
@@ -46,11 +46,19 @@ class Normalisation:
         # Create a mapping dictionary
         class_mapping = {value: int(scaling[i]) for i, value in enumerate(unique_classes)}
 
-        # Apply the mapping
-        compliant_masks = np.vectorize(class_mapping.get)(masks)
+        # Convert masks to a PyTorch tensor
+        masks_tensor = torch.tensor(masks, device=self.device)
+
+        # Apply the mapping using vectorization
+        compliant_masks = torch.zeros_like(masks_tensor, dtype=torch.uint8)
+        for value, scaled_value in class_mapping.items():
+            compliant_masks[masks_tensor == value] = scaled_value
+
+        # Move the compliant masks back to CPU and convert to NumPy array
+        compliant_masks_cpu = compliant_masks.cpu().numpy()
 
         # Create a new image from the compliant masks
-        self.normalized_image = Image.fromarray(compliant_masks.astype(np.uint8))
+        self.normalized_image = Image.fromarray(compliant_masks_cpu.astype(np.uint8))
 
         return self.normalized_image
 
@@ -86,12 +94,14 @@ output_path : Directory where the generated images will be stored.
 
         if len(files) == 0:
             # Retrieving the name of the parent folder
-            parent = name_parent(self.input_path)
-            self.report.add(' - No files to process in : ',parent)
+            name = fo.get_name_at_index(self.input_path, -2)
+            self.report.add(' - No files to process in : ',name)
         else:
-            for filename in tqdm(files, unit="file",
-                          bar_format="  - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                          ncols=80):
+            for filename in tqdm(
+                    files,
+                    unit="file",
+                    bar_format=" - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                    ncols=80):
                 file = os.path.join(self.input_path, filename)
 
                 try:

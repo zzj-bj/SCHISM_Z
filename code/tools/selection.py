@@ -11,6 +11,13 @@ from tools import menu as me
 #============================================================================
 BELL = "\a" # Sound system for Error.
 
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+GRAY = "\033[90m"
+RESET = "\033[0m"
+
+
 class Menu :
     """
     This class allows displaying a menu and controlling the choice.
@@ -91,3 +98,16 @@ def answer_yes_or_non(message):
             return False
         else:
             print("incorrect answer !!! ")
+
+
+def print_red(text):
+    print(RED + text + RESET)
+
+def print_green(text):
+    print(GREEN + text + RESET)
+
+def print_yellow(text):
+    print(YELLOW + text + RESET)
+
+def print_gray(text):
+    print(GRAY + text + RESET)

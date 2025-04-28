@@ -8,6 +8,7 @@ import os
 
 from tools import folder as fo
 from tools import report as re
+from tools import selection as sl
 
 from preprocessing import normalisation as no
 from preprocessing import json_generation as jg
@@ -85,10 +86,10 @@ def launch_normalisation():
                 print(e)
 
     if report_mormal.is_report():
-        print("[X] Normalization finished with error")
+        sl.print_red("[X] Normalization finished with error")
         report_mormal.display_report()
     else:
-        print("[√] Normalization finished without error\n")
+        sl.print_green("[√] Normalization finished without error\n")
     report_mormal.print_report(file_name_report)
 
 

@@ -18,7 +18,6 @@ def get_path(prompt):
         if os.path.exists(path):
             return path
         print(f"[X] Invalid path. Try again. {BELL}")
-        # InvalidInput('Invalid path.').invalid_input()
 
 def create_name_path(root, directory, subdirectory):
     """
@@ -41,6 +40,25 @@ def create_name_path(root, directory, subdirectory):
     """
     return os.path.join(root, directory, subdirectory)
 
+
+def get_name_at_index(input_path, pos):
+    """
+    This function takes a file path as input and returns the component of the path at the specified index.
+
+    Parameters
+    ----------
+    input_path : str
+        The complete file path as a string.
+    pos : int
+        The index of the component to retrieve from the path.
+
+    Returns
+    -------
+    str
+        The component of the path at the specified index.
+    """
+    name = input_path.split("\\")
+    return name[pos]
 
 def compter_files(folder):
     """

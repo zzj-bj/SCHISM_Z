@@ -7,8 +7,10 @@ Created on Mon Apr 14 14:49:41 2025
 
 from datetime import datetime
 
+from tools import folder as fo
+
 #============================================================================
-F_DATE = "%Y-%m-%d :: %H:%M:%S"
+F_DATE = "%Y-%m-%d <> %H:%M:%S"
 
 class ErrorReport:
     """
@@ -59,17 +61,16 @@ class ErrorReport:
         now = datetime.now()
         total_def = sum(len(liste)for liste in self.dictionary.values())
 
-        name = instance_name.split("\\")
-        gg = name[-1]
+        name = fo.get_name_at_index(instance_name, -1)
 
         filename = f"{instance_name}_report.txt"
         with open(filename, 'a') as file:
-            file.write("\n*-------------------------------------\n")
+            file.write("\n*------------------------------------------\n")
+            file.write(f"-- {now.strftime(F_DATE  )} -- \n")
             if total_def == 0:
-                file.write(f" - {gg}  \n finished whitout error\n")
+                file.write(f" - {name} finished whitout error\n")
             else:
-                file.write(f"-- {now.strftime(F_DATE  )} -- \n")
                 file.write(f"*** !!! {total_def} problems founds !!! :***\n")
                 for key, elements in self.dictionary.items():
                     file.write(f"{key} : {', '.join(elements)}\n")
-            file.write("-------------------------------------*\n")
+            file.write("------------------------------------------*\n")
