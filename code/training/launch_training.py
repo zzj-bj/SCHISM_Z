@@ -8,6 +8,7 @@ import os
 
 from tools import folder as fo
 from tools import report as re
+from tools import selection as sl
 
 from classes.Training import Training
 from commun.hyperparameters import Hyperparameters
@@ -29,10 +30,10 @@ def check_folder(folder, root, report):
                 nb_f_image = fo.compter_tif_files(images_path)
                 nb_f_masks = fo.compter_tif_files(masks_path)
                 if nb_f_image == 0:
-                    report.add(" - No file in folder 'image'  :", f)
+                    report.add(" - No file in folder 'image' :", f)
                 else:
                     if nb_f_masks == 0:
-                        report.add(" - No file in folder 'masks'  :", f)
+                        report.add(" - No file in folder 'masks' :", f)
                     else:
                         if nb_f_image != nb_f_masks :
                             report.add(" - 'images/masks' : Size not equal :", f)
@@ -63,7 +64,7 @@ def train_model():
 
         valid_subfolders = []
         if len(subfolders) == 0 :
-            report_training.add(" - No folder found in ", data_dir)
+            report_training.add(" - No folder found in : ", data_dir)
         else:
             valid_subfolders = check_folder(subfolders, data_dir, report_training)
 
@@ -84,8 +85,8 @@ def train_model():
                 print(e)
 
     if report_training.is_report():
-        print("[X] Training finished with error")
+        sl.Display_Color("[X] Training finished with error", "red")
         report_training.display_report()
     else:
-        print("[√] Training completed successfully!\n")
+        sl.Display_Color("[√] Training completed successfully!\n", "green")
     report_training.print_report(file_name_report)

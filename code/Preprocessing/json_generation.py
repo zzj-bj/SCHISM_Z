@@ -18,4 +18,3 @@ class JsonGeneration:
 
         print("*** Development in progress ***")
         print("***      See you soon       ***")
-

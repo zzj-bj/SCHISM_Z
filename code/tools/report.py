@@ -62,7 +62,7 @@ class ErrorReport:
 
         print(f"*** !!! {total_def} problems founds !!! :***")
         for key, elements in self.dictionary.items():
-            print(f"{key} : {', '.join(elements)}")
+            print(f"{key} {', '.join(elements)}")
         print("")
 
     def print_report(self, instance_name):

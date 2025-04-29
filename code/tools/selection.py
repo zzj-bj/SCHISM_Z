@@ -11,13 +11,6 @@ from tools import menu as me
 #============================================================================
 BELL = "\a" # Sound system for Error.
 
-RED = "\033[31m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-GRAY = "\033[90m"
-RESET = "\033[0m"
-
-
 class Menu :
     """
     This class allows displaying a menu and controlling the choice.
@@ -84,6 +77,11 @@ class Menu :
 
 
 def Display_Color(text, color="WHITE"):
+    """
+    This function displays the message passed as a parameter in the requested color.
+    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', and 'gray'.
+    If the color is not specified, the text is displayed in white.
+    """
     BLACK = "\033[30m"
     RED = "\033[31m"
     GREEN = "\033[32m"
