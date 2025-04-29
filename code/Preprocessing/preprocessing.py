@@ -86,10 +86,11 @@ def launch_normalisation():
                 print(e)
 
     if report_mormal.is_report():
-        sl.print_red("[X] Normalization finished with error")
+        sl.Display_Color("[X] Normalization finished with error", "red")
+        print("These directories have been removed from processing")
         report_mormal.display_report()
     else:
-        sl.print_green("[√] Normalization finished without error\n")
+        sl.Display_Color("[√] Normalization finished without error\n", "green")
     report_mormal.print_report(file_name_report)
 
 

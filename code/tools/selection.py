@@ -83,6 +83,34 @@ class Menu :
                 print(f"[X] Waiting for number. Try again ! {BELL}")
 
 
+def Display_Color(text, color="WHITE"):
+    BLACK = "\033[30m"
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW =  "\033[33m"
+    BLUE = "\033[34m"
+    MAGENTA = "\033[35m"
+    CYAN = "\033[36m"
+    WHITE = "\033[37m"
+    GRAY = "\033[90m"
+
+    RESET = "\033[0m"
+
+    # Check the color
+    if color.upper() == "RED":
+        color = RED
+    elif color.upper() == "YELLOW":
+        color = YELLOW
+    elif color.upper() == "GREEN":
+        color = GREEN
+    elif color.upper() == "GRAY":
+        color = GRAY
+    else:
+        color = WHITE
+
+    print(color + text + RESET)
+
+
 def answer_yes_or_non(message):
     """
     This function retum.
@@ -100,14 +128,6 @@ def answer_yes_or_non(message):
             print("incorrect answer !!! ")
 
 
-def print_red(text):
-    print(RED + text + RESET)
 
-def print_green(text):
-    print(GREEN + text + RESET)
 
-def print_yellow(text):
-    print(YELLOW + text + RESET)
 
-def print_gray(text):
-    print(GRAY + text + RESET)

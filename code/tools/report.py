@@ -10,6 +10,7 @@ from datetime import datetime
 from tools import folder as fo
 
 #============================================================================
+# Formar for Date & Time
 F_DATE = "%Y-%m-%d <> %H:%M:%S"
 
 class ErrorReport:
@@ -17,13 +18,21 @@ class ErrorReport:
     This class allows for tracking errors during the execution of processes.
     It also generates a file in 'txt' format based on the name of the process
     """
+    def __repr__(self):
+        """
+        Returns a string representation of the ErrorReport class.
+
+        Returns:
+            str: A string indicating the class name.
+        """
+        return 'ErrorReport'
+
     def __init__(self):
         """
         Initialize an empty dictionary.
         """
         self.dictionary = {}
         self.report = None
-
 
     def add(self, key, element):
         """

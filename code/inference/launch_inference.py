@@ -44,11 +44,11 @@ def run_inference():
         # Filter out 'ConfusionMatrix' if it's part of the metrics
         available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
 
-        # Display the Metric available
+        # Display the Metric available Menu
         menu_metric = ['Metric'] + available_metrics
-        main_menu = sl.Menu('Dynamic',menu_metric)
-        main_menu.display_menu()
-        choice = main_menu.selection()
+        inference_menu = sl.Menu('Dynamic',menu_metric)
+        inference_menu.display_menu()
+        choice = inference_menu.selection()
         selected_metric = metrics[int(choice) - 1]
         print(f' - Metric selected = {selected_metric}')
 
@@ -82,8 +82,9 @@ def run_inference():
             print(e)
 
     if report_inference.is_report():
-        print("[X] Inference finished with error")
+        sl.Display_Color("[X] Inference finished with error", "red")
+        print("These directories have been removed from processing")
         report_inference.display_report()
     else:
-        print("[√] Inference completed successfully!\n")
+        sl.Display_Color("[√] Inference completed successfully!\n", "green")
     report_inference.print_report(file_name_report)
