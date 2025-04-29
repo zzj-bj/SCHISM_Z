@@ -10,14 +10,13 @@ from preprocessing import preprocessing as pr
 from training import launch_training as tr
 from inference import launch_inference as li
 
-
 #=======================================================================
 def exit_prog():
     print("\n[!! End of programme !!]")
     select = sl.answer_yes_or_non("Are you sure")
     if select :
         print(f"[<3] Goodbye! o/{sl.BELL}")
-        sl.print_gray(lo.LOGO_OUT)
+        sl.Display_Color(lo.LOGO_OUT, "gray")
         sys.exit()
 
 def menu_preprocessing():
@@ -36,7 +35,7 @@ def menu_preprocessing():
         if choice == 1:
             pr.launch_json_generation()
 
-        # **** Normalisation ****
+        # **** Normalization ****
         elif choice == 2:
             pr.launch_normalisation()
 
@@ -46,8 +45,7 @@ def menu_preprocessing():
 
 def main():
     """Displays the CLI menu and handles user choices."""
-    sl.print_yellow(lo.LOGO_IN) # "Display the logo SCHISM_IN
-
+    sl.Display_Color(lo.LOGO_IN, "Yellow")
     main_menu = sl.Menu('MAIN')
     while True:
         main_menu.display_menu()
