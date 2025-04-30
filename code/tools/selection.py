@@ -76,37 +76,37 @@ class Menu :
                 print(f"[X] Waiting for number. Try again ! {BELL}")
 
 
-def Display_Color(text, color="WHITE"):
+class DisplayColor:
     """
-    This function displays the message passed as a parameter in the requested color.
-    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', and 'gray'.
+    This class displays messages in the requested color.
+    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
     If the color is not specified, the text is displayed in white.
     """
-    BLACK = "\033[30m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW =  "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-    WHITE = "\033[37m"
-    GRAY = "\033[90m"
 
+    COLORS = {
+        "BLACK": "\033[30m",
+        "RED": "\033[31m",
+        "GREEN": "\033[32m",
+        "YELLOW": "\033[33m",
+        "BLUE": "\033[34m",
+        "MAGENTA": "\033[35m",
+        "CYAN": "\033[36m",
+        "WHITE": "\033[37m",
+        "GRAY": "\033[90m",
+    }
     RESET = "\033[0m"
 
-    # Check the color
-    if color.upper() == "RED":
-        color = RED
-    elif color.upper() == "YELLOW":
-        color = YELLOW
-    elif color.upper() == "GREEN":
-        color = GREEN
-    elif color.upper() == "GRAY":
-        color = GRAY
-    else:
-        color = WHITE
+    def __init__(self, text, color="WHITE"):
+        self.text = text
+        self.color = self.COLORS.get(color.upper(), self.COLORS["WHITE"])
 
-    print(color + text + RESET)
+    def display(self):
+        """Display the text in the specified color."""
+        print(f"{self.color}{self.text}{self.RESET}")
+
+def display_color(text, color="WHITE"):
+    display = DisplayColor(text, color)
+    display.display()
 
 
 def answer_yes_or_non(message):

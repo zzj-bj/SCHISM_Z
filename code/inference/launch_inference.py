@@ -21,6 +21,7 @@ def run_inference():
     print("\n[ Inference Mode ]")
 
     report_inference = re.ErrorReport()
+    valid_subfolders = []
 
     data_dir = fo.get_path("Enter the directory containing data to predict")
     run_dir = fo.get_path("Enter the directory containing model weights")
@@ -31,7 +32,6 @@ def run_inference():
     if not os.path.exists(hyperparameters_path):
         report_inference.add("hyperparameters.ini file was not found", "")
     else:
-        valid_subfolders = []
         hyperparameters = Hyperparameters(hyperparameters_path)
         params = hyperparameters.get_parameters().get("Training", {})
         metrics = [metric.strip()
@@ -82,9 +82,9 @@ def run_inference():
             print(e)
 
     if report_inference.is_report():
-        sl.Display_Color("[X] Inference finished with error", "red")
-        print("These directories have been removed from processing")
+        sl.display_color("[X] Inference finished with error", "red")
+        print("Some directories have been removed from processing")
         report_inference.display_report()
     else:
-        sl.Display_Color("[√] Inference completed successfully!\n", "green")
+        sl.display_color(f"[√] Inference ({selected_metric}) completed successfully!\n", "green")
     report_inference.print_report(file_name_report)

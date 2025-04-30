@@ -100,7 +100,7 @@ output_path : Directory where the generated images will be stored.
             for filename in tqdm(
                     files,
                     unit="file",
-                    bar_format=" - Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                    bar_format="     Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
                     ncols=80):
                 file = os.path.join(self.input_path, filename)
 

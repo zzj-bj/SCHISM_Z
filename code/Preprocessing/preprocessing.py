@@ -23,16 +23,27 @@ def launch_json_generation():
     print("\n[ Json Generation Mode ]")
 
     report_json = re.ErrorReport()
-
+    data_dir = fo.get_path("Enter the data directory")
     report_dir = fo.get_path("Enter the directory to save report")
     file_name_report = fo.create_name_path(report_dir, '', 'Json')
 
-    print("[!] Starting Json generation")
-    json_generation = jg.JsonGeneration()
-    try:
-        json_generation.process()
-    except ValueError as e:
-        print(e)
+    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+
+    valid_subfolders = []
+    if len(subfolders) == 0 :
+        report_json.add(" - No folder found in ", data_dir)
+    else:
+        for f in subfolders:
+            #TODO to be defined
+            pass
+
+    if len(valid_subfolders) != 0 :
+        print("[!] Starting Json generation")
+        json_generation = jg.JsonGeneration()
+        try:
+            json_generation.process()
+        except ValueError as e:
+            print(e)
 
     if report_json.is_report():
         print("[X] Json Generation Mode finished with error")
@@ -86,11 +97,11 @@ def launch_normalisation():
                 print(e)
 
     if report_mormal.is_report():
-        sl.Display_Color("[X] Normalization finished with error", "red")
-        print("These directories have been removed from processing")
+        sl.display_color("[X] Normalization finished with error", "red")
+        print("Some directories have been removed from processing")
         report_mormal.display_report()
     else:
-        sl.Display_Color("[√] Normalization finished without error\n", "green")
+        sl.display_color("[√] Normalization finished without error\n", "green")
     report_mormal.print_report(file_name_report)
 
 

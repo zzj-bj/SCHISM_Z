@@ -16,7 +16,7 @@ def exit_prog():
     select = sl.answer_yes_or_non("Are you sure")
     if select :
         print(f"[<3] Goodbye! o/{sl.BELL}")
-        sl.Display_Color(lo.LOGO_OUT, "gray")
+        sl.display_color(lo.LOGO_OUT, "gray")
         sys.exit()
 
 def menu_preprocessing():
@@ -45,7 +45,7 @@ def menu_preprocessing():
 
 def main():
     """Displays the CLI menu and handles user choices."""
-    sl.Display_Color(lo.LOGO_IN, "Yellow")
+    sl.display_color(lo.LOGO_IN, "Yellow")
     main_menu = sl.Menu('MAIN')
     while True:
         main_menu.display_menu()

@@ -85,8 +85,9 @@ def train_model():
                 print(e)
 
     if report_training.is_report():
-        sl.Display_Color("[X] Training finished with error", "red")
+        sl.display_color("[X] Training finished with error", "red")
+        print("Some directories have been removed from processing")
         report_training.display_report()
     else:
-        sl.Display_Color("[√] Training completed successfully!\n", "green")
+        sl.display_color("[√] Training completed successfully!\n", "green")
     report_training.print_report(file_name_report)
