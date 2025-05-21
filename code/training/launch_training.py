@@ -10,8 +10,9 @@ from tools import folder as fo
 from tools import report as re
 from tools import selection as sl
 
-from classes.Training import Training
 from commun.hyperparameters import Hyperparameters
+
+from training import Training as tr
 
 #===========================================================================
 def check_folder(folder, root, report):
@@ -71,7 +72,7 @@ def train_model():
         if len(valid_subfolders) != 0 :
             print("[!] Starting training.")
 
-            train_object = Training(
+            train_object = tr.Training(
                 data_dir=data_dir,
                 subfolders=valid_subfolders,
                 run_dir=run_dir,

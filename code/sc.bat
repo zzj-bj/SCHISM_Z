@@ -1,2 +1,0 @@
-python schism.py
-pause
