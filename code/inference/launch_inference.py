@@ -10,7 +10,7 @@ from tools import selection as sl
 from tools import folder as fo
 from tools import report as re
 
-from classes.Inference import Inference
+from inference.Inference import Inference
 from commun.hyperparameters import Hyperparameters
 
 

@@ -37,7 +37,8 @@ def launch_json_generation():
             #TODO to be defined
             pass
 
-    if len(valid_subfolders) != 0 :
+    #TODO waiting work
+    if len(valid_subfolders) != 0 or True :
         print("[!] Starting Json generation")
         json_generation = jg.JsonGeneration()
         try:
@@ -46,11 +47,11 @@ def launch_json_generation():
             print(e)
 
     if report_json.is_report():
-        print("[X] Json Generation Mode finished with error")
+        sl.display_color("[X] Json Generation Mode finished with error", "red")
         report_json.display_report()
         report_json.print_report(file_name_report)
     else:
-        print("[√] Json Generation Mode finished without error\n")
+        sl.display_color("[√] Json Generation Mode finished without error\n", "green")
 
 def launch_normalisation():
     """
