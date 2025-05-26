@@ -30,7 +30,7 @@ class TrainingLogger:
         self.data = data
 
         os.makedirs(self.save_directory, exist_ok=True)
-        
+
     def save_indices_to_file(self, indices_list):
         """
         Saves the indices of the training, validation, and test sets to text files.
@@ -67,7 +67,7 @@ class TrainingLogger:
         with open(json_file_path, 'w') as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
-        print(f"Data statistics saved to {json_file_path}")
+        print(f" Data statistics saved to {json_file_path}")
 
     def save_hyperparameters(self):
         """
@@ -78,7 +78,7 @@ class TrainingLogger:
         config.add_section('Model')
         for key, value in self.model_params.items():
             config.set('Model', key, str(value))
-        
+
         config.add_section('Optimizer')
         for key, value in self.optimizer_params.items():
             config.set('Optimizer', key, str(value))
@@ -103,7 +103,7 @@ class TrainingLogger:
         with open(ini_file_path, 'w') as configfile:
             config.write(configfile)
 
-        print(f"Hyperparameters saved to {ini_file_path}")
+        print(f" Hyperparameters saved to {ini_file_path}")
 
     def save_best_metrics(self, loss_dict, metrics_dict):
         """
@@ -126,7 +126,7 @@ class TrainingLogger:
                     f.write(f"  - {metric}: {values[epoch - 1]:.4f}\n")
                 f.write("\n" + "-" * 30 + "\n\n")
 
-        print(f"Validation metrics history saved to {file_path}")
+        print(f" Validation metrics history saved to {file_path}")
 
     def plot_learning_curves(self, loss_dict, metrics_dict):
         """
@@ -165,7 +165,7 @@ class TrainingLogger:
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
         plt.close()
-        print(f"Learning curves saved to {self.save_directory}/learning_curves.png")
+        print(f" Learning curves saved to {self.save_directory}/learning_curves.png")
 
     def save_confusion_matrix(self, conf_metric, model, val_dataloader, device):
         """
@@ -223,4 +223,4 @@ class TrainingLogger:
 
             plt.savefig(os.path.join(self.save_directory, "confusion_matrix.png"), dpi=300)
             plt.close()
-            print(f"Confusion matrix saved to {self.save_directory}/confusion_matrix.png")
+            print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png")

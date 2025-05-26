@@ -76,6 +76,8 @@ class Inference:
         """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
+            text =f" - Model '{model_name}' is not supported"
+            self.report .add(text,'')
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
@@ -102,6 +104,8 @@ class Inference:
                 k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
             }
         except ValueError as e:
+            text =f" - Error converting parameters for model '{model_name}': {e}"
+            self.report .add(text,'')
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
 
         # Initialize the model
@@ -110,6 +114,8 @@ class Inference:
         # Load pre-trained weights
         checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
         if not os.path.exists(checkpoint_path):
+            text =f" - Checkpoint not found at '{checkpoint_path}'"
+            self.report .add(text,'')
             raise FileNotFoundError(f"Checkpoint not found at '{checkpoint_path}'. Ensure the path is correct.")
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
@@ -178,11 +184,13 @@ class Inference:
                 for key, values in raw_data_stats.items()
             }
 
-            print("Data stats loaded successfully.")
+            print(" Data stats loaded successfully.")
             return self.data_stats  # Return for verification if needed
 
         except Exception as e:
-            print(f"Error loading data stats: {e}")
+            print(f" Error loading data stats: {e}")
+            text =f" - Error loading data stats: {e}"
+            self.report .add(text,'')
             raise
 
     def predict(self):
@@ -194,7 +202,7 @@ class Inference:
         """
         dataloader = self.load_dataset()
         total_images = len(dataloader)
-        print("total_images : ", total_images)
+        print(" total_images : ", total_images)
 
         with tqdm(total=len(dataloader), unit="batch",
           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",

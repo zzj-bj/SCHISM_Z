@@ -189,6 +189,8 @@ class Training:
             if metric in self.metrics_mapping:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
+                text =f" - Metric '{metric}' not recognized"
+                self.report .add(text,'')
                 raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
 
         return selected_metrics
@@ -198,6 +200,8 @@ class Training:
         optimizer_class = self.optimizer_mapping.get(optimizer_name)
 
         if not optimizer_class:
+            text =f" - Optimizer '{optimizer_name}' is not supported"
+            self.report .add(text,'')
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
         converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
@@ -209,6 +213,8 @@ class Training:
         scheduler_class = self.scheduler_mapping.get(scheduler_name)
 
         if not scheduler_class:
+            text =f" - Scheduler '{scheduler_name}' is not supported"
+            self.report .add(text,'')
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
 
         converted_params = {k: self.param_converter._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
@@ -223,6 +229,8 @@ class Training:
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
+            text =f" - Loss '{loss_name}' is not supported"
+            self.report .add(text,'')
             raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
         # Convert static parameters from config
@@ -250,6 +258,8 @@ class Training:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
+            text =f" - Model '{model_name}' is not supported"
+            self.report .add(text,'')
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
@@ -276,6 +286,8 @@ class Training:
                 for k, v in optional_params.items()
             }
         except ValueError as e:
+            text =f" - Error converting parameters for model '{model_name}' : {e}"
+            self.report .add(text,'')
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
@@ -319,7 +331,7 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                print(f"File {json_file_path} not found. Using default normalization stats.")
+                print(f" File {json_file_path} not found. Using default normalization stats.")
                 return {"default": neutral_stats}
 
             try:
@@ -330,6 +342,8 @@ class Training:
                 for key, value in raw_data_stats.items():
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
+                        text =f" - Invalid format in data_stats.json for key {key}"
+                        self.report .add(text,'')
                         raise ValueError(f"Invalid format in data_stats.json for key {key}")
 
                     data_stats_loaded[key] = [
@@ -340,7 +354,7 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
-                print(f"Error loading data stats from {json_file_path}: {e}. Using default normalization stats.")
+                print(f" Error loading data stats from {json_file_path}: {e}. Using default normalization stats.")
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
@@ -458,9 +472,9 @@ class Training:
             box_width = len(epoch_str) + 2  # Add padding for the box
 
             # Create the box
-            print(f"╔{'═' * (box_width)}╗")
-            print(f"║{epoch_str.center(box_width)}║")
-            print(f"╚{'═' * (box_width)}╝")
+            print(f" ╔{'═' * (box_width)}╗")
+            print(f" ║{epoch_str.center(box_width)}║")
+            print(f" ╚{'═' * (box_width)}╝")
 
         scaler = None
         if self.device == "cuda":
@@ -565,11 +579,10 @@ class Training:
                 for metric, value in epoch_metrics.items():
                     metrics_dict[phase][metric].append(value)
 
-                print(f"{phase.title().ljust(5)} Loss: {epoch_loss: .4f}")
-                print(f"{phase.title().ljust(5)} ", end='')
+                print(f" {phase.title().ljust(5)} Loss: {epoch_loss: .4f}")
+                print(f" {phase.title().ljust(5)} ", end='')
                 for metric, value in epoch_metrics.items():
 
-                    # print(f"{phase.title().ljust(7)} {metric}: {value: .4f}", end=" | ")
                     print(f" {metric}: {value: .4f}", end=" | ")
                 print()
 
@@ -586,15 +599,14 @@ class Training:
                                 os.path.join(self.save_directory, f"model_best_{metric}.pth")
                             )
 
-        # print(f"Best Validation Metrics: {best_val_metrics}")
         formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
-        print(f"Best Validation Metrics: {formatted_metrics}")
+        print(f" Best Validation Metrics: {formatted_metrics}")
 
         return loss_dict, metrics_dict, metrics
 
     def train(self):
 
-        text =f'Processing with {self.num_samples} images among {self.num_file}'
+        text =f' Processing with {self.num_samples} images among {self.num_file}'
         print(text)
 
         optimizer = self.initialize_optimizer()
