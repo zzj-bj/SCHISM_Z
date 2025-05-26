@@ -8,6 +8,7 @@ Created on Mon Apr 14 14:49:41 2025
 from datetime import datetime
 
 from tools import folder as fo
+from tools import selection as sl
 
 #============================================================================
 # Formar for Date & Time
@@ -48,11 +49,8 @@ class ErrorReport:
         self.dictionary[key].append(element)
 
     def is_report(self):
-        """ check if there is a report. """
-        self.report = False
-        if self.dictionary:
-            self.report =  True
-        return self.report
+        """ Check if there is a report. """
+        return bool(self.dictionary)
 
     def display_report(self):
         """
@@ -65,7 +63,7 @@ class ErrorReport:
             print(f"{key} {', '.join(elements)}")
         print("")
 
-    def print_report(self, instance_name):
+    def print_report(self, process, instance_name):
         """ Write report into a file """
         now = datetime.now()
         total_def = sum(len(liste)for liste in self.dictionary.values())
@@ -77,9 +75,18 @@ class ErrorReport:
             file.write("\n*------------------------------------------\n")
             file.write(f"-- {now.strftime(F_DATE  )} -- \n")
             if total_def == 0:
-                file.write(f" - {name} finished whitout error\n")
+                file.write(f" - {process} finished whitout error\n")
             else:
                 file.write(f"*** !!! {total_def} problems founds !!! :***\n")
                 for key, elements in self.dictionary.items():
                     file.write(f"{key} : {', '.join(elements)}\n")
             file.write("------------------------------------------*\n")
+
+    def status(self, process, file):
+        if self.is_report():
+            sl.display_color(f"[X] {process} finished with error", "red")
+            self.display_report()
+        else:
+            sl.display_color(f"[√] {process} finished without error\n", "green")
+
+        self.print_report(process, file)

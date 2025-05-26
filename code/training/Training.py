@@ -2,31 +2,31 @@ import sys
 import os
 from datetime import datetime
 
+
 import glob
 import json
 import numpy as np
-
 import matplotlib
 matplotlib.use('Agg')
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
 import torch.nn.functional as nn_func
-
+from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
 from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
 from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 
+
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
-# from classes.TrainingLogger import TrainingLogger
-from training import TrainingLogger as tl
+from training.TrainingLogger import TrainingLogger
+# from training import TrainingLogger as tl
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -62,6 +62,8 @@ class Training:
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
         self.hyperparameters = kwargs.get('hyperparameters')
+        self.num_file = kwargs.get('num_file')
+        self.report = kwargs.get('report')
 
         # Extract category-wise parameters
         self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
@@ -91,6 +93,15 @@ class Training:
         self.img_res = int(self.data.get('img_res', 560))
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
+
+        # Control Num image to process
+        if self.num_file <= self.num_samples :
+            text =f' - num_samples ({self.num_samples}) > maximum number of images to process ({self.num_file})'
+            self.report .add(text,'')
+            raise ValueError
+        if self.num_samples < 16 :
+            self.report .add(f'num_samples ({self.num_samples}) < 16 ','')
+            raise ValueError
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')
@@ -133,7 +144,7 @@ class Training:
 
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
-        self.logger = tl.TrainingLogger(save_directory=self.save_directory,
+        self.logger = TrainingLogger(save_directory=self.save_directory,
                                     num_classes=self.num_classes,
                                     model_params=self.model_params,
                                     optimizer_params=self.optimizer_params,
@@ -575,11 +586,17 @@ class Training:
                                 os.path.join(self.save_directory, f"model_best_{metric}.pth")
                             )
 
-        print(f"Best Validation Metrics: {best_val_metrics}")
+        # print(f"Best Validation Metrics: {best_val_metrics}")
+        formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
+        print(f"Best Validation Metrics: {formatted_metrics}")
 
         return loss_dict, metrics_dict, metrics
 
     def train(self):
+
+        text =f'Processing with {self.num_samples} images among {self.num_file}'
+        print(text)
+
         optimizer = self.initialize_optimizer()
         scheduler = self.initialize_scheduler(optimizer=optimizer)
         loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer,

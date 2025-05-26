@@ -9,8 +9,9 @@ class JsonGeneration:
     """
     A class to generatz Json file from images.
     """
-    def __init__(self):
+    def __init__(self, report):
         self.raw_image = None
+        self.report = report
 
 
     def process(self):
@@ -18,3 +19,4 @@ class JsonGeneration:
 
         print("*** Development in progress ***")
         print("***      See you soon       ***")
+        self.report.add(" - Development in progress", "")

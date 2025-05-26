@@ -81,10 +81,5 @@ def run_inference():
         except ValueError as e:
             print(e)
 
-    if report_inference.is_report():
-        sl.display_color("[X] Inference finished with error", "red")
-        print("Some directories have been removed from processing")
-        report_inference.display_report()
-    else:
-        sl.display_color(f"[√] Inference ({selected_metric}) completed successfully!\n", "green")
-    report_inference.print_report(file_name_report)
+    text = f"Inference with Metric '{selected_metric}'"
+    report_inference.status(text , file_name_report)

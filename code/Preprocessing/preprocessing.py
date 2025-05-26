@@ -8,7 +8,6 @@ import os
 
 from tools import folder as fo
 from tools import report as re
-from tools import selection as sl
 
 from preprocessing import normalisation as no
 from preprocessing import json_generation as jg
@@ -40,18 +39,13 @@ def launch_json_generation():
     #TODO waiting work
     if len(valid_subfolders) != 0 or True :
         print("[!] Starting Json generation")
-        json_generation = jg.JsonGeneration()
+        json_generation = jg.JsonGeneration(report_json)
         try:
             json_generation.process()
         except ValueError as e:
             print(e)
 
-    if report_json.is_report():
-        sl.display_color("[X] Json Generation Mode finished with error", "red")
-        report_json.display_report()
-        report_json.print_report(file_name_report)
-    else:
-        sl.display_color("[√] Json Generation Mode finished without error\n", "green")
+    report_json.status("Json Generation Mode", file_name_report)
 
 def launch_normalisation():
     """
@@ -97,12 +91,4 @@ def launch_normalisation():
             except ValueError as e:
                 print(e)
 
-    if report_mormal.is_report():
-        sl.display_color("[X] Normalization finished with error", "red")
-        print("Some directories have been removed from processing")
-        report_mormal.display_report()
-    else:
-        sl.display_color("[√] Normalization finished without error\n", "green")
-    report_mormal.print_report(file_name_report)
-
-
+    report_mormal.status("Normalization", file_name_report)
