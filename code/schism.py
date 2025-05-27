@@ -7,15 +7,16 @@ from tools import logo as lo
 from tools import selection as sl
 
 from preprocessing import preprocessing as pr
-from training import launch_training as tr
+from training import launch_training as lt
 from inference import launch_inference as li
 
 #=======================================================================
 def exit_prog():
-    print("\n[!! End of programme !!]")
+    """ End of Program """
+    print("\n[!! End of program !!]")
     select = sl.answer_yes_or_non("Are you sure")
     if select :
-        print(f"[<3] Goodbye! o/{sl.BELL}")
+        print(f"[<3] Goodbye! {sl.BELL}")
         sl.display_color(lo.LOGO_OUT, "gray")
         sys.exit()
 
@@ -57,7 +58,7 @@ def main():
 
         # Training
         elif choice == 2:
-            tr.train_model()
+            lt.train_model()
 
          # Inference
         elif choice == 3:
