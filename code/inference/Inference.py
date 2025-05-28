@@ -48,6 +48,7 @@ class Inference:
         self.run_dir = kwargs.get('run_dir')
         self.hyperparameters = kwargs.get('hyperparameters')
         self.metric = kwargs.get('selected_metric')
+        self.report = kwargs.get('report')
 
         # Extract category-wise parameters
         self.model_params = self.hyperparameters.get_parameters()['Model']
