@@ -79,7 +79,7 @@ class Inference:
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
             self.report .add(text,'')
-            raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
+            raise ValueError(f" Model '{model_name}' is not supported.\n Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
@@ -105,9 +105,9 @@ class Inference:
                 k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
             }
         except ValueError as e:
-            text =f" - Error converting parameters for model '{model_name}': {e}"
+            text =f" - Error converting parameters for model '{model_name}':\n {e}"
             self.report .add(text,'')
-            raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
+            raise ValueError(f" Error converting parameters for model '{model_name}':\n {e}")
 
         # Initialize the model
         model = model_class(**typed_required_params, **optional_params).to(self.device)
@@ -117,7 +117,7 @@ class Inference:
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
             self.report .add(text,'')
-            raise FileNotFoundError(f"Checkpoint not found at '{checkpoint_path}'. Ensure the path is correct.")
+            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n Ensure the path is correct.")
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)

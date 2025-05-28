@@ -22,6 +22,7 @@ def run_inference():
 
     report_inference = re.ErrorReport()
     valid_subfolders = []
+    selected_metric =""
     initial_condition = True
 
     data_dir = fo.get_path("Enter the directory containing data to predict")
@@ -55,18 +56,18 @@ def run_inference():
             selected_metric = metrics[int(choice) - 1]
             print(f' - Metric selected = {selected_metric}')
 
+            # Check for the existence of the *.pth files
+            files = [f for f in os.listdir(run_dir) if f.endswith(".pth")]
+            print(files)
+            if len(files) == 0:
+                report_inference.add(" File (*.pth) for Metrics not found", "")
+                initial_condition = False
+
         # Check for the existence of the *.Json file
         json_file_path = os.path.join(run_dir, 'data_stats.json')
         if not os.path.exists(json_file_path):
-            report_inference.add(f"File {json_file_path} not found", "")
+            report_inference.add(f" File {json_file_path} not found", "")
             initial_condition = False
-
-        # Check for the existence of the *.pth files
-        files = [f for f in os.listdir(run_dir) if f.endswith(".pth")]
-        if len(files) == 0:
-            report_inference.add("File (*.pth) for Metrics not found", "")
-            initial_condition = False
-
 
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
         if len(subfolders) == 0 :
@@ -95,10 +96,16 @@ def run_inference():
                 report = report_inference,
             )
 
+            try:
+                pred_object.predict()
+            except ValueError as e:
+                print(f" ValueError during prediction:\n {e}")
 
-            pred_object.predict()
-        except ValueError as e:
-            print(e)
+        except FileNotFoundError as e:
+            print(f" FileNotFoundError during model initialization:\n {e}")
+        except Exception as e:
+            print(f" An unexpected error occurred:\n {e}")
+
 
     text = f"Inference with Metric '{selected_metric}'"
     report_inference.status(text , file_name_report)
