@@ -50,9 +50,9 @@ def run_inference():
 
             # Display the Metric available Menu
             menu_metric = ['Metric'] + available_metrics
-            inference_menu = sl.Menu('Dynamic',menu_metric)
-            inference_menu.display_menu()
-            choice = inference_menu.selection()
+            metric_menu = sl.Menu('Dynamic',menu_metric)
+            metric_menu.display_menu()
+            choice = metric_menu.selection()
             selected_metric = metrics[int(choice) - 1]
             print(f' - Metric selected = {selected_metric}')
 
