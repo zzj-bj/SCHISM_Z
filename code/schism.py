@@ -6,7 +6,7 @@ import sys
 from tools import logo as lo
 from tools import selection as sl
 
-from preprocessing import preprocessing as pr
+from preprocessing import launch_preprocessing as lp
 from training import launch_training as lt
 from inference import launch_inference as li
 
@@ -34,11 +34,11 @@ def menu_preprocessing():
         #TODO In development
         # **** Json generation ****
         if choice == 1:
-            pr.launch_json_generation()
+            lp.launch_json_generation()
 
         # **** Normalization ****
         elif choice == 2:
-            pr.launch_normalisation()
+            lp.launch_normalisation()
 
         # **** Return main menu ****
         elif choice == 3:

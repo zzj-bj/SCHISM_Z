@@ -36,7 +36,7 @@ def launch_json_generation():
             #TODO to be defined
             pass
 
-    #TODO waiting work
+    #TODO waiting work : "or True" to be deleter
     if len(valid_subfolders) != 0 or True :
         print("[!] Starting Json generation")
         json_generation = jg.JsonGeneration(report_json)

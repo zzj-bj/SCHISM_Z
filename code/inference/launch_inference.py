@@ -15,7 +15,6 @@ from commun.hyperparameters import Hyperparameters
 
 
 #===========================================================================
-
 def run_inference():
     """Executes the inference process in CLI."""
     print("\n[ Inference Mode ]")
@@ -53,12 +52,11 @@ def run_inference():
             metric_menu = sl.Menu('Dynamic',menu_metric)
             metric_menu.display_menu()
             choice = metric_menu.selection()
-            selected_metric = metrics[int(choice) - 1]
+            selected_metric = metrics[choice - 1]
             print(f' - Metric selected = {selected_metric}')
 
             # Check for the existence of the *.pth files
             files = [f for f in os.listdir(run_dir) if f.endswith(".pth")]
-            print(files)
             if len(files) == 0:
                 report_inference.add(" File (*.pth) for Metrics not found", "")
                 initial_condition = False
