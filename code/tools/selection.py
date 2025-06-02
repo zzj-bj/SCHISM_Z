@@ -16,21 +16,21 @@ class Menu :
     This class allows displaying a menu and controlling the choice.
     """
 
-    def __init__(self, sel_menu,  menu_dynamique = None):
+    def __init__(self, sel_menu,  dynamic_menu = None):
 
         self.sel_menu = sel_menu
-        self.menu_dynamique = menu_dynamique
+        self.dynamic_menu = dynamic_menu
 
         # Check selec menu
         self.unknow_menu = False
         if self.sel_menu == 'Dynamic':
-            if self.menu_dynamique is None :
+            if self.dynamic_menu is None :
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
-                self.tableau = [str(element) for element in self.menu_dynamique]
+                self.board = [str(element) for element in self.dynamic_menu]
         elif self.sel_menu in me.MENUS:
-            self.tableau = [str(element) for element in me.MENUS[self.sel_menu]]
+            self.board = [str(element) for element in me.MENUS[self.sel_menu]]
         else:
             self.unknow_menu = True
 
@@ -44,20 +44,20 @@ class Menu :
             print(f" '{self.sel_menu}' : This menu doesn't existe in the dictionary !!!")
             sys.exit()
         else:
-            longueur_max = max(len(chaine) for chaine in self.tableau)
-            self.ligne = len(self.tableau)
-            box_width = longueur_max + 6
+            max_length = max(len(chaine) for chaine in self.board)
+            self.ligne = len(self.board)
+            box_width = max_length + 6
 
             # Create the frame
             print(f"╔{'═' * (box_width )}╗")
-            print(f"║{self.tableau[0].center(box_width )}║")
+            print(f"║{self.board[0].center(box_width )}║")
             print(f"╠{'═' * (box_width )}╣")
             for i in range(1, self.ligne):
-                print(f"║ {i} : {self.tableau[i].ljust(longueur_max)} ║")
+                print(f"║ {i} : {self.board[i].ljust(max_length)} ║")
             print(f"╚{'═' * (box_width )}╝")
 
             if self.ligne < 2 :
-                print(f" '{self.tableau[0]}' : Menu without Choise !!!")
+                print(f" '{self.board[0]}' : Menu without Choise !!!")
                 sys.exit()
 
     def selection(self):
@@ -105,6 +105,11 @@ class DisplayColor:
         print(f"{self.color}{self.text}{self.RESET}")
 
 def display_color(text, color="WHITE"):
+    """
+    Display a text with color.
+    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
+    If the color is not specified, the text is displayed in white.
+    """
     display = DisplayColor(text, color)
     display.display()
 
@@ -124,8 +129,3 @@ def answer_yes_or_non(message):
             return False
         else:
             print("incorrect answer !!! ")
-
-
-
-
-
