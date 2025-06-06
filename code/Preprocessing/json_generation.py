@@ -17,6 +17,6 @@ class JsonGeneration:
     def process(self):
         """ Processing to be defined """
 
-        print("*** Development in progress ***")
-        print("***      See you soon       ***")
+        print(" *** Development in progress ***")
+        print(" ***      See you soon       ***")
         self.report.add(" - Development in progress", "")

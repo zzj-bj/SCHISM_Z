@@ -5,6 +5,7 @@ Created on Fri Apr  4 11:14:12 2025
 @author: Pierre.FANCELLI
 """
 
+# Menu declaration
 MENUS = {
     'MAIN': [
         "MAIN MENU",
