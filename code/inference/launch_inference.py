@@ -49,7 +49,7 @@ def run_inference():
 
             # Display the Metric available Menu
             menu_metric = ['Metric'] + available_metrics
-            metric_menu = sl.Menu('Dynamic',menu_metric)
+            metric_menu = sl.Menu('Dynamic',menu_metric, style = 'rounds')
             metric_menu.display_menu()
             choice = metric_menu.selection()
             selected_metric = metrics[choice - 1]

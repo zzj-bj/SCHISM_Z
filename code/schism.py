@@ -26,7 +26,7 @@ def menu_preprocessing():
         - Json generation   *** In development ***
         - Normalization of masks in 8-bit grayscale format."
     """
-    preprocessing_menu = sl.Menu('Preprocessing')
+    preprocessing_menu = sl.Menu('Preprocessing', style = 'simple')
     while True:
         preprocessing_menu.display_menu()
         choice = preprocessing_menu.selection()

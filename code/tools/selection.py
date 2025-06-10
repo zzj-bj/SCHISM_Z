@@ -14,12 +14,16 @@ BELL = "\a" # Sound system for Error.
 class Menu :
     """
     This class allows displaying a menu and controlling the choice.
+    You can chose the style of the pattern between:
+       simple, double or rounds.
+    The default value is 'double'
     """
 
-    def __init__(self, sel_menu,  dynamic_menu = None):
+    def __init__(self, sel_menu,  dynamic_menu = None, style = None):
 
         self.sel_menu = sel_menu
         self.dynamic_menu = dynamic_menu
+        self.style = style
 
         # Check selec menu
         self.unknow_menu = False
@@ -33,6 +37,14 @@ class Menu :
             self.board = [str(element) for element in me.MENUS[self.sel_menu]]
         else:
             self.unknow_menu = True
+
+        # Select pattern
+        if self.style == 'simple' :
+            self.frame = simple
+        elif self.style == 'rounds' :
+            self.frame = rounds
+        else:
+            self.frame = double
 
         self.select = None
         self.ligne = None
@@ -48,13 +60,14 @@ class Menu :
             self.ligne = len(self.board)
             box_width = max_length + 6
 
-            # Create the frame
-            print(f"╔{'═' * (box_width )}╗")
-            print(f"║{self.board[0].center(box_width )}║")
-            print(f"╠{'═' * (box_width )}╣")
+            # Create the pattern
+            print(f"{self.frame[0]}{self.frame[10] * box_width}{self.frame[2]}")
+            print(f"{self.frame[9]}{self.board[0].center(box_width )}{self.frame[9]}")
+            print(f"{self.frame[3]}{self.frame[10] * box_width}{self.frame[5]}")
             for i in range(1, self.ligne):
-                print(f"║ {i} : {self.board[i].ljust(max_length)} ║")
-            print(f"╚{'═' * (box_width )}╝")
+                print(f"{self.frame[9]} {i} : {self.board[i].ljust(max_length)} {self.frame[9]}")
+            print(f"{self.frame[6]}{self.frame[10] * box_width}{self.frame[8]}")
+
 
             if self.ligne < 2 :
                 print(f" '{self.board[0]}' : Menu without Choise !!!")
@@ -129,3 +142,24 @@ def answer_yes_or_non(message):
             return False
         else:
             print("incorrect answer !!! ")
+
+#--------------------------------------------------------------
+# Frame pattern
+double = ["╔", "╦", "╗",
+          "╠", "╬", "╣",
+          "╚", "╩", "╝",
+          "║", "═"
+          ]
+
+simple = ["┌", "┬", "┐",
+          "├", "┼", "┤",
+          "└", "┴", "┘",
+          "│", "─"
+          ]
+
+rounds = ["╭", "┬", "╮",
+          "├", "┼", "┤",
+          "╰", "┴", "╯",
+          "│", "─"
+          ]
+
