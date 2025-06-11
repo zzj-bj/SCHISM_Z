@@ -7,6 +7,7 @@ Created on Fri Apr  4 11:14:12 2025
 import sys
 
 from tools import menu as me
+from tools import pattern as pa
 
 #============================================================================
 BELL = "\a" # Sound system for Error.
@@ -15,7 +16,7 @@ class Menu :
     """
     This class allows displaying a menu and controlling the choice.
     You can chose the style of the pattern between:
-       simple, double or rounds.
+       simple, double, rounds, ASCII or Unicode.
     The default value is 'double'
     """
 
@@ -40,11 +41,15 @@ class Menu :
 
         # Select pattern
         if self.style == 'simple' :
-            self.frame = simple
+            self.frame = pa.pattern['simple']
         elif self.style == 'rounds' :
-            self.frame = rounds
+            self.frame = pa.pattern['rounds']
+        elif self.style == 'ASCII' :
+            self.frame = pa.pattern['ASCII']
+        elif self.style == 'Unicode' :
+            self.frame = pa.pattern['Unicode']
         else:
-            self.frame = double
+            self.frame = pa.pattern['double']
 
         self.select = None
         self.ligne = None
@@ -67,7 +72,6 @@ class Menu :
             for i in range(1, self.ligne):
                 print(f"{self.frame[9]} {i} : {self.board[i].ljust(max_length)} {self.frame[9]}")
             print(f"{self.frame[6]}{self.frame[10] * box_width}{self.frame[8]}")
-
 
             if self.ligne < 2 :
                 print(f" '{self.board[0]}' : Menu without Choise !!!")
@@ -142,24 +146,3 @@ def answer_yes_or_non(message):
             return False
         else:
             print("incorrect answer !!! ")
-
-#--------------------------------------------------------------
-# Frame pattern
-double = ["╔", "╦", "╗",
-          "╠", "╬", "╣",
-          "╚", "╩", "╝",
-          "║", "═"
-          ]
-
-simple = ["┌", "┬", "┐",
-          "├", "┼", "┤",
-          "└", "┴", "┘",
-          "│", "─"
-          ]
-
-rounds = ["╭", "┬", "╮",
-          "├", "┼", "┤",
-          "╰", "┴", "╯",
-          "│", "─"
-          ]
-
