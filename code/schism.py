@@ -4,9 +4,10 @@
 import sys
 
 from tools import selection as sl
-from tools import various_functions as vf
 from tools import display_color as dc
+from tools import various_functions as vf
 from tools import constants as ct
+
 
 from preprocessing import launch_preprocessing as lp
 from training import launch_training as lt

@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 12 13:27:41 2025
+Set of constants used in the program:
+    Logo for SCHISM
+    Sound system for Error
+    symbols for frame creation
+    Constants for displaying menus
 
 @author: Pierre.FANCELLI
 """
+#------------------------------------------------------------------
 
-""" Logo for SCHISM """
+# Logo for SCHISM
 LOGO_IN = """
 ╔══════════════════════════════════════════════════╗
 ║  ███████╗ ██████╗██╗  ██╗██╗███████╗███╗   ███╗  ║
@@ -32,12 +37,11 @@ LOGO_OUT = """
 ╚══════════════════════════════════════════════════╝
 """
 
-
 # Sound system for Error.
 BELL = "\a"
 
 
-# Frame pattern
+# symbols for frame creation
 PATTERN ={
 "double" : ["╔", "╦", "╗",
             "╠", "╬", "╣",
@@ -67,7 +71,9 @@ PATTERN ={
     }
 
 
-# Menu declaration
+# Constants for displaying menus
+# MAIN MENU_   : Represents the main menu options
+# PREPROCESSING : Represents the preprocessing menu options
 MENUS = {
     'MAIN': [
         "MAIN MENU",
@@ -81,11 +87,3 @@ MENUS = {
         "Normalization",
         "Return Main Menu"]
 }
-
-
-
-
-
-
-
-
