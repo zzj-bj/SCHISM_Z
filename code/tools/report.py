@@ -63,28 +63,10 @@ class ErrorReport:
             print(f"{key} {', '.join(elements)}")
         print("")
 
-    def print_report(self, process, instance_name):
-        """ Write report into a file """
-        now = datetime.now()
-        total_def = sum(len(liste)for liste in self.dictionary.values())
-
-        filename = f"{instance_name}_report.txt"
-        with open(filename, 'a') as file:
-            file.write("\n*------------------------------------------\n")
-            file.write(f"-- {now.strftime(F_DATE  )} -- \n")
-            if total_def == 0:
-                file.write(f" - {process} finished whitout error\n")
-            else:
-                file.write(f" *** !!! {total_def} problems founds !!! :***\n")
-                for key, elements in self.dictionary.items():
-                    file.write(f"{key} : {', '.join(elements)}\n")
-            file.write("------------------------------------------*\n")
-
     def status(self, process, file):
         if self.is_report():
-            sl.display_color(f"[X] {process} finished with error", "red")
+            sl.display_color(f"[X] {process} completed with error(s)", "red")
             self.display_report()
         else:
-            sl.display_color(f"[√] {process} finished without error\n", "green")
+            sl.display_color(f"[√] {process} completed without error\n", "green")
 
-        self.print_report(process, file)

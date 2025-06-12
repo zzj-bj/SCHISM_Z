@@ -28,14 +28,14 @@ def check_folder(folder, root, report):
             if not os.path.isdir(masks_path):
                 report.add(" - Folder 'masks' missing in :", f)
             else:
-                nb_f_image = fo.compter_tif_files(images_path)
-                nb_f_masks = fo.compter_tif_files(masks_path)
+                nb_f_image = fo.count_tif_files(images_path)
+                nb_f_masks = fo.count_tif_files(masks_path)
                 num_file += nb_f_image
                 if nb_f_image == 0:
-                    report.add(" - No file in folder 'image'  :", f)
+                    report.add(" - No file (*.tif') in folder 'image'  :", f)
                 else:
                     if nb_f_masks == 0:
-                        report.add(" - No file in folder 'masks'  :", f)
+                        report.add(" - No file (*.tif') in folder 'masks'  :", f)
                     else:
                         if nb_f_image != nb_f_masks :
                             report.add(" - 'images/masks' : Size not equal :", f)
@@ -49,12 +49,13 @@ def train_model():
     print("\n[ Training Mode ]")
 
     report_training = re.ErrorReport()
+    file_name_report = 'Training'
+
     data_dir = fo.get_path("Enter the data directory")
     run_dir = fo.get_path("Enter the directory to save runs")
     hyperparameters_path = fo.get_path("Enter the path to the hyperparameters INI file")
 
-    report_dir = fo.get_path("Enter the directory to save report")
-    file_name_report = fo.create_name_path(report_dir, '', 'Training')
+
 
     hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):

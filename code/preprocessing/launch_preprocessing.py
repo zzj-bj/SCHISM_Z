@@ -9,7 +9,7 @@ import os
 from tools import folder as fo
 from tools import report as re
 
-from preprocessing import normalisation as no
+from preprocessing import image_normalizer as no
 from preprocessing import json_generation as jg
 
 #=============================================================================
@@ -22,9 +22,9 @@ def launch_json_generation():
     print("\n[ Json Generation Mode ]")
 
     report_json = re.ErrorReport()
+    file_name_report = 'Json'
+
     data_dir = fo.get_path("Enter the data directory")
-    report_dir = fo.get_path("Enter the directory to save report")
-    file_name_report = fo.create_name_path(report_dir, '', 'Json')
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
@@ -53,26 +53,26 @@ def launch_normalisation():
     """
     print("\n[ Normalization Mode ]")
 
-    report_mormal = re.ErrorReport()
+    report_normal = re.ErrorReport()
+    file_name_report = 'Normalization'
+
     data_dir = fo.get_path("Enter the data directory")
-    report_dir = fo.get_path("Enter the directory to save report")
-    file_name_report = fo.create_name_path(report_dir, '', 'Normalization')
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
     valid_subfolders = []
     if len(subfolders) == 0 :
-        report_mormal.add(" - No folder found in ", data_dir)
+        report_normal.add(" - No folder found in ", data_dir)
     else:
         for f in subfolders:
             masks_path = fo.create_name_path(data_dir, f, 'masks')
 
             if not os.path.isdir(masks_path):
-                report_mormal.add(" - Folder 'masks' missing in :", f)
+                report_normal.add(" - Folder 'masks' missing in :", f)
             else:
-                nb_f_masks = fo.compter_files(masks_path)
+                nb_f_masks = fo.count_files(masks_path)
                 if nb_f_masks == 0:
-                    report_mormal.add(" - No file in folder 'masks'  :", f)
+                    report_normal.add(" - No file in folder 'masks'  :", f)
                 else:
                     valid_subfolders.append(f)
 
@@ -84,11 +84,11 @@ def launch_normalisation():
             out_path = fo.create_name_path(data_dir, f, 'normalized')
             os.makedirs(out_path, exist_ok=True)
 
-            normalizer = no.ImageNormalizer(in_path, out_path, report_mormal)
+            normalizer = no.ImageNormalizer(in_path, out_path, report_normal)
 
             try:
                 normalizer.normalize_images()
             except ValueError as e:
                 print(e)
 
-    report_mormal.status("Normalization", file_name_report)
+    report_normal.status("Normalization", file_name_report)

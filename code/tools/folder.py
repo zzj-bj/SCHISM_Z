@@ -43,7 +43,8 @@ def create_name_path(root, directory, subdirectory):
 
 def get_name_at_index(input_path, pos):
     """
-    This function takes a file path as input and returns the component of the path at the specified index.
+    This function takes a file path as input.
+    and returns the component of the path at the specified index.
 
     Parameters
     ----------
@@ -60,7 +61,7 @@ def get_name_at_index(input_path, pos):
     name = input_path.split("\\")
     return name[pos]
 
-def compter_files(folder):
+def count_files(folder):
     """
     Count the number of files in the given directory.
 
@@ -77,9 +78,9 @@ def compter_files(folder):
     chemin = Path(folder)
     return sum(1 for fichier in chemin.iterdir() if fichier.is_file())
 
-def compter_tif_files(folder):
+def count_tif_files(folder):
     """
-    Count the number of files with extention = '.tif' in the given directory.
+    Count the number of files with extention '.tif' in the given directory.
 
     Parameters
     ----------

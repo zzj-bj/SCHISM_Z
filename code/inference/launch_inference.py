@@ -20,14 +20,15 @@ def run_inference():
     print("\n[ Inference Mode ]")
 
     report_inference = re.ErrorReport()
+    file_name_report = 'Inference'
+
     valid_subfolders = []
     selected_metric =""
     initial_condition = True
 
     data_dir = fo.get_path("Enter the directory containing data to predict")
     run_dir = fo.get_path("Enter the directory containing model weights")
-    report_dir = fo.get_path("Enter the directory to save report")
-    file_name_report = fo.create_name_path(report_dir, '', 'Inference')
+    file_name_report = 'Inference'
 
     hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
