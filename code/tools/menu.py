@@ -16,6 +16,6 @@ MENUS = {
     'Preprocessing': [
         "PREPROCESSING",
         "Json generation",
-        "Normalisation",
+        "Normalization",
         "Return Main Menu"]
 }

@@ -22,7 +22,6 @@ def launch_json_generation():
     print("\n[ Json Generation Mode ]")
 
     report_json = re.ErrorReport()
-    file_name_report = 'Json'
 
     data_dir = fo.get_path("Enter the data directory")
 
@@ -45,7 +44,7 @@ def launch_json_generation():
         except ValueError as e:
             print(e)
 
-    report_json.status("Json Generation Mode", file_name_report)
+    report_json.status("Json Generation Mode")
 
 def launch_normalisation():
     """
@@ -54,7 +53,6 @@ def launch_normalisation():
     print("\n[ Normalization Mode ]")
 
     report_normal = re.ErrorReport()
-    file_name_report = 'Normalization'
 
     data_dir = fo.get_path("Enter the data directory")
 
@@ -70,9 +68,9 @@ def launch_normalisation():
             if not os.path.isdir(masks_path):
                 report_normal.add(" - Folder 'masks' missing in :", f)
             else:
-                nb_f_masks = fo.count_files(masks_path)
+                nb_f_masks = fo.count_tif_files(masks_path)
                 if nb_f_masks == 0:
-                    report_normal.add(" - No file in folder 'masks'  :", f)
+                    report_normal.add(" - No file (*.tif') in folder 'masks'  :", f)
                 else:
                     valid_subfolders.append(f)
 
@@ -91,4 +89,4 @@ def launch_normalisation():
             except ValueError as e:
                 print(e)
 
-    report_normal.status("Normalization", file_name_report)
+    report_normal.status("Normalization")

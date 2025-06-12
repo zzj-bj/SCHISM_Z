@@ -15,9 +15,6 @@ from tools import folder as fo
 class ImageNormalizer:
     """
     This class allows normalizing a group of images.
-
-    input_path  : Directory where the masks to be processed are located.
-    output_path : Directory where the generated images will be stored.
     """
     def __init__(self, input_path, output_path, report):
         self.input_path = input_path
@@ -29,54 +26,49 @@ class ImageNormalizer:
         # Searching for image files (*.tif)
         files = [f for f in os.listdir(self.input_path) if f.endswith(".tif")]
 
-        if len(files) == 0:
-            # Retrieving the name of the parent folder
-            name = fo.get_name_at_index(self.input_path, -2)
-            self.report.add(' - No files to process in : ', name)
-        else:
-            for filename in tqdm(
-                    files,
-                    unit="file",
-                    bar_format="     Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                    ncols=80):
-                file = os.path.join(self.input_path, filename)
+        for filename in tqdm(
+               files,
+                unit="file",
+                bar_format="     Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                ncols=80):
+            file = os.path.join(self.input_path, filename)
 
-                try:
-                    # Load the image and convert it to grayscale
-                    image = Image.open(file).convert('L')
-                    masks = np.array(image)
+            try:
+                # Load the image and convert it to grayscale
+                image = Image.open(file).convert('L')
+                masks = np.array(image)
 
-                    # Retrieve the unique classes in the image
-                    unique_classes = np.unique(masks)
-                    num_classes = len(unique_classes)
+                # Retrieve the unique classes in the image
+                unique_classes = np.unique(masks)
+                num_classes = len(unique_classes)
 
-                    # Create a mapping of classes to scaled values
-                    scaling = np.linspace(0, 255, num_classes)
+                # Create a mapping of classes to scaled values
+                scaling = np.linspace(0, 255, num_classes)
 
-                    # Create a mapping dictionary
-                    class_mapping = {value: int(scaling[i]) for i,
-                                     value in enumerate(unique_classes)}
+                # Create a mapping dictionary
+                class_mapping = {value: int(scaling[i]) for i,
+                                 value in enumerate(unique_classes)}
 
-                    # Convert masks to a PyTorch tensor
-                    masks_tensor = torch.tensor(masks,
-                                        device='cuda' if torch.cuda.is_available() else 'cpu')
+                # Convert masks to a PyTorch tensor
+                masks_tensor = torch.tensor(masks,
+                                    device='cuda' if torch.cuda.is_available() else 'cpu')
 
-                    # Apply the mapping using vectorization
-                    compliant_masks = torch.zeros_like(masks_tensor, dtype=torch.uint8)
-                    for value, scaled_value in class_mapping.items():
-                        compliant_masks[masks_tensor == value] = scaled_value
+                # Apply the mapping using vectorization
+                compliant_masks = torch.zeros_like(masks_tensor, dtype=torch.uint8)
+                for value, scaled_value in class_mapping.items():
+                    compliant_masks[masks_tensor == value] = scaled_value
 
-                    # Move the compliant masks back to CPU and convert to NumPy array
-                    compliant_masks_cpu = compliant_masks.cpu().numpy()
+                # Move the compliant masks back to CPU and convert to NumPy array
+                compliant_masks_cpu = compliant_masks.cpu().numpy()
 
-                    # Create a new image from the compliant masks
-                    normalized_image = Image.fromarray(compliant_masks_cpu.astype(np.uint8))
+                # Create a new image from the compliant masks
+                normalized_image = Image.fromarray(compliant_masks_cpu.astype(np.uint8))
 
-                    # Save the normalized image
-                    name, ext = os.path.splitext(os.path.basename(file))
-                    output_name = f"{name}{ext}"
-                    output_file_path = os.path.join(self.output_path, output_name)
-                    normalized_image.save(output_file_path)
+                # Save the normalized image
+                name, ext = os.path.splitext(os.path.basename(file))
+                output_name = f"{name}{ext}"
+                output_file_path = os.path.join(self.output_path, output_name)
+                normalized_image.save(output_file_path)
 
-                except Exception as e:
-                    print(f"\n{e}")
+            except Exception as e:
+                print(f"\n{e}")

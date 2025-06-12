@@ -20,7 +20,6 @@ def run_inference():
     print("\n[ Inference Mode ]")
 
     report_inference = re.ErrorReport()
-    file_name_report = 'Inference'
 
     valid_subfolders = []
     selected_metric =""
@@ -28,7 +27,6 @@ def run_inference():
 
     data_dir = fo.get_path("Enter the directory containing data to predict")
     run_dir = fo.get_path("Enter the directory containing model weights")
-    file_name_report = 'Inference'
 
     hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
@@ -107,4 +105,4 @@ def run_inference():
 
 
     text = f"Inference with Metric '{selected_metric}'"
-    report_inference.status(text , file_name_report)
+    report_inference.status(text)

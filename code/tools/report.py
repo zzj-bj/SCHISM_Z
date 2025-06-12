@@ -5,19 +5,15 @@ Created on Mon Apr 14 14:49:41 2025
 @author: Pierre.FANCELLI
 """
 
-from datetime import datetime
-
-from tools import folder as fo
 from tools import selection as sl
 
 #============================================================================
-# Formar for Date & Time
+# Format for Date & Time
 F_DATE = "%Y-%m-%d <> %H:%M:%S"
 
 class ErrorReport:
     """
     This class allows for tracking errors during the execution of processes.
-    It also generates a file in 'txt' format based on the name of the process
     """
     def __repr__(self):
         """
@@ -54,19 +50,21 @@ class ErrorReport:
 
     def display_report(self):
         """
-        Display the contents of the dictionary..
+        Display the contents of the report
         """
         total_def = sum(len(liste)for liste in self.dictionary.values())
 
-        print(f"*** !!! {total_def} problems founds !!! :***")
+        print(f"*** !!! {total_def} problem(s) found(s) !!! :***")
         for key, elements in self.dictionary.items():
             print(f"{key} {', '.join(elements)}")
         print("")
 
-    def status(self, process, file):
+    def status(self, process):
+        """
+        Displaying the correct end process message
+        """
         if self.is_report():
             sl.display_color(f"[X] {process} completed with error(s)", "red")
             self.display_report()
         else:
             sl.display_color(f"[√] {process} completed without error\n", "green")
-

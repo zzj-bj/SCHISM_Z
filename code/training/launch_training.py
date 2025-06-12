@@ -49,12 +49,10 @@ def train_model():
     print("\n[ Training Mode ]")
 
     report_training = re.ErrorReport()
-    file_name_report = 'Training'
 
     data_dir = fo.get_path("Enter the data directory")
     run_dir = fo.get_path("Enter the directory to save runs")
     hyperparameters_path = fo.get_path("Enter the path to the hyperparameters INI file")
-
 
 
     hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
@@ -89,4 +87,4 @@ def train_model():
             except ValueError as e:
                 print(e)
 
-    report_training.status("Training", file_name_report)
+    report_training.status("Training")
