@@ -7,9 +7,9 @@ Created on Mon Apr 14 11:28:36 2025
 
 import os
 from pathlib import Path
+from tools import constants as ct
 
 #==========================================================================
-BELL = "\a" # Sound system for Error.
 
 def get_path(prompt):
     """Requests a valid path from the user."""
@@ -17,7 +17,7 @@ def get_path(prompt):
         path = input(f"[?] {prompt}: ").strip()
         if os.path.exists(path):
             return path
-        print(f"[X] Invalid path. Try again. {BELL}")
+        print(f"[X] Invalid path. Try again. {ct.BELL}")
 
 def create_name_path(root, directory, subdirectory):
     """

@@ -8,8 +8,6 @@ Created on Mon Apr 14 14:49:41 2025
 from tools import display_color as dc
 
 #============================================================================
-# Format for Date & Time
-F_DATE = "%Y-%m-%d <> %H:%M:%S"
 
 class ErrorReport:
     """

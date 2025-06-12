@@ -3,10 +3,10 @@
 
 import sys
 
-from tools import logo as lo
 from tools import selection as sl
 from tools import various_functions as vf
 from tools import display_color as dc
+from tools import constants as ct
 
 from preprocessing import launch_preprocessing as lp
 from training import launch_training as lt
@@ -18,8 +18,8 @@ def exit_prog():
     print("\n[!! End of program !!]")
     select = vf.answer_yes_or_non("Are you sure")
     if select :
-        print(f"[<3] Goodbye! {sl.BELL}")
-        dc.display_color(lo.LOGO_OUT, "gray")
+        print(f"[<3] Goodbye! {ct.BELL}")
+        dc.display_color(ct.LOGO_OUT, "gray")
         sys.exit()
 
 def menu_preprocessing():
@@ -48,7 +48,7 @@ def menu_preprocessing():
 
 def main():
     """Displays the CLI menu and handles user choices."""
-    dc.display_color(lo.LOGO_IN, "Yellow")
+    dc.display_color(ct.LOGO_IN, "Yellow")
     main_menu = sl.Menu('MAIN')
     while True:
         main_menu.display_menu()

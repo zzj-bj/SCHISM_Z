@@ -6,8 +6,7 @@ Created on Fri Apr  4 11:14:12 2025
 """
 import sys
 
-from tools import menu as me
-from tools import pattern as pa
+from tools import constants as ct
 
 #============================================================================
 BELL = "\a" # Sound system for Error.
@@ -34,22 +33,22 @@ class Menu :
                 sys.exit()
             else:
                 self.board = [str(element) for element in self.dynamic_menu]
-        elif self.sel_menu in me.MENUS:
-            self.board = [str(element) for element in me.MENUS[self.sel_menu]]
+        elif self.sel_menu in ct.MENUS:
+            self.board = [str(element) for element in ct.MENUS[self.sel_menu]]
         else:
             self.unknow_menu = True
 
         # Select pattern
         if self.style == 'simple' :
-            self.frame = pa.PATTERN['simple']
+            self.frame = ct.PATTERN['simple']
         elif self.style == 'rounds' :
-            self.frame = pa.PATTERN['rounds']
+            self.frame = ct.PATTERN['rounds']
         elif self.style == 'ASCII' :
-            self.frame = pa.PATTERN['ASCII']
+            self.frame = ct.PATTERN['ASCII']
         elif self.style == 'Unicode' :
-            self.frame = pa.PATTERN['Unicode']
+            self.frame = ct.PATTERN['Unicode']
         else:
-            self.frame = pa.PATTERN['double']
+            self.frame = ct.PATTERN['double']
 
         self.select = None
         self.ligne = None

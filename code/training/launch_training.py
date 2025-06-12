@@ -8,7 +8,6 @@ import os
 
 from tools import folder as fo
 from tools import report as re
-from tools import selection as sl
 
 from training.Training import Training
 from commun.hyperparameters import Hyperparameters

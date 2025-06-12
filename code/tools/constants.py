@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
-""" Logo for SCHISM """
+"""
+Created on Thu Jun 12 13:27:41 2025
 
+@author: Pierre.FANCELLI
+"""
+
+""" Logo for SCHISM """
 LOGO_IN = """
 ╔══════════════════════════════════════════════════╗
 ║  ███████╗ ██████╗██╗  ██╗██╗███████╗███╗   ███╗  ║
@@ -26,3 +31,61 @@ LOGO_OUT = """
 ║       -That's all folks!-  See You soon          ║
 ╚══════════════════════════════════════════════════╝
 """
+
+
+# Sound system for Error.
+BELL = "\a"
+
+
+# Frame pattern
+PATTERN ={
+"double" : ["╔", "╦", "╗",
+            "╠", "╬", "╣",
+            "╚", "╩", "╝",
+            "║", "═"
+           ],
+"simple" : ["┌", "┬", "┐",
+            "├", "┼", "┤",
+            "└", "┴", "┘",
+            "│", "─"
+           ],
+"rounds" : ["╭", "┬", "╮",
+            "├", "┼", "┤",
+            "╰", "┴", "╯",
+            "│", "─"
+           ],
+"ASCII" : ["+", "+", "+",
+           "+", "+", "+",
+           "+", "+", "+",
+           "│", "─"
+           ],
+"Unicode" : ["┏", "┯", "┓",
+             "┣", "┿", "┫",
+             "┗", "┷", "┛",
+             "┃", "━","│"
+           ]
+    }
+
+
+# Menu declaration
+MENUS = {
+    'MAIN': [
+        "MAIN MENU",
+        "Preprocessing",
+        "Training",
+        "Inference",
+        "Quit"    ],
+    'Preprocessing': [
+        "PREPROCESSING",
+        "Json generation",
+        "Normalization",
+        "Return Main Menu"]
+}
+
+
+
+
+
+
+
+
