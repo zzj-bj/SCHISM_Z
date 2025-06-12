@@ -5,7 +5,7 @@ Created on Mon Apr 14 14:49:41 2025
 @author: Pierre.FANCELLI
 """
 
-from tools import selection as sl
+from tools import display_color as dc
 
 #============================================================================
 # Format for Date & Time
@@ -64,7 +64,7 @@ class ErrorReport:
         Displaying the correct end process message
         """
         if self.is_report():
-            sl.display_color(f"[X] {process} completed with error(s)", "red")
+            dc.display_color(f"[X] {process} completed with error(s)", "red")
             self.display_report()
         else:
-            sl.display_color(f"[√] {process} completed without error\n", "green")
+            dc.display_color(f"[√] {process} completed without error\n", "green")

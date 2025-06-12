@@ -41,15 +41,15 @@ class Menu :
 
         # Select pattern
         if self.style == 'simple' :
-            self.frame = pa.pattern['simple']
+            self.frame = pa.PATTERN['simple']
         elif self.style == 'rounds' :
-            self.frame = pa.pattern['rounds']
+            self.frame = pa.PATTERN['rounds']
         elif self.style == 'ASCII' :
-            self.frame = pa.pattern['ASCII']
+            self.frame = pa.PATTERN['ASCII']
         elif self.style == 'Unicode' :
-            self.frame = pa.pattern['Unicode']
+            self.frame = pa.PATTERN['Unicode']
         else:
-            self.frame = pa.pattern['double']
+            self.frame = pa.PATTERN['double']
 
         self.select = None
         self.ligne = None
@@ -91,58 +91,3 @@ class Menu :
             # Input is not a number
             except ValueError:
                 print(f"[X] Waiting for number. Try again ! {BELL}")
-
-
-class DisplayColor:
-    """
-    This class displays messages in the requested color.
-    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
-    If the color is not specified, the text is displayed in white.
-    """
-
-    COLORS = {
-        "BLACK":   "\033[30m",
-        "RED":     "\033[31m",
-        "GREEN":   "\033[32m",
-        "YELLOW":  "\033[33m",
-        "BLUE":    "\033[34m",
-        "MAGENTA": "\033[35m",
-        "CYAN":    "\033[36m",
-        "WHITE":   "\033[37m",
-        "GRAY":    "\033[90m",
-    }
-    RESET = "\033[0m"
-
-    def __init__(self, text, color="WHITE"):
-        self.text = text
-        self.color = self.COLORS.get(color.upper(), self.COLORS["WHITE"])
-
-    def display(self):
-        """Display the text in the specified color."""
-        print(f"{self.color}{self.text}{self.RESET}")
-
-def display_color(text, color="WHITE"):
-    """
-    Display a text with color.
-    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
-    If the color is not specified, the text is displayed in white.
-    """
-    display = DisplayColor(text, color)
-    display.display()
-
-
-def answer_yes_or_non(message):
-    """
-    This function retum.
-      True for yes, y, oui, o.
-      False for no, non n.
-     The input does not take uppercase letters into account."
-    """
-    while True:
-        reponse = input(f"[?] {message} (Y/N) ? : ").strip().lower()
-        if reponse in ['yes', 'y', 'oui', 'o']:
-            return True
-        elif reponse in ['no', 'non', 'n']:
-            return False
-        else:
-            print("incorrect answer !!! ")

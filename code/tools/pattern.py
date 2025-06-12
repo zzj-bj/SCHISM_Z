@@ -5,9 +5,8 @@ Created on Wed Jun 11 08:23:51 2025
 @author: Pierre.FANCELLI
 """
 
-
 # Frame pattern
-pattern ={
+PATTERN ={
 "double" : ["╔", "╦", "╗",
             "╠", "╬", "╣",
             "╚", "╩", "╝",
