@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr  4 11:14:12 2025
+This module allows creating a menu and managing the input choice based on the selection.
+You can choose the frame format of the menu.
+It is possible to opt for a static menu or a dynamic menu.
 
 @author: Pierre.FANCELLI
 """
@@ -9,7 +11,6 @@ import sys
 from tools import constants as ct
 
 #============================================================================
-BELL = "\a" # Sound system for Error.
 
 class Menu :
     """
@@ -86,7 +87,7 @@ class Menu :
                 if 1 <= select <= self.ligne - 1 :
                     return select
                 else:
-                    print(f"[X] Invalid selection. Try again ! {BELL}")
+                    print(f"[X] Invalid selection. Try again ! {ct.BELL}")
             # Input is not a number
             except ValueError:
-                print(f"[X] Waiting for number. Try again ! {BELL}")
+                print(f"[X] Waiting for number. Try again ! {ct.BELL}")

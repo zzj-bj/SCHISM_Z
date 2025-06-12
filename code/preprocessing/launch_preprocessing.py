@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  9 17:05:11 2025
+This module allows for the following operations:
+    - Json generation   *** In development ***
+    - Normalization of masks in 8-bit grayscale format.
 
 @author: Pierre.FANCELLI
 """

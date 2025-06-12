@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 12 11:19:45 2025
+Collection of non-specific functions used in the program.
 
 @author: Pierre.FANCELLI
 """

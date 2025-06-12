@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 12 11:23:53 2025
+This class displays messages in the requested color.
+The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
+If the color is not specified, the text is displayed in white.
 
 @author: Pierre.FANCELLI
 """
 
 class DisplayColor:
-    """
-    This class displays messages in the requested color.
-    The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
-    If the color is not specified, the text is displayed in white.
-    """
 
     COLORS = {
         "BLACK":   "\033[30m",

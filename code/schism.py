@@ -25,9 +25,9 @@ def exit_prog():
 
 def menu_preprocessing():
     """
-    "This module allows for the following operations:
+    This module allows for the following operations:
         - Json generation   *** In development ***
-        - Normalization of masks in 8-bit grayscale format."
+        - Normalization of masks in 8-bit grayscale format.
     """
     preprocessing_menu = sl.Menu('Preprocessing', style = 'Unicode')
     while True:
