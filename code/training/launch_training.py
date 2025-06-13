@@ -14,7 +14,26 @@ from commun.hyperparameters import Hyperparameters
 
 #===========================================================================
 def check_folder(folder, root, report):
+    """
+    This function checks that all the directories passed as parameters comply with the expected requirements.
 
+    Parameters
+    ----------
+    folder : liste
+        List of directories to analyze.
+    root : str
+        Reference path for analysis.
+    report : str
+        File for report.
+
+    Returns
+    -------
+    valid_subfolders : liste
+        List of valid directories.
+    num_file : int
+        Total number of files considered.
+
+    """
     valid_subfolders =[]
     num_file = 0
     for f in folder:

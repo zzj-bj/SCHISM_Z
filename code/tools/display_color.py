@@ -8,7 +8,9 @@ If the color is not specified, the text is displayed in white.
 """
 
 class DisplayColor:
-
+    """
+    This class displays messages in the requested color.
+    """
     COLORS = {
         "BLACK":   "\033[30m",
         "RED":     "\033[31m",

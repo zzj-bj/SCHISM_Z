@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 14 11:28:36 2025
+In this module, there are useful functions for managing directories :
+    Requests a valid path from the user
+    Function returns the full name of a directory based on a root,
+    a directory, and a subdirectory
+    Function takes a file path as input.
+    and returns the component of the path at the specified index
+    Count the number of files in the given directory
+    Count the number of files with extention '.tif' in the given directory
 
 @author: Pierre.FANCELLI
 """

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 14 14:49:41 2025
+This class allows for tracking errors during the execution of processes
 
 @author: Pierre.FANCELLI
 """
