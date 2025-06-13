@@ -28,7 +28,7 @@ the module 'Preprocesing' has two menus 'Json generation' and 'Normalization'
     - Option 1: Preprocessing 
     - Option 2: Train a new model.
     - Option 3: Make predictions using a trained model.
-
+The option '1: Preprocessing' opens a new menu. This new menu allows you to generate a file in 'Json' format or to normalize masks.
 ---
 ### Preprocesing
 In this menu, we have access to two options that allow us to:
@@ -42,6 +42,7 @@ In this menu, we have access to two options that allow us to:
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).    
 2. run the mormalization command: Launch the preprocessing process, then lauch the normalization and specify:
     - The dataset directory (presented below).
+3. During the normalization process, a directory named 'normalized' is created in each subdirectory. This is where the normalized images will be stored.
 
 ---
 ### Training Workflow
@@ -60,7 +61,7 @@ To make predictions:
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
     - The folder containing trained weights.
     - The dataset for prediction.
-    - A directory will be created. The name of this directory will follow the logic: 'preds_X'. X is the name of the metric used for this generation. For example, for the metric 'Jaccard', the directory will be 'preds_Jaccard'. 
+    - A directory will be created. The name of this directory will follow the logic: 'preds_X', where 'X' represents the name of the metric used for this generation. For example, if the metric is 'Jaccard', the directory will be named 'preds_Jaccard'. Additionally, '_X' will also be appended to the names of the generated images (for instance, image000.tif will become image000_Jaccard.tif).
 ---
 ## :scroll: INI File Setup
 

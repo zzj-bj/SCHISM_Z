@@ -48,7 +48,6 @@ def check_folder(folder, root, report):
             else:
                 nb_f_image = fo.count_tif_files(images_path)
                 nb_f_masks = fo.count_tif_files(masks_path)
-                num_file += nb_f_image
                 if nb_f_image == 0:
                     report.add(" - No file (*.tif') in folder 'image'  :", f)
                 else:
@@ -58,6 +57,7 @@ def check_folder(folder, root, report):
                         if nb_f_image != nb_f_masks :
                             report.add(" - 'images/masks' : Size not equal :", f)
                         else:
+                            num_file += nb_f_image
                             valid_subfolders.append(f)
     return  valid_subfolders, num_file
 

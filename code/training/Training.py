@@ -100,7 +100,7 @@ class Training:
             self.report .add(text,'')
             raise ValueError
         if self.num_samples < 16 :
-            self.report .add(f'num_samples ({self.num_samples}) < 16 ','')
+            self.report .add(f'num_samples ({self.num_samples}) must be >= 16 ','')
             raise ValueError
 
         # Extract and parse metrics from the ini file
