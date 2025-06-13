@@ -43,6 +43,7 @@ In this menu, we have access to two options that allow us to:
 2. run the mormalization command: Launch the preprocessing process, then lauch the normalization and specify:
     - The dataset directory (presented below).
 3. During the normalization process, a directory named 'normalized' is created in each subdirectory. This is where the normalized images will be stored.If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
+4. At the end of the normalization process, a new organization for the subdirectories is obtained (see below).
 
 ---
 ### Training Workflow
@@ -61,7 +62,7 @@ To make predictions:
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
     - The folder containing trained weights.
     - The dataset for prediction.
-    - A directory will be created. The name of this directory will follow the logic: 'preds_X', where 'X' represents the name of the metric used for this generation. For example, if the metric is 'Jaccard', the directory will be named 'preds_Jaccard'. Additionally, '_X' will also be appended to the names of the generated images (for instance, image000.tif will become image000_Jaccard.tif). If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
+ 4. A directory will be created. The name of this directory will follow the logic: 'preds_X', where 'X' represents the name of the metric used for this generation. For example, if the metric is 'Jaccard', the directory will be named 'preds_Jaccard'. Additionally, '_X' will also be appended to the names of the generated images (for instance, image000.tif will become image000_Jaccard.tif). If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
 ---
 ## :scroll: INI File Setup
 
@@ -107,7 +108,8 @@ For information on both the network configurations and the INI file setup, pleas
 
 The data should be organized as follows:
 
-``` Before normalization
+``` 
+- Before normalization
 data <--- Select this folder for data input during normalization, training or inference.
 |_dataset 1/ 
 |   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
@@ -120,7 +122,8 @@ data <--- Select this folder for data input during normalization, training or in
 |   |_masks/
 |_data_stats.json <--- This file is optional.
 ```
-``` After normalization
+``` 
+ -After normalization
 data <--- Select this folder for data input during normalization, training or inference.
 |_dataset 1/ 
 |   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
