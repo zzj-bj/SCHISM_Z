@@ -28,12 +28,12 @@ the module 'Preprocesing' has two menus 'Json generation' and 'Normalization'
     - Option 1: Preprocessing 
     - Option 2: Train a new model.
     - Option 3: Make predictions using a trained model.
-The option '1: Preprocessing' opens a new menu. This new menu allows you to generate a file in 'Json' format or to normalize masks.
+5. The option '1: Preprocessing' opens a new menu. This new menu allows you to generate a file in 'Json' format or to normalize masks.
 ---
 ### Preprocesing
 In this menu, we have access to two options that allow us to:
-    Json generation: in development
-    Normalization: creation of a grayscale image (0-255) in 8-bit format from a mask
+    - Json generation: in development
+    - Normalization: creation of a grayscale image (0-255) in 8-bit format from a mask
 
 ### - Json generation
     This module is in development    
@@ -42,7 +42,7 @@ In this menu, we have access to two options that allow us to:
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).    
 2. run the mormalization command: Launch the preprocessing process, then lauch the normalization and specify:
     - The dataset directory (presented below).
-3. During the normalization process, a directory named 'normalized' is created in each subdirectory. This is where the normalized images will be stored.
+3. During the normalization process, a directory named 'normalized' is created in each subdirectory. This is where the normalized images will be stored.If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
 
 ---
 ### Training Workflow
@@ -61,7 +61,7 @@ To make predictions:
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
     - The folder containing trained weights.
     - The dataset for prediction.
-    - A directory will be created. The name of this directory will follow the logic: 'preds_X', where 'X' represents the name of the metric used for this generation. For example, if the metric is 'Jaccard', the directory will be named 'preds_Jaccard'. Additionally, '_X' will also be appended to the names of the generated images (for instance, image000.tif will become image000_Jaccard.tif).
+    - A directory will be created. The name of this directory will follow the logic: 'preds_X', where 'X' represents the name of the metric used for this generation. For example, if the metric is 'Jaccard', the directory will be named 'preds_Jaccard'. Additionally, '_X' will also be appended to the names of the generated images (for instance, image000.tif will become image000_Jaccard.tif). If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
 ---
 ## :scroll: INI File Setup
 

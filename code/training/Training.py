@@ -26,7 +26,6 @@ from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
 from training.TrainingLogger import TrainingLogger
-# from training import TrainingLogger as tl
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
