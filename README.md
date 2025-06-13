@@ -107,7 +107,20 @@ For information on both the network configurations and the INI file setup, pleas
 
 The data should be organized as follows:
 
+``` Before normalization
+data <--- Select this folder for data input during normalization, training or inference.
+|_dataset 1/ 
+|   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
+|   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
+|_dataset 2/
+|   |_images/
+|   |_masks/
+|_dataset n/
+|   |_images/
+|   |_masks/
+|_data_stats.json <--- This file is optional.
 ```
+``` After normalization
 data <--- Select this folder for data input during normalization, training or inference.
 |_dataset 1/ 
 |   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
@@ -122,7 +135,7 @@ data <--- Select this folder for data input during normalization, training or in
 |   |_masks/
 |   |_Normalized/
 |_data_stats.json <--- This file is optional.
-```
+
 
 - **Images**: Directory containing the input images.
 - **Masks**: Directory containing the corresponding segmentation masks.
