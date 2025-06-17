@@ -6,15 +6,17 @@ This module allows for the following operations:
 
 @author: Pierre.FANCELLI
 """
+
 import os
 
 from tools import folder as fo
 from tools import report as re
 
 from preprocessing import image_normalizer as no
-from preprocessing import json_generation as jg
+from preprocessing import j_son as js
 
 #=============================================================================
+
 def launch_json_generation():
     """
     Json Generation
@@ -26,6 +28,7 @@ def launch_json_generation():
     report_json = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
+    file_name_report = fo.create_name_path(data_dir, '', 'data_stats.json')
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
@@ -34,15 +37,24 @@ def launch_json_generation():
         report_json.add(" - No folder found in ", data_dir)
     else:
         for f in subfolders:
-            #TODO to be defined
-            pass
+            images_path = fo.create_name_path(data_dir, f, 'images')
 
-    #TODO waiting work : "or True" to be deleter
-    if len(valid_subfolders) != 0 or True :
+            if not os.path.isdir(images_path):
+                report_json.add(" - Folder 'images' missing in :", f)
+            else:
+                nb_f_images = fo.count_tif_files(images_path)
+                if nb_f_images == 0:
+                    report_json.add(" - No file (*.tif') in folder 'images'  :", f)
+                else:
+                    valid_subfolders.append(f)
+
+
+    if len(valid_subfolders) != 0 :
         print("[!] Starting Json generation")
-        json_generation = jg.JsonGeneration(report_json)
+        json_generation = js.DatasetProcessor(data_dir, valid_subfolders,report_json)
         try:
-            json_generation.process()
+            json_generation.process_datasets()
+            json_generation.save_results(file_name_report)
         except ValueError as e:
             print(e)
 
