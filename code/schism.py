@@ -26,7 +26,7 @@ def exit_prog():
 def menu_preprocessing():
     """
     This module allows for the following operations:
-        - Json generation   *** In development ***
+        - Json generation
         - Normalization of masks in 8-bit grayscale format.
     """
     preprocessing_menu = sl.Menu('Preprocessing', style = 'Unicode')
@@ -34,7 +34,6 @@ def menu_preprocessing():
         preprocessing_menu.display_menu()
         choice = preprocessing_menu.selection()
 
-        #TODO In development
         # **** Json generation ****
         if choice == 1:
             lp.launch_json_generation()
