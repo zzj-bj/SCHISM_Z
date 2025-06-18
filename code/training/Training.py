@@ -29,7 +29,9 @@ from training.TrainingLogger import TrainingLogger
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from tools import display_color as dc
 
+#---------------------------------------------------------------------------
 class Training:
 
     def __repr__(self):
@@ -330,8 +332,13 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                print(f" File {json_file_path} not found. Using default normalization stats.")
+                dc.display_color(f" File {json_file_path} not found.", "yellow")
+                dc.display_color(" Using default normalization stats." , "yellow")
+                self.report .add(" - File 'J_son' not found. Using default normalization", '')
                 return {"default": neutral_stats}
+            else:
+                print(f" File {json_file_path} found.")
+                print(" Using this one.")
 
             try:
                 with open(json_file_path, 'r') as file:
