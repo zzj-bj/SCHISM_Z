@@ -52,10 +52,14 @@ class ErrorReport:
         """
         total_def = sum(len(liste)for liste in self.dictionary.values())
 
+        # Display the message in "MAGENTA" color
+        print("\033[35m", end="")
         print(f"*** !!! {total_def} problem(s) found(s) !!! :***")
         for key, elements in self.dictionary.items():
             print(f"{key} {', '.join(elements)}")
-        print("")
+        # Return to a white display
+        print("\033[0m")
+
 
     def status(self, process):
         """
