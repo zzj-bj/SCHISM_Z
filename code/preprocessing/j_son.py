@@ -14,14 +14,26 @@ import torch
 from tqdm import tqdm
 
 class DatasetProcessor:
-    def __init__(self, parent_dir, subfolders, report, percentage_to_process=0.9):
+    def __init__(self, parent_dir, subfolders,json_file ,report, percentage_to_process=1):
         self.parent_dir = parent_dir
         self.subfolders = subfolders
         self.percentage_to_process = percentage_to_process
         self.report = report
+        self.json_file = json_file
         self.results = {}
 
     def process_datasets(self):
+        """
+        Process each dataset in the specified subfolders.
+
+        This method iterates through each subfolder, checks if the 'images' directory exists.
+        Calculates the mean and standard deviation of the RGB values for the images in that directory.
+        Results are stored in the `self.results` dictionary,
+        and any warnings or errors are reported.
+
+        Raises:
+            Exception: If an error occurs during the processing of a dataset.
+        """
         for folder_name in tqdm(sorted(self.subfolders),
                            bar_format="   Process : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
                            ncols=80):
@@ -38,9 +50,30 @@ class DatasetProcessor:
                 self.report.add(f" - Error processing {folder_name}: {e}", '')
                 print(f"Error processing {folder_name}: {e}")
 
+        with open(self.json_file, "w") as json_file:
+            json.dump(self.results, json_file, indent=4)
+
+
     def calculate_mean_and_std_rgb(self, folder_path):
+        """
+        Calculate the mean and standard deviation of RGB values for images in a specified folder.
+
+        This method randomly selects a percentage of images from the given folder, computes the mean
+        and standard deviation of their RGB pixel values, and normalizes the results to the range [0, 1].
+
+        Args:
+            folder_path (str): The path to the folder containing the images.
+
+        Returns:
+            tuple: A tuple containing the standard deviation and mean of the RGB values, both as lists.
+
+        Raises:
+            Exception: If an error occurs while processing the images.
+        """
         image_files = self._get_image_files(folder_path)
         num_items_to_process = int(len(image_files) * self.percentage_to_process)
+
+        num_items_to_process = int(len(image_files))
         indices_to_process = np.random.choice(len(image_files), num_items_to_process, replace=False)
 
         pixel_sum = torch.zeros(3, dtype=torch.float32)
@@ -78,8 +111,17 @@ class DatasetProcessor:
         return std_dev, mean
 
     def _get_image_files(self, folder_path):
-        return [f for f in sorted(os.listdir(folder_path)) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))]
+        """
+       Retrieve a sorted list of image files from a specified folder.
 
-    def save_results(self, output_file):
-        with open(output_file, "w") as json_file:
-            json.dump(self.results, json_file, indent=4)
+       This method filters the contents of the folder to include only image files with specific extensions.
+
+       Args:
+           folder_path (str): The path to the folder to search for image files.
+
+       Returns:
+           list: A sorted list of image file names.
+       """
+        return [f for f in sorted(os.listdir(folder_path))
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))]
+

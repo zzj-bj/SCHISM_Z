@@ -11,6 +11,7 @@ import os
 
 from tools import folder as fo
 from tools import report as re
+from tools import various_functions as vf
 
 from preprocessing import image_normalizer as no
 from preprocessing import j_son as js
@@ -21,13 +22,13 @@ def launch_json_generation():
     """
     Json Generation
 
-             *** Development in progress ***
     """
     print("\n[ Json Generation Mode ]")
 
     report_json = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
+    vv = vf.input_percentage("Enter a percentage between 1 & 100")
     file_name_report = fo.create_name_path(data_dir, '', 'data_stats.json')
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
@@ -51,10 +52,13 @@ def launch_json_generation():
 
     if len(valid_subfolders) != 0 :
         print("[!] Starting Json generation")
-        json_generation = js.DatasetProcessor(data_dir, valid_subfolders,report_json)
+        json_generation = js.DatasetProcessor(data_dir,
+                                              valid_subfolders,
+                                              file_name_report,
+                                              report_json,
+                                              vv)
         try:
             json_generation.process_datasets()
-            json_generation.save_results(file_name_report)
         except ValueError as e:
             print(e)
 

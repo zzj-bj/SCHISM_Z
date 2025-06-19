@@ -52,7 +52,7 @@ def run_inference():
             metric_menu.display_menu()
             choice = metric_menu.selection()
             selected_metric = metrics[choice - 1]
-            print(f' - Metric selected = {selected_metric}')
+            print(f' - Metric selected : {selected_metric}')
 
             # Check for the existence of the *.pth files
             files = [f for f in os.listdir(run_dir) if f.endswith(".pth")]
