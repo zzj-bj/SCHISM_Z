@@ -205,9 +205,9 @@ class Inference:
         total_images = len(dataloader)
         print(" total_images : ", total_images)
 
-        with tqdm(total=len(dataloader), unit="batch",
+        with tqdm(total=len(dataloader), ncols=100,
           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
-          ncols=100, desc="Predicting") as pbar:
+          ) as pbar:
 
             for i, (img, dataset_id, img_path) in enumerate(dataloader):
 

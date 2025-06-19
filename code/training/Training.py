@@ -509,10 +509,9 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
-                # with tqdm(total=len(self.dataloaders[phase]), unit="batch") as pbar:
-                with tqdm(total=len(self.dataloaders[phase]), unit="batch",
+                with tqdm(total=len(self.dataloaders[phase]), ncols=100 ,
                           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
-                          ncols=100 ) as pbar:
+                          ) as pbar:
 
                     for inputs, labels, weights in self.dataloaders[phase]:
 

@@ -28,7 +28,12 @@ def launch_json_generation():
     report_json = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
-    vv = vf.input_percentage("Enter a percentage between 1 & 100")
+    select = vf.answer_yes_or_non("Used all the data")
+    if select :
+        vv = 1
+    else :
+        vv = vf.input_percentage("Enter a percentage between 1 & 100")
+
     file_name_report = fo.create_name_path(data_dir, '', 'data_stats.json')
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]

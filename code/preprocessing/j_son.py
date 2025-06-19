@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-
+Created on Thu Jun 19 09:17:37 2025
 
 @author: Pierre.FANCELLI
 """
-
 
 import os
 import json
@@ -13,8 +12,12 @@ import cv2
 import torch
 from tqdm import tqdm
 
+from tools import folder as fo
+
+#---------------------------------------------------------------------------
+
 class DatasetProcessor:
-    def __init__(self, parent_dir, subfolders,json_file ,report, percentage_to_process=1):
+    def __init__(self, parent_dir, subfolders, json_file, report, percentage_to_process=1):
         self.parent_dir = parent_dir
         self.subfolders = subfolders
         self.percentage_to_process = percentage_to_process
@@ -34,12 +37,13 @@ class DatasetProcessor:
         Raises:
             Exception: If an error occurs during the processing of a dataset.
         """
-        for folder_name in tqdm(sorted(self.subfolders),
-                           bar_format="   Process : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                           ncols=80):
+        for folder_name in self.subfolders :
+
             dataset_path = os.path.join(self.parent_dir, folder_name, 'images')
+            rep_name = fo.get_name_at_index(folder_name, -1)
+            print(f" - {rep_name}")
             if not os.path.isdir(dataset_path):
-                self.report.add(f" - Warning: {dataset_path} is not a directory. Skipping", '')
+                self.report.add(f" - {dataset_path} is not a directory.", '')
                 print(f"Warning: {dataset_path} is not a directory. Skipping.")
                 continue
 
@@ -52,7 +56,6 @@ class DatasetProcessor:
 
         with open(self.json_file, "w") as json_file:
             json.dump(self.results, json_file, indent=4)
-
 
     def calculate_mean_and_std_rgb(self, folder_path):
         """
@@ -73,16 +76,20 @@ class DatasetProcessor:
         image_files = self._get_image_files(folder_path)
         num_items_to_process = int(len(image_files) * self.percentage_to_process)
 
-        num_items_to_process = int(len(image_files))
+        num_items_to_process = min(num_items_to_process, len(image_files))
+        # np.random.seed(42)
         indices_to_process = np.random.choice(len(image_files), num_items_to_process, replace=False)
 
         pixel_sum = torch.zeros(3, dtype=torch.float32)
         pixel_count = 0
+        for idx in tqdm(indices_to_process, ncols=100,
+                   bar_format="   Mean     : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                   ):
 
-        for idx in indices_to_process:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
+                self.report.add(f"Unable to load image at path: {image_path}", "")
                 print(f"Unable to load image at path: {image_path}")
                 continue
 
@@ -93,7 +100,10 @@ class DatasetProcessor:
         mean = pixel_sum / pixel_count
 
         pixel_variance = torch.zeros(3, dtype=torch.float32)
-        for idx in indices_to_process:
+        for idx in tqdm(indices_to_process, ncols=100,
+                   bar_format="   Variance : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                   ):
+
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
@@ -124,4 +134,3 @@ class DatasetProcessor:
        """
         return [f for f in sorted(os.listdir(folder_path))
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))]
-

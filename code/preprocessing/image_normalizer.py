@@ -26,11 +26,9 @@ class ImageNormalizer:
         # Searching for image files (*.tif)
         files = [f for f in os.listdir(self.input_path) if f.endswith(".tif")]
 
-        for filename in tqdm(
-               files,
-                unit="file",
-                bar_format="     Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                ncols=80):
+        for filename in tqdm(files, ncols=100,
+                bar_format="   Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                ):
             file = os.path.join(self.input_path, filename)
 
             try:
