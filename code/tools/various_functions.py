@@ -22,6 +22,9 @@ def answer_yes_or_non(message):
             print("incorrect answer !!! ")
 
 def input_percentage(message):
+    """
+    This function returns a real number between 1 and 100%
+    """
     while True:
         try:
             value = float(input(f"[?] {message} : "))
@@ -31,4 +34,3 @@ def input_percentage(message):
                 print("Error: The value must be between 1 and 100.")
         except ValueError:
             print("Error: Please enter a valid number.")
-

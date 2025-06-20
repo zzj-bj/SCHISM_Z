@@ -15,7 +15,8 @@ from commun.hyperparameters import Hyperparameters
 #===========================================================================
 def check_folder(folder, root, report):
     """
-    This function checks that all the directories passed as parameters comply with the expected requirements.
+    This function checks that all the directories passed as parameters comply
+    with the expected requirements.
 
     Parameters
     ----------
@@ -82,6 +83,7 @@ def train_model():
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
         valid_subfolders = []
+        num_file = 0
         if len(subfolders) == 0 :
             report_training.add(" - No folder found in ", data_dir)
         else:

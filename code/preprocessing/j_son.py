@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 19 09:17:37 2025
+J_son Generation
 
 @author: Pierre.FANCELLI
 """
@@ -17,7 +17,11 @@ from tools import folder as fo
 #---------------------------------------------------------------------------
 
 class DatasetProcessor:
-    def __init__(self, parent_dir, subfolders, json_file, report, percentage_to_process=1):
+    """
+    This module generates a 'json' file from the provided data.
+    You can specify the percentage of data to be included.
+    """
+    def __init__(self, parent_dir, subfolders, json_file, report, percentage_to_process):
         self.parent_dir = parent_dir
         self.subfolders = subfolders
         self.percentage_to_process = percentage_to_process
@@ -30,7 +34,7 @@ class DatasetProcessor:
         Process each dataset in the specified subfolders.
 
         This method iterates through each subfolder, checks if the 'images' directory exists.
-        Calculates the mean and standard deviation of the RGB values for the images in that directory.
+        Calculates the mean & standard deviation of the images in that directory.
         Results are stored in the `self.results` dictionary,
         and any warnings or errors are reported.
 
@@ -42,10 +46,6 @@ class DatasetProcessor:
             dataset_path = os.path.join(self.parent_dir, folder_name, 'images')
             rep_name = fo.get_name_at_index(folder_name, -1)
             print(f" - {rep_name}")
-            if not os.path.isdir(dataset_path):
-                self.report.add(f" - {dataset_path} is not a directory.", '')
-                print(f"Warning: {dataset_path} is not a directory. Skipping.")
-                continue
 
             try:
                 std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path)
@@ -61,14 +61,15 @@ class DatasetProcessor:
         """
         Calculate the mean and standard deviation of RGB values for images in a specified folder.
 
-        This method randomly selects a percentage of images from the given folder, computes the mean
-        and standard deviation of their RGB pixel values, and normalizes the results to the range [0, 1].
+        This method randomly selects a percentage of images from the given folder,
+        computes the mean & standard deviation of their pixel values,
+        and normalizes the results to the range [0, 1].
 
         Args:
             folder_path (str): The path to the folder containing the images.
 
         Returns:
-            tuple: A tuple containing the standard deviation and mean of the RGB values, both as lists.
+            tuple: A tuple containing the standard deviation & mean of the values, both as lists.
 
         Raises:
             Exception: If an error occurs while processing the images.
@@ -124,7 +125,8 @@ class DatasetProcessor:
         """
        Retrieve a sorted list of image files from a specified folder.
 
-       This method filters the contents of the folder to include only image files with specific extensions.
+       This method filters the contents of the folder to include only image
+       files with specific extensions.
 
        Args:
            folder_path (str): The path to the folder to search for image files.

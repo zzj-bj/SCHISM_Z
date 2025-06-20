@@ -30,7 +30,7 @@ def launch_json_generation():
     data_dir = fo.get_path("Enter the data directory")
     select = vf.answer_yes_or_non("Used all the data")
     if select :
-        vv = 1
+        vv = 1.0
     else :
         vv = vf.input_percentage("Enter a percentage between 1 & 100")
 
