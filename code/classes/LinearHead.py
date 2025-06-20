@@ -1,11 +1,21 @@
+"""
+LinearHead class for image classification tasks.
+
+This class implements a linear head for image classification tasks.
+It includes configurable parameters for the embedding size, number of classes,
+and the number of features.
+"""
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
 class LinearHead(nn.Module):
-    def __init__(self, 
-                 embedding_size=512, 
-                 num_classes=3, 
+    """
+    LinearHead class for image classification tasks.
+    """
+    def __init__(self,
+                 embedding_size=512,
+                 num_classes=3,
                  n_features=1
                  ):
         super(LinearHead, self).__init__()
@@ -28,6 +38,7 @@ class LinearHead(nn.Module):
         )
         logits = self.head(features)
         logits = F.interpolate(
-            input=logits, size=(int(img_shape), int(img_shape)), mode="bilinear", align_corners=False
+            input=logits, size=(int(img_shape),int(img_shape)),
+                                mode="bilinear",align_corners=False
         )
         return logits

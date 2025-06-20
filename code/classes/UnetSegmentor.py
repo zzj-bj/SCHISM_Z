@@ -1,16 +1,22 @@
-# -*- coding: utf-8 -*-
 """
-Created on Wed Nov 13 14:02:53 2024
+UnetSegmentor: A U-Net based segmentation model for image segmentation tasks.
+
+This module implements a U-Net architecture for semantic segmentation tasks.
+UnetSegmentor is a PyTorch module that implements a U-Net architecture for image segmentation.
+It includes configurable parameters for the number of blocks, channels, kernel size,
+activation functions, and the number of output classes.
+It consists of encoder blocks, decoder blocks, and a bridge layer.
 
 @author: Florent.BRONDOLO
 """
 
-import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as nn_func
 
-
 class UnetSegmentor(nn.Module):
+    """
+    UnetSegmentor: A U-Net based segmentation model for image segmentation tasks.
+    """
     REQUIRED_PARAMS = {
         'num_classes': int
     }
@@ -23,12 +29,12 @@ class UnetSegmentor(nn.Module):
         'p': float
     }
 
-    def __init__(self, 
-                 n_block=4, 
-                 channels=8, 
-                 num_classes=3, 
-                 p=0.5, 
-                 k_size=3, 
+    def __init__(self,
+                 n_block=4,
+                 channels=8,
+                 num_classes=3,
+                 p=0.5,
+                 k_size=3,
                  activation='relu'
                  ):
         super(UnetSegmentor, self).__init__()
@@ -38,13 +44,14 @@ class UnetSegmentor(nn.Module):
         self.p = p
         self.k_size = k_size
         self.activation = activation.lower()
-        
-        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels, kernel_size=self.k_size, padding=1)
+        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels,
+                                    kernel_size=self.k_size, padding=1)
         self.encoder_convs = nn.ModuleList([
             self._create_encoder_conv_block(channels= self.channels * 2 ** i)
             for i in range(0, self.n_block - 1)
         ])
-        self.mid_conv = self._create_encoder_conv_block(channels=self.channels * 2 ** (self.n_block - 1))
+        self.mid_conv = self._create_encoder_conv_block(
+            channels=self.channels*2**(self.n_block - 1))
         self.decoder_deconvs = nn.ModuleList([
             nn.ConvTranspose2d(
                 in_channels= self.channels * 2 ** (i + 1),
@@ -73,7 +80,6 @@ class UnetSegmentor(nn.Module):
 
         Args:
             channels (int): Number of input channels for the convolutional block.
-
         Returns:
             nn.Sequential: A sequential block containing convolutional layers,
             batch normalization, and the specified activation function.
@@ -93,7 +99,6 @@ class UnetSegmentor(nn.Module):
 
         Args:
             channels (int): Number of input channels for the convolutional block.
-
         Returns:
             nn.Sequential: A sequential block containing convolutional layers,
             batch normalization, and the specified activation function.
@@ -111,19 +116,21 @@ class UnetSegmentor(nn.Module):
         """
         Returns the specified activation function.
 
+        Supported activation types: 'relu', 'leakyrelu', 'sigmoid', 'tanh'.
         Returns:
             nn.Module: Activation function module.
+        Raises:
+            ValueError: If the specified activation function is not supported.
         """
         if self.activation == 'relu':
             return nn.ReLU()
-        elif self.activation == 'leakyrelu':
+        if self.activation == 'leakyrelu':
             return nn.LeakyReLU()
-        elif self.activation == 'sigmoid':
+        if self.activation == 'sigmoid':
             return nn.Sigmoid()
-        elif self.activation == 'tanh':
+        if self.activation == 'tanh':
             return nn.Tanh()
-        else:
-            raise ValueError(f"Unsupported activation: {self.activation}")
+        raise ValueError(f"Unsupported activation: {self.activation}")
 
     def forward(self, x):
         """
@@ -131,10 +138,9 @@ class UnetSegmentor(nn.Module):
 
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, channels, height, width).
-
         Returns:
-            torch.Tensor: Output tensor of shape (batch_size, num_classes, height, width) representing
-            the segmentation map.
+            torch.Tensor: Output tensor of shape (batch_size, num_classes, height, width) 
+            representing the segmentation map.
         """
         feature_list = []
         x = self.input_conv(x)
