@@ -11,8 +11,8 @@ import torch
 from torch import nn
 from transformers import AutoModel, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from classes.LinearHead import LinearHead
-from classes.CNNHead import CNNHead
+from classes.linear_head import LinearHead
+from classes.cnn_head import CNNHead
 
 class DinoV2Segmentor(nn.Module):
     """
@@ -43,31 +43,29 @@ class DinoV2Segmentor(nn.Module):
 		"large": 1024,
 	}
 
-    def __init__(
-			self,
-			channels=512,
-			num_classes=3,
-			linear_head=True,
-			k_size=3,
-			activation='relu',
-			size='base',
-			n_features=1,
-			peft=True,
-			quantize=True,
-			r=32,
-			lora_alpha=32,
-			lora_dropout=0.1,
-			inference_mode=False
-		):
-
-        super(DinoV2Segmentor, self).__init__()
+    def __init__(self,
+				channels=512,
+				num_classes=3,
+				linear_head=True,
+				k_size=3,
+				activation='relu',
+				size='base',
+				n_features=1,
+				peft=True,
+				quantize=True,
+				r=32,
+				lora_alpha=32,
+				lora_dropout=0.1,
+				inference_mode=False
+				):
+        super().__init__()
         self.inference_mode=inference_mode
         self.channels = channels
         self.num_classes = num_classes
         self.linear_head = linear_head
         self.k_size = k_size
         self.activation = activation
-        assert size in self.emb_size.keys(), "Invalid size embedding size"
+        assert size in self.emb_size, "Invalid size embedding size"
         self.embedding_size = self.emb_size[str(size)]
         self.n_features = n_features
         self.peft = peft
@@ -126,4 +124,3 @@ class DinoV2Segmentor(nn.Module):
                                               ['hidden_states'])[-self.n_features:]
         inputs = {"features" : features, "image" : x}
         return self.seg_head(inputs)
-    
