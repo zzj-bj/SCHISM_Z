@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import os
 import glob
@@ -73,7 +74,8 @@ class Inference:
             nn.Module: The initialized model ready for inference.
 
         Raises:
-            ValueError: If the specified model type is not supported or if there is an error converting parameters.
+            ValueError: If the specified model type is not supported
+            or if there is an error converting parameters.
         """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
@@ -85,10 +87,12 @@ class Inference:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter._convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter._convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         # Ensure `model_type` is not included in the parameters
@@ -277,7 +281,8 @@ class Inference:
                 patch_index += 1
 
         # Resize the full prediction map to the original image size
-        predicted_patches_reshaped = np.reshape(predicted_patches, (grid_size, grid_size, self.crop_size, self.crop_size))
+        predicted_patches_reshaped = np.reshape(predicted_patches,
+                                       (grid_size, grid_size, self.crop_size, self.crop_size))
         reconstructed_image = unpatchify(predicted_patches_reshaped, (dimenssions, dimenssions))
         full_pred = torch.tensor(reconstructed_image).float()
 
@@ -294,7 +299,8 @@ class Inference:
             torch.Tensor: A tensor containing the scaled mask with class values.
         """
         if self.num_classes > 1:
-            class_values = torch.linspace(0, 255, self.num_classes, device=mask_tensor.device).round()
+            class_values = torch.linspace(0, 255, self.num_classes,
+                                          device=mask_tensor.device).round()
             scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
             return scaled_mask
         else:

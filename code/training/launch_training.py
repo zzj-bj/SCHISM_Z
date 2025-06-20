@@ -9,7 +9,7 @@ import os
 from tools import folder as fo
 from tools import report as re
 
-from training.Training import Training
+from training import training as tr
 from commun.hyperparameters import Hyperparameters
 
 #===========================================================================
@@ -93,7 +93,7 @@ def train_model():
             print("[!] Starting training.")
 
             try:
-                train_object = Training(
+                train_object = tr.Training(
                     data_dir=data_dir,
                     subfolders=valid_subfolders,
                     run_dir=run_dir,

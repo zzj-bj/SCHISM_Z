@@ -25,7 +25,7 @@ from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
-from training.TrainingLogger import TrainingLogger
+from training import training_logger as tl
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -145,7 +145,7 @@ class Training:
 
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
-        self.logger = TrainingLogger(save_directory=self.save_directory,
+        self.logger = tl.TrainingLogger(save_directory=self.save_directory,
                                     num_classes=self.num_classes,
                                     model_params=self.model_params,
                                     optimizer_params=self.optimizer_params,

@@ -10,7 +10,7 @@ from tools import selection as sl
 from tools import folder as fo
 from tools import report as re
 
-from inference.Inference import Inference
+from inference import inference as nf
 from commun.hyperparameters import Hyperparameters
 
 
@@ -84,7 +84,7 @@ def run_inference():
         print("[!] Starting inference...")
 
         try:
-            pred_object = Inference(
+            pred_object = nf.Inference(
                 data_dir=data_dir,
                 subfolders=valid_subfolders,
                 run_dir=run_dir,
