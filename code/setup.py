@@ -66,7 +66,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="SCHISM",
-    version="0.2.7",
+    version="0.2.5",
     author="Florent Brondolo",
     author_email="florent.brondolo@akkodis.com",
     description="Simple framework for computer vision",
@@ -82,8 +82,7 @@ setup(
         "patchify",
         "peft>=0.10.0",
         "transformers>=4.40.0",
-        "bitsandbytes>=0.42.0",
-        "early-stopping-pytorch"
+        "bitsandbytes>=0.42.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

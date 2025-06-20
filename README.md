@@ -16,7 +16,8 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 ---
 ## :question: How to use
 
-SCHISM offers two main functionalities: **Training** and **Inference**.
+SCHISM offers three main functionalities: **Preprocesing** ,  **Training** and **Inference**.
+the module 'Preprocesing' has two menus 'Json generation' and 'Normalization' 
 
 ### General Steps
 1. Organize your data in the required structure (see Data Preparation).
@@ -24,8 +25,25 @@ SCHISM offers two main functionalities: **Training** and **Inference**.
 3. Run the main script:
    ``` python schism.py ```
 4. Navigate through the command-line menu:
-    - Option 1: Train a new model.
-    - Option 2: Make predictions using a trained model.
+    - Option 1: Preprocessing 
+    - Option 2: Train a new model.
+    - Option 3: Make predictions using a trained model.
+5. The option '1: Preprocessing' opens a new menu. This new menu allows you to generate a file in 'Json' format or to normalize masks.
+---
+### Preprocesing
+In this menu, we have access to two options that allow us to:
+    - Json generation: in development
+    - Normalization: creation of a grayscale image (0-255) in 8-bit format from a mask
+
+### - Json generation
+    This module is in development    
+
+###  - Normalization
+1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).    
+2. run the mormalization command: Launch the preprocessing process, then lauch the normalization and specify:
+    - The dataset directory (presented below).
+3. During the normalization process, a directory named 'normalized' is created in each subdirectory. This is where the normalized images will be stored.If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
+4. At the end of the normalization process, a new organization for the subdirectories is obtained (see below).
 
 ---
 ### Training Workflow
@@ -44,7 +62,7 @@ To make predictions:
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
     - The folder containing trained weights.
     - The dataset for prediction.
-
+ 4. A directory will be created. The name of this directory will follow the logic: 'preds_X', where 'X' represents the name of the metric used for this generation. For example, if the metric is 'Jaccard', the directory will be named 'preds_Jaccard'. Additionally, '_X' will also be appended to the names of the generated images (for instance, image000.tif will become image000_Jaccard.tif). If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
 ---
 ## :scroll: INI File Setup
 
@@ -53,47 +71,34 @@ Below is an example of an INI file:
 ```
 [Model]
 n_block=4
-channels=16
+channels=8
 num_classes=3
 model_type=UnetSegmentor
 k_size=3
 activation=leakyrelu
-channel=16
  
 [Optimizer]
-optimizer=RAdam
-lr=0.001
-eps=1e-6
-weight_decay=0.001
+optimizer=Adam
+lr=0.01
 
 [Scheduler]
-scheduler=ReduceLROnPlateau
-mode=min
-factor=0.5
-patience=5
-threshold=1e-4
-threshold_mode=rel
-cooldown=2
-min_lr=1e-6
-eps=1e-8
-verbose=True
+scheduler = ConstantLR
 
 [Loss]
-loss=CrossEntropyLoss
+loss= CrossEntropyLoss
 ignore_background=True
 weights=True
 
 [Training]
 batch_size=4
 val_split=0.8
-epochs=40
-metrics=Jaccard, F1, Recall, Accuracy, Precision, ConfusionMatrix
-early_stopping=True
-
+epochs=50
+metrics=Jaccard, ConfusionMatrix
+ 
 [Data]
-crop_size=225
-img_res=512
-num_samples=1500
+crop_size=128
+img_res=560
+num_samples=7000
 ```
 
 For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
@@ -103,9 +108,10 @@ For information on both the network configurations and the INI file setup, pleas
 
 The data should be organized as follows:
 
-```
-data <--- Select this folder for data input during training or inference.
-|_dataset 1/
+``` 
+- Before normalization
+data <--- Select this folder for data input during normalization, training or inference.
+|_dataset 1/ 
 |   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
 |   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
 |_dataset 2/
@@ -116,9 +122,27 @@ data <--- Select this folder for data input during training or inference.
 |   |_masks/
 |_data_stats.json <--- This file is optional.
 ```
+``` 
+ -After normalization
+data <--- Select this folder for data input during normalization, training or inference.
+|_dataset 1/ 
+|   |_images/ <--- Contains grayscale TIFF images, sequentially named for logical ordering (e.g., image0000.tif, image0001.tif, etc.).
+|   |_masks/ <--- Contains corresponding TIFF masks, named to match their respective images (e.g., mask0000.tif for image0000.tif).
+|   |_Normalized/ <--- Contains images mormalized
+|_dataset 2/
+|   |_images/
+|   |_masks/
+|   |_Normalized/
+|_dataset n/
+|   |_images/
+|   |_masks/
+|   |_Normalized/
+|_data_stats.json <--- This file is optional.
 
-- **Images**: The directory containing the input images. Images must be in TIFF format and will be automatically converted to HWC (Height, Width, Channels) format.
-- **Masks**: The directory containing the corresponding segmentation masks. Masks will be converted to 8-bit format (uint8) with values set between 0 and 255.
+
+- **Images**: Directory containing the input images.
+- **Masks**: Directory containing the corresponding segmentation masks.
+- **Normalized**: Directory containing the corresponding images mormalized from the masks.
 - **data_stats.json**: (Optional) A JSON file containing mean and standard deviation values for normalization. Currently, this file must be set manually and should follow this format:
 
 ```
@@ -164,7 +188,7 @@ If you use our solution or find our work helpful, please consider citing it as f
 ```
 @misc{schism2025,
   title       = {SCHISM: Semantic Classification of High-resolution Imaging for Scanned Materials},
-  author      = {Florent Brondolo and Samuel Beaussant and Soufiane Elbouazaoui and Saïd Ezzedine},
+  author      = {Florent Brondolo and Samuel Beaussant and Soufiane Elbouazaoui and Saïd Ezzedine and Pierre Fancelli},
   year        = {2025},
   howpublished= {\url{https://github.com/FloFive/SCHISM}},
   note        = {GitHub repository}

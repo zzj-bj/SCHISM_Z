@@ -1,120 +1,74 @@
-import os
+# -*- coding: utf-8 -*-
+""" SCHISM """
+
 import sys
-from classes.Training import Training
-from classes.Inference import Inference
-from classes.Hyperparameters import Hyperparameters
 
-ASCII_MENU = """
-╔══════════════════════════════════════════════════╗
-║  ███████╗ ██████╗██╗  ██╗██╗███████╗███╗   ███╗  ║
-║  ██╔════╝██╔════╝██║  ██║██║██╔════╝████╗ ████║  ║
-║  ███████╗██║     ███████║██║███████╗██╔████╔██║  ║
-║  ╚════██║██║     ██╔══██║██║╚════██║██║╚██╔╝██║  ║
-║  ███████║╚██████╗██║  ██║██║███████║██║ ╚═╝ ██║  ║
-║  ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝     ╚═╝  ║
-╠══════════════════════════════════════════════════╣
-║        -Let's do some cool segmentation-         ║
-╠══════════════════════════════════════════════════╣
-║ ▓▓▓▓▓▓ 1 -► Training       ░░░░░░░░░░░░░░░░██████║
-║ ▓▓▓▓ 2 -► Inference     ░░░░░░░░░░░░░░░░░████████║
-║ ▓▓ 3 -► Quit        ░░░░░░░░░░░░░░░░░░███████████║
-╚══════════════════════════════════════════════════╝
-"""
+from tools import selection as sl
+from tools import display_color as dc
+from tools import various_functions as vf
+from tools import constants as ct
 
-def get_path(prompt):
-    """Requests a valid path from the user."""
+
+from preprocessing import launch_preprocessing as lp
+from training import launch_training as lt
+from inference import launch_inference as li
+
+#=======================================================================
+def exit_prog():
+    """ End of Program """
+    print("\n[!! End of program !!]")
+    select = vf.answer_yes_or_non("Are you sure")
+    if select :
+        print(f"[<3] Goodbye! {ct.BELL}")
+        dc.display_color(ct.LOGO_OUT, "gray")
+        sys.exit()
+
+def menu_preprocessing():
+    """
+    This module allows for the following operations:
+        - Json generation
+        - Normalization of masks in 8-bit grayscale format.
+    """
+    preprocessing_menu = sl.Menu('Preprocessing', style = 'Unicode')
     while True:
-        path = input(f"[?] {prompt}: ").strip()
-        if os.path.exists(path):
-            return path
-        print("[X] Invalid path. Try again.")
+        preprocessing_menu.display_menu()
+        choice = preprocessing_menu.selection()
 
-def train_model():
-    """Executes the training process in CLI."""
-    print("\n[ Training Mode ]")
-    data_dir = get_path("Enter the data directory")
-    run_dir = get_path("Enter the directory to save runs")
-    hyperparameters_path = get_path("Enter the path to the hyperparameters INI file")
-    hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
+        # **** Json generation ****
+        if choice == 1:
+            lp.launch_json_generation()
 
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    hyperparameters = Hyperparameters(hyperparameters_path)
+        # **** Normalization ****
+        elif choice == 2:
+            lp.launch_normalisation()
 
-    train_object = Training(
-        data_dir=data_dir,
-        subfolders=subfolders,
-        run_dir=run_dir,
-        hyperparameters=hyperparameters
-    )
-
-    print("\n[!] Starting training...")
-    train_object.load_segmentation_data()
-    train_object.train()
-    print("\n[√] Training completed successfully!")
-
-def run_inference():
-    """Executes the inference process in CLI."""
-    print("\n[ Inference Mode ]")
-    data_dir = get_path("Enter the directory containing data to predict")
-    run_dir = get_path("Enter the directory containing model weights")
-
-    hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
-    if not os.path.exists(hyperparameters_path):
-        print("[X] The hyperparameters.ini file was not found in the weights directory.")
-        return
-
-    hyperparameters = Hyperparameters(hyperparameters_path)
-    params = hyperparameters.get_parameters().get("Training", {})
-    metrics = [metric.strip() for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
-
-    if not metrics:
-        print("[X] No metrics found in the hyperparameters.")
-        return
-
-    # Filter out 'ConfusionMatrix' if it's part of the metrics
-    available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
-
-    # Display the available metrics for inference
-    for i, metric in enumerate(available_metrics, start=1):
-        print(f" {i} --> {metric}")
-
-    while True:
-        choice = input("\n[?] Enter the metric number: ").strip()
-        if choice.isdigit() and 1 <= int(choice) <= len(metrics):
-            selected_metric = metrics[int(choice) - 1]
-            break
-        print("[X] Invalid selection. Try again.")
-
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    pred_object = Inference(
-        data_dir=data_dir,
-        subfolders=subfolders,
-        run_dir=run_dir,
-        selected_metric=selected_metric,
-        hyperparameters=hyperparameters
-    )
-
-    print("\n[!] Starting inference...")
-
-    pred_object.predict()
-    
-    print("\n[√] Inference completed successfully!")
+        # **** Return main menu ****
+        elif choice == 3:
+            return
 
 def main():
     """Displays the CLI menu and handles user choices."""
+    dc.display_color(ct.LOGO_IN, "Yellow")
+    main_menu = sl.Menu('MAIN')
     while True:
-        print("\n" + ASCII_MENU)
+        main_menu.display_menu()
+        choice = main_menu.selection()
 
-        choice = input("[?] Make your selection: ").strip()
-        if choice == "1":
-            train_model()
-        elif choice == "2":
-            run_inference()
-        elif choice == "3":
-            print("\n[<3] Goodbye! o/")
-            sys.exit()
-        else:
-            print("[X] Invalid choice. Try again.")
+        # Menu Preprocessing
+        if choice == 1:
+            menu_preprocessing()
+
+        # Training
+        elif choice == 2:
+            lt.train_model()
+
+         # Inference
+        elif choice == 3:
+            li.run_inference()
+
+        # Fin de Programme
+        elif choice == 4:
+            exit_prog()
 
 if __name__ == "__main__":
     main()
