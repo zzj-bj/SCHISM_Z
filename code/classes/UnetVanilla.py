@@ -9,7 +9,6 @@ It consists of encoder blocks, decoder blocks, and a bridge layer.
 
 @author: Florent.BRONDOLO
 """
-
 import torch
 from torch import nn
 import torch.nn.functional as F

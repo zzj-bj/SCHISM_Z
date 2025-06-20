@@ -7,8 +7,6 @@ and can be quantized for efficient inference.
 
 @author: Florent.BRONDOLO
 """
-
-
 import torch
 from torch import nn
 from transformers import AutoModel, BitsAndBytesConfig

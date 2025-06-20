@@ -28,6 +28,15 @@ class LinearHead(nn.Module):
         )
 
     def forward(self, inputs):
+        """
+        Forward pass of the LinearHead.
+
+        Processes the input features and returns the output logits.
+        Args:
+            inputs (dict): A dictionary containing the input features and image shape.
+        Returns:
+            torch.Tensor: The output logits after processing the input features.
+        """
         features = inputs["features"]
         img_shape = inputs["image"].shape[-1]
         patch_feature_size = img_shape // 14
