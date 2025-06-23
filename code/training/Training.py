@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 
 
-from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 

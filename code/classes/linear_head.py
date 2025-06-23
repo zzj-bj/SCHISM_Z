@@ -4,6 +4,8 @@ LinearHead class for image classification tasks.
 This class implements a linear head for image classification tasks.
 It includes configurable parameters for the embedding size, number of classes,
 and the number of features.
+
+@author: Florent.BRONDOLO
 """
 import torch
 from torch import nn

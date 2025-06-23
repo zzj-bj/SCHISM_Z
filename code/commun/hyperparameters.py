@@ -1,6 +1,17 @@
+"""
+Hyperparameters Class for Managing Model Parameters
+
+This class provides functionality to load, access, and save hyperparameters
+from an INI file format. It allows for easy management of model configurations
+and hyperparameters, making it suitable for machine learning and deep learning tasks.
+"""
+
 import configparser
 
 class Hyperparameters:
+    """
+    Hyperparameters class for managing model parameters.
+    """
     def __init__(self, file_path):
         """
         Initialize the Hyperparameters class and load parameters from an INI file.
@@ -37,5 +48,5 @@ class Hyperparameters:
         config.optionxform = str  # Preserve key case on saving as well
         for section, params in self.parameters.items():
             config[section] = {k: str(v) for k, v in params.items()}
-        with open(file_path, 'w') as configfile:
+        with open(file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)

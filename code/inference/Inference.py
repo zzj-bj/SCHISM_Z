@@ -14,7 +14,7 @@ import torchvision.transforms as Tc
 
 from patchify import unpatchify
 
-from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
