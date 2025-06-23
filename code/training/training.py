@@ -29,7 +29,7 @@ from torchmetrics.classification import (BinaryJaccardIndex, MulticlassJaccardIn
                                           BinaryRecall, MulticlassRecall)
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
-from tqdm import tqdm  # Ajout de tqdm
+from tqdm import tqdm
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
@@ -79,25 +79,27 @@ class Training:
         self.report = kwargs.get('report')
 
         # Extract category-wise parameters
-        self.model_params = {k: v
-                             for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.optimizer_params = {k: v
-                                 for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
-        self.scheduler_params = {k: v
-                                 for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
-        self.loss_params = {k: v
-                            for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
-        self.training_params = {k: v
-                                for k, v in self.hyperparameters.get_parameters()['Training'].items()}
-        self.data = {k: v
-                     for k, v in self.hyperparameters.get_parameters()['Data'].items()}
+        # Helper function to extract parameters from hyperparameters
+        def extract_params(category):
+            return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
+
+        # Extracting parameters for different categories
+        self.model_params = extract_params('Model')
+        self.optimizer_params = extract_params('Optimizer')
+        self.scheduler_params = extract_params('Scheduler')
+        self.loss_params = extract_params('Loss')
+        self.training_params = extract_params('Training')
+        self.data = extract_params('Data')
+
+        # Determine the number of classes
         self.num_classes = int(self.model_params.get('num_classes'))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
         #Loss parameters
         self.weights = self.param_converter._convert_param(self.loss_params.get('weights', "False"))
-        self.ignore_background = self.param_converter._convert_param(self.loss_params.get('ignore_background', "False"))
-
+        self.ignore_background = self.param_converter._convert_param(
+            self.loss_params.get('ignore_background', "False")
+        )
         if self.ignore_background:
             self.ignore_index = -1
         else:
@@ -115,7 +117,10 @@ class Training:
 
         # Control Num image to process
         if self.num_file <= self.num_samples :
-            text =f' - num_samples ({self.num_samples}) > maximum number of images to process ({self.num_file})'
+            text = (
+                f' - num_samples ({self.num_samples}) > '
+                f'maximum number of images to process ({self.num_file})'
+                )
             self.report .add(text,'')
             raise ValueError
         if self.num_samples < 16 :
@@ -173,6 +178,16 @@ class Training:
                                     data=self.data)
 
     def create_metric(self, binary_metric, multiclass_metric):
+        """
+        Creates a metric based on the number of classes.
+
+        Args:
+            binary_metric: The binary metric to use.
+            multiclass_metric: The multiclass metric to use.
+
+        Returns:
+            Instance of the appropriate metric.
+        """
         return (
             binary_metric(ignore_index=self.ignore_index).to(self.device)
             if self.num_classes == 1
@@ -194,7 +209,8 @@ class Training:
             "Jaccard": self.create_metric(BinaryJaccardIndex, MulticlassJaccardIndex),
             "F1": self.create_metric(BinaryF1Score, MulticlassF1Score),
             "Accuracy": self.create_metric(BinaryAccuracy, MulticlassAccuracy),
-            "AveragePrecision": self.create_metric(BinaryAveragePrecision, MulticlassAveragePrecision),
+            "AveragePrecision": self.create_metric(BinaryAveragePrecision,
+                                                   MulticlassAveragePrecision),
             "ConfusionMatrix": self.create_metric(BinaryConfusionMatrix, MulticlassConfusionMatrix),
             "Precision": self.create_metric(BinaryPrecision, MulticlassPrecision),
             "Recall": self.create_metric(BinaryRecall, MulticlassRecall),
@@ -217,13 +233,20 @@ class Training:
         return selected_metrics
 
     def initialize_optimizer(self):
+        """
+        Initializes the optimizer based on the specified parameters.
+
+        Returns:
+            Optimizer configured.
+        """
         optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
         optimizer_class = self.optimizer_mapping.get(optimizer_name)
 
         if not optimizer_class:
             text =f" - Optimizer '{optimizer_name}' is not supported"
             self.report .add(text,'')
-            raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
+            raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
+                             " Check your 'optimizer_mapping'.")
 
         converted_params = {k: self.param_converter._convert_param(v)
                             for k, v in self.optimizer_params.items() if k != 'optimizer'}
@@ -231,13 +254,23 @@ class Training:
         return optimizer_class(self.model.parameters(), **converted_params)
 
     def initialize_scheduler(self, optimizer):
+        """
+        Initializes the learning rate scheduler.
+
+        Args:
+            optimizer: The optimizer to use with the scheduler.
+
+        Returns:
+            Learning rate scheduler configured.
+        """
         scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
         scheduler_class = self.scheduler_mapping.get(scheduler_name)
 
         if not scheduler_class:
             text =f" - Scheduler '{scheduler_name}' is not supported"
             self.report .add(text,'')
-            raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
+            raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
+                             "Check your 'scheduler_mapping'.")
 
         converted_params = {k: self.param_converter._convert_param(v)
                             for k, v in self.scheduler_params.items() if k != 'scheduler'}
@@ -248,6 +281,15 @@ class Training:
             return scheduler_class(optimizer, **converted_params)
 
     def initialize_loss(self, **dynamic_params):
+        """
+        Initializes the loss function based on the specified parameters.
+
+        Args:
+            **dynamic_params: Dynamic parameters to use for the loss function.
+
+        Returns:
+            Loss function configured.
+        """
         loss_name = self.loss_params.get('loss', 'CrossEntropyLoss')
         loss_class = self.loss_mapping.get(loss_name)
 
@@ -278,6 +320,12 @@ class Training:
         return loss_class(**final_params)
 
     def initialize_model(self) -> nn.Module:
+        """
+        Initializes the model based on the specified parameters.
+
+        Returns:
+            nn.Module: Instance of the configured model.
+        """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
@@ -387,7 +435,8 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
-                print(f" Error loading data stats from {json_file_path}: {e}. Using default normalization stats.")
+                print(f" Error loading data stats from {json_file_path}: {e}."
+                      " Using default normalization stats.")
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
@@ -501,7 +550,16 @@ class Training:
         }
 
     def training_loop(self, optimizer, scheduler):
+        """
+        Main training loop that handles the training and validation of the model.
 
+        Args:
+            optimizer: The optimizer to use for training.
+            scheduler: The learning rate scheduler to use.
+
+        Returns:
+            tuple: Dictionaries containing losses and metrics for each phase.
+        """
         def print_epoch_box(epoch, total_epochs):
             # Generate the epoch string
             epoch_str = f" Epoch {epoch}/{total_epochs} "
@@ -520,7 +578,8 @@ class Training:
             cudnn.benchmark = True
 
         # Initialize metric instances and losses
-        metrics = self.initialize_metrics()  # This list includes your ConfusionMatrix instance if enabled
+        # This list includes your ConfusionMatrix instance if enabled
+        metrics = self.initialize_metrics()
         loss_dict = {"train": {}, "val": {}}
 
         # Build a list of display metric names (excluding "ConfusionMatrix")
@@ -590,7 +649,9 @@ class Training:
                                     loss.backward()
                                     optimizer.step()
 
-                                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                                if isinstance(
+                                    scheduler,
+                                    torch.optim.lr_scheduler.ReduceLROnPlateau):
                                     scheduler.step(loss)
                                 else:
                                     scheduler.step()
@@ -611,7 +672,8 @@ class Training:
 
                         pbar.set_postfix(
                             loss=running_loss / (pbar.n + 1),
-                            **{metric: running_metrics[metric] / (pbar.n + 1) for metric in display_metrics}
+                            **{metric: running_metrics[metric] / (pbar.n + 1)
+                               for metric in display_metrics}
                         )
                         pbar.update(1)
 
@@ -650,7 +712,9 @@ class Training:
         return loss_dict, metrics_dict, metrics
 
     def train(self):
-
+        """
+        Starts the training process for the model.
+        """
         text =f' Processing with {self.num_samples} images among {self.num_file}'
         print(text)
 

@@ -63,12 +63,12 @@ class Menu :
             box_width = max_length + 6
 
             # Create the pattern
-            print(f"{self.frame[0]}{self.frame[10] * box_width}{self.frame[2]}")
-            print(f"{self.frame[9]}{self.board[0].center(box_width )}{self.frame[9]}")
-            print(f"{self.frame[3]}{self.frame[10] * box_width}{self.frame[5]}")
+            print(f"{self.frame[1]}{self.frame[10] * box_width}{self.frame[3]}")
+            print(f"{self.frame[11]}{self.board[0].center(box_width )}{self.frame[11]}")
+            print(f"{self.frame[4]}{self.frame[10] * box_width}{self.frame[6]}")
             for i in range(1, self.ligne):
-                print(f"{self.frame[9]} {i} : {self.board[i].ljust(max_length)} {self.frame[9]}")
-            print(f"{self.frame[6]}{self.frame[10] * box_width}{self.frame[8]}")
+                print(f"{self.frame[11]} {i} : {self.board[i].ljust(max_length)} {self.frame[11]}")
+            print(f"{self.frame[7]}{self.frame[10] * box_width}{self.frame[9]}")
 
             if self.ligne < 2 :
                 print(f" '{self.board[0]}' : Menu without Choise !!!")
