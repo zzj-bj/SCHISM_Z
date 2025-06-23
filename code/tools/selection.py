@@ -44,10 +44,11 @@ class Menu :
             'simple': ct.PATTERN['simple'],
             'rounds': ct.PATTERN['rounds'],
             'ASCII': ct.PATTERN['ASCII'],
-            'Unicode': ct.PATTERN['Unicode']
+            'Unicode': ct.PATTERN['Unicode'],
+            'None': ct.PATTERN['double']
         }
-        self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
-
+        # self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
+        self.frame = style_mapping.get(str(self.style))
 
         self.ligne = 0
 
