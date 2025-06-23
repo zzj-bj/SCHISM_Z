@@ -20,45 +20,42 @@ class Menu :
     The default value is 'double'
     """
 
-    def __init__(self, sel_menu,  dynamic_menu = None, style = None):
+    def __init__(self, selected_menu,  dynamic_menu = None, style = None):
 
-        self.sel_menu = sel_menu
+        self.selected_menu = selected_menu
         self.dynamic_menu = dynamic_menu
         self.style = style
 
         # Check selec menu
-        self.unknow_menu = False
-        if self.sel_menu == 'Dynamic':
+        self.unknown_menu = False
+        if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
                 self.board = [str(element) for element in self.dynamic_menu]
-        elif self.sel_menu in ct.MENUS:
-            self.board = [str(element) for element in ct.MENUS[self.sel_menu]]
+        elif self.selected_menu in ct.MENUS:
+            self.board = [str(element) for element in ct.MENUS[self.selected_menu]]
         else:
-            self.unknow_menu = True
+            self.unknown_menu = True
 
         # Select pattern
-        if self.style == 'simple' :
-            self.frame = ct.PATTERN['simple']
-        elif self.style == 'rounds' :
-            self.frame = ct.PATTERN['rounds']
-        elif self.style == 'ASCII' :
-            self.frame = ct.PATTERN['ASCII']
-        elif self.style == 'Unicode' :
-            self.frame = ct.PATTERN['Unicode']
-        else:
-            self.frame = ct.PATTERN['double']
+        style_mapping = {
+            'simple': ct.PATTERN['simple'],
+            'rounds': ct.PATTERN['rounds'],
+            'ASCII': ct.PATTERN['ASCII'],
+            'Unicode': ct.PATTERN['Unicode']
+        }
+        self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
 
-        self.select = None
-        self.ligne = None
-        self.vali = None
+
+        self.ligne = 0
+
 
     def display_menu(self):
         """ display the menu """
-        if self.unknow_menu :
-            print(f" '{self.sel_menu}' : This menu doesn't existe in the dictionary !!!")
+        if self.unknown_menu :
+            print(f" '{self.selected_menu}' : This menu doesn't existe in the dictionary !!!")
             sys.exit()
         else:
             max_length = max(len(chaine) for chaine in self.board)
@@ -83,11 +80,11 @@ class Menu :
         """
         while True:
             try:
-                select = int(input("[?] Make your selection: "))
+                select = int(input("[?] Make your choice: "))
                 if 1 <= select <= self.ligne - 1 :
                     return select
                 else:
-                    print(f"[X] Invalid selection. Try again ! {ct.BELL}")
+                    print(f"[X] Invalid choice. Try again ! {ct.BELL}")
             # Input is not a number
             except ValueError:
                 print(f"[X] Waiting for number. Try again ! {ct.BELL}")
