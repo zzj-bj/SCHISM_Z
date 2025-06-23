@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 
 
 class TrainingLogger:
-    def __init__(self, save_directory, num_classes, model_params, optimizer_params, scheduler_params, loss_params, training_params, data):
+    def __init__(self, save_directory, num_classes, model_params, optimizer_params,
+                 scheduler_params, loss_params, training_params, data):
         """
         Initializes the TrainingLogger.
 
@@ -36,7 +37,8 @@ class TrainingLogger:
         Saves the indices of the training, validation, and test sets to text files.
 
         Args:
-            indices_list (list): A list containing the indices for training, validation, and test sets.
+            indices_list (list): A list containing the indices for training,
+                                 validation, and test sets.
         """
         indices_map = {
             "train": indices_list[0],

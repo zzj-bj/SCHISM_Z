@@ -1,25 +1,35 @@
-import sys
+
 import os
+import sys
 from datetime import datetime
-
-
 import glob
 import json
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as nn_func
-from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
-from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
-from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
-from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
+from torch.nn import (PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss,
+                      GaussianNLLLoss, NLLLoss)
+from torch.optim import (Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD)
+from torch.optim.lr_scheduler import (LRScheduler, LambdaLR, MultiplicativeLR,
+                                       StepLR, MultiStepLR, ConstantLR,
+                                       LinearLR, ExponentialLR, PolynomialLR,
+                                       CosineAnnealingLR, SequentialLR,
+                                       ReduceLROnPlateau, CyclicLR,
+                                       OneCycleLR, CosineAnnealingWarmRestarts)
+from torchmetrics.classification import (BinaryJaccardIndex, MulticlassJaccardIndex,
+                                          MulticlassF1Score, BinaryF1Score,
+                                          BinaryAccuracy, MulticlassAccuracy,
+                                          BinaryAveragePrecision, MulticlassAveragePrecision,
+                                          BinaryConfusionMatrix, MulticlassConfusionMatrix,
+                                          BinaryPrecision, MulticlassPrecision,
+                                          BinaryRecall, MulticlassRecall)
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
-
+from tqdm import tqdm  # Ajout de tqdm
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
@@ -27,9 +37,10 @@ from commun.model_registry import model_mapping
 
 from training import training_logger as tl
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from tools import display_color as dc
+
+# Ajoutez le chemin du système à la fin pour éviter les problèmes de dépendance
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #---------------------------------------------------------------------------
 class Training:
@@ -52,7 +63,8 @@ class Training:
                 - subfolders (list): List of subfolder names containing the dataset.
                 - data_dir (str): Directory containing the dataset.
                 - run_dir (str): Directory for saving model outputs.
-                - hyperparameters (Hyperparameters): An object containing model and training parameters.
+                - hyperparameters (Hyperparameters): An object containing model
+                                                    and training parameters.
 
         Raises:
             Exception: If pathLogDir is not provided.
@@ -67,12 +79,18 @@ class Training:
         self.report = kwargs.get('report')
 
         # Extract category-wise parameters
-        self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
-        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
-        self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
-        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
-        self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
+        self.model_params = {k: v
+                             for k, v in self.hyperparameters.get_parameters()['Model'].items()}
+        self.optimizer_params = {k: v
+                                 for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
+        self.scheduler_params = {k: v
+                                 for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
+        self.loss_params = {k: v
+                            for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
+        self.training_params = {k: v
+                                for k, v in self.hyperparameters.get_parameters()['Training'].items()}
+        self.data = {k: v
+                     for k, v in self.hyperparameters.get_parameters()['Data'].items()}
         self.num_classes = int(self.model_params.get('num_classes'))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
@@ -158,7 +176,8 @@ class Training:
         return (
             binary_metric(ignore_index=self.ignore_index).to(self.device)
             if self.num_classes == 1
-            else multiclass_metric(num_classes=self.num_classes, ignore_index=self.ignore_index).to(self.device)
+            else multiclass_metric(num_classes=self.num_classes,
+                                   ignore_index=self.ignore_index).to(self.device)
         )
 
     def initialize_metrics(self):
@@ -182,7 +201,8 @@ class Training:
         }
 
         # Parse metrics from string input or use default
-        self.metrics = [metric.strip() for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+        self.metrics = [metric.strip()
+                     for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
@@ -205,7 +225,8 @@ class Training:
             self.report .add(text,'')
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
-        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
+        converted_params = {k: self.param_converter._convert_param(v)
+                            for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
         return optimizer_class(self.model.parameters(), **converted_params)
 
@@ -218,7 +239,8 @@ class Training:
             self.report .add(text,'')
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
 
-        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
+        converted_params = {k: self.param_converter._convert_param(v)
+                            for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
             return scheduler_class(optimizer)
@@ -267,10 +289,12 @@ class Training:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter._convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter._convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         required_params.pop('model_type', None)
@@ -295,7 +319,8 @@ class Training:
 
     def create_unique_folder(self):
         """
-        Creates a unique folder for saving model weights and logs based on the current training parameters.
+        Creates a unique folder for saving model weights
+        and logs based on the current training parameters.
 
         Returns:
             str: The path to the created directory.
@@ -311,9 +336,11 @@ class Training:
 
     def load_segmentation_data(self):
         """
-        Loads segmentation data from the specified directories, prepares datasets, and creates data loaders.
+        Loads segmentation data from the specified directories,
+        prepares datasets, and creates data loaders.
 
-        This method also handles the loading of normalization statistics and the splitting of data into training,
+        This method also handles the loading of normalization statistics
+        and the splitting of data into training,
         validation, and test sets.
         """
 
@@ -365,13 +392,15 @@ class Training:
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
             """
-            Generates random indices for splitting the dataset into training, validation, and test sets.
+            Generates random indices for splitting the dataset into training, validation,
+            and test sets.
 
             Args:
                 num_samples (int): Total number of samples in the dataset.
                 val_split (float): Proportion of the dataset to use for validation.
                 subfolders (list): List of subfolder names containing the dataset.
-                num_sample_subfolder (dict): Dictionary mapping subfolder names to the number of samples in each.
+                num_sample_subfolder (dict): Dictionary mapping subfolder names to
+                                            the number of samples in each.
 
             Returns:
                 tuple: Three lists containing the indices for training, validation, and test sets.
@@ -454,10 +483,13 @@ class Training:
             ignore_background=self.ignore_background
         )
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2,
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
+                                  shuffle=True, num_workers=2,
                                   pin_memory=True, drop_last=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False, num_workers=2, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size,
+                                shuffle=False, num_workers=2, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
+                                 num_workers=2, drop_last=True)
 
         self.logger.save_indices_to_file([train_indices, val_indices, test_indices])
 
@@ -493,7 +525,10 @@ class Training:
 
         # Build a list of display metric names (excluding "ConfusionMatrix")
         display_metrics = [m for m in self.metrics if m != "ConfusionMatrix"]
-        metrics_dict = {phase: {metric: [] for metric in display_metrics} for phase in ["train", "val"]}
+        metrics_dict = {
+            phase: {metric: [] for metric in display_metrics}
+            for phase in ["train", "val"]
+        }
         best_val_loss = float("inf")
         best_val_metrics = {metric: 0 for metric in display_metrics}
 
@@ -515,7 +550,11 @@ class Training:
 
                     for inputs, labels, weights in self.dataloaders[phase]:
 
-                        inputs, labels, weights = inputs.to(self.device), labels.to(self.device), weights.to(self.device)
+                        inputs, labels, weights = (
+                                        inputs.to(self.device),
+                                        labels.to(self.device),
+                                        weights.to(self.device)
+                        )
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
 
@@ -593,7 +632,8 @@ class Training:
 
                 if phase == "val" and epoch_loss < best_val_loss:
                     best_val_loss = epoch_loss
-                    torch.save(self.model.state_dict(), os.path.join(self.save_directory, "model_best_loss.pth"))
+                    torch.save(self.model.state_dict(), os.path.join(self.save_directory,
+                                                "model_best_loss.pth"))
 
                 if phase == "val":
                     for metric, value in epoch_metrics.items():
@@ -626,7 +666,8 @@ class Training:
         self.logger.save_hyperparameters()
         self.logger.save_data_stats(self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:
-            self.logger.save_confusion_matrix(conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
-                                            model=self.model,
-                                            val_dataloader=self.dataloaders["val"],
-                                            device=self.device)
+            self.logger.save_confusion_matrix(
+                conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
+                model=self.model,
+                val_dataloader=self.dataloaders["val"],
+                device=self.device)
