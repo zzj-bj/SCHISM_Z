@@ -47,7 +47,7 @@ class TrainingLogger:
         }
         for idx_type, idx_list in indices_map.items():
             file_path = os.path.join(self.save_directory, f'{idx_type}_indices.txt')
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 for subfolder_name, sample_idx in idx_list:
                     f.write(f"{subfolder_name}, {sample_idx}\n")
 
@@ -66,7 +66,7 @@ class TrainingLogger:
         }
 
         json_file_path = os.path.join(self.save_directory, 'data_stats.json')
-        with open(json_file_path, 'w') as json_file:
+        with open(json_file_path, 'w', encoding="utf-8") as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
         print(f" Data statistics saved to {json_file_path}")
@@ -102,7 +102,7 @@ class TrainingLogger:
             config.set('Data', key, str(value))
 
         ini_file_path = os.path.join(self.save_directory, 'hyperparameters.ini')
-        with open(ini_file_path, 'w') as configfile:
+        with open(ini_file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)
 
         print(f" Hyperparameters saved to {ini_file_path}")
@@ -117,7 +117,7 @@ class TrainingLogger:
         """
         file_path = os.path.join(self.save_directory, "val_metrics_history.txt")
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("Validation Metrics History\n")
             f.write("=" * 30 + "\n\n")
 

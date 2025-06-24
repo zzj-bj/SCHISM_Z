@@ -54,7 +54,7 @@ class DatasetProcessor:
                 self.report.add(f" - Error processing {folder_name}: {e}", '')
                 print(f"Error processing {folder_name}: {e}")
 
-        with open(self.json_file, "w") as json_file:
+        with open(self.json_file, "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
 
     def calculate_mean_and_std_rgb(self, folder_path):

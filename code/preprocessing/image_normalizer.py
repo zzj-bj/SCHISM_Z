@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 11 22:12:18 2025
+This module allows normalizing a group of images.
 
 @author: Pierre.FANCELLI
 """
@@ -11,7 +11,7 @@ from tqdm import tqdm
 from PIL import Image
 import torch
 
-
+#=============================================================================
 class ImageNormalizer:
     """
     This class allows normalizing a group of images.
