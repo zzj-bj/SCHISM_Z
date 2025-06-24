@@ -28,7 +28,7 @@ def launch_json_generation():
     report_json = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
-    select = vf.answer_yes_or_non("Used all the data")
+    select = vf.answer_yes_or_no("Used all the data (100%) ")
     if select :
         vv = 1.0
     else :

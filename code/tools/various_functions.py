@@ -5,7 +5,10 @@ Collection of non-specific functions used in the program.
 @author: Pierre.FANCELLI
 """
 
-def answer_yes_or_non(message):
+from tools import constants as ct
+
+#==============================================================================
+def answer_yes_or_no(message):
     """
     This function retum.
       True for yes, y, oui, o.
@@ -19,7 +22,7 @@ def answer_yes_or_non(message):
         elif reponse in ['no', 'non', 'n']:
             return False
         else:
-            print("incorrect answer !!! ")
+            print(f"incorrect answer !!! {ct.BELL}")
 
 def input_percentage(message):
     """
@@ -31,6 +34,6 @@ def input_percentage(message):
             if 1 <= value <= 100:
                 return value / 100
             else:
-                print("Error: The value must be between 1 and 100.")
+                print(f"Error: The value must be between 1 and 100. {ct.BELL}")
         except ValueError:
-            print("Error: Please enter a valid number.")
+            print(f"Error: Please enter a valid number. {ct.BELL}")

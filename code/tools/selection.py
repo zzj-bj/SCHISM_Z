@@ -20,7 +20,7 @@ class Menu :
     The default value is 'double'
     """
 
-    def __init__(self, selected_menu,  dynamic_menu = None, style = None):
+    def __init__(self, selected_menu,  dynamic_menu = None, style = ''):
 
         self.selected_menu = selected_menu
         self.dynamic_menu = dynamic_menu
@@ -47,7 +47,7 @@ class Menu :
             'ASCII': ct.PATTERN['ASCII'],
             'Unicode': ct.PATTERN['Unicode']
         }
-        self.frame = style_mapping.get(str(self.style), ct.PATTERN['double'])
+        self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
 
         self.ligne = 0
 
