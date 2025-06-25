@@ -142,7 +142,7 @@ class TrainingLogger:
         train_loss_values = [loss_dict['train'][epoch] for epoch in epochs]
         val_loss_values = [loss_dict['val'][epoch] for epoch in epochs]
 
-        fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+        _, axes = plt.subplots(1, 2, figsize=(15, 5))
 
         ax0 = axes[0]
         ax0.plot(epochs, train_loss_values, 'b-', label='Train Loss')

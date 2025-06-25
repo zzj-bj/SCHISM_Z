@@ -1,10 +1,11 @@
-
+# -*- coding: utf-8 -*-
 import os
 import sys
 from datetime import datetime
 import glob
 import json
 import numpy as np
+from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
 
@@ -29,7 +30,7 @@ from torchmetrics.classification import (BinaryJaccardIndex, MulticlassJaccardIn
                                           BinaryRecall, MulticlassRecall)
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
-from tqdm import tqdm
+
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
@@ -603,7 +604,7 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
-                with tqdm(total=len(self.dataloaders[phase]), ncols=100 ,
+                with tqdm(total=len(self.dataloaders[phase]), ncols=102 ,
                           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                           ) as pbar:
 

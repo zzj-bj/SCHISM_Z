@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Collection of non-specific functions used in the program.
+    - Waiting for a Yes or No Answer
+    - Enter a percentage
 
 @author: Pierre.FANCELLI
 """
@@ -26,7 +28,8 @@ def answer_yes_or_no(message):
 
 def input_percentage(message):
     """
-    This function returns a real number between 1 and 100%
+    This function returns a real number between 0 and 1
+    that corresponds to a percentage.
     """
     while True:
         try:

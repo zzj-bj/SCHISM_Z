@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Set of constants used in the program:
-    Logo for SCHISM
-    Sound system for Error
-    symbols for frame creation
-    Constants for displaying menus
+    - Logo for SCHISM
+    - Sound system for Error
+    - symbols for frame creation
+    - Constants for displaying menus
 
 @author: Pierre.FANCELLI
 """
@@ -44,28 +44,28 @@ BELL = "\a"
 # symbols for frame creation
 PATTERN ={
 "double" : [".","╔", "╦", "╗",
-            "╠", "╬", "╣",
-            "╚", "╩", "╝",
+                "╠", "╬", "╣",
+                "╚", "╩", "╝",
             "═", "║"
            ],
 "simple" : [".","┌", "┬", "┐",
-            "├", "┼", "┤",
-            "└", "┴", "┘",
+                "├", "┼", "┤",
+                "└", "┴", "┘",
             "─", "│"
            ],
 "rounds" : [".","╭", "┬", "╮",
-            "├", "┼", "┤",
-            "╰", "┴", "╯",
+                "├", "┼", "┤",
+                "╰", "┴", "╯",
             "─", "│"
            ],
 "ASCII" : [".","+", "+", "+",
-           "+", "+", "+",
-           "+", "+", "+",
+               "+", "+", "+",
+               "+", "+", "+",
            "─", "│"
            ],
 "Unicode" : [".","┏", "┯", "┓",
-             "┣", "┿", "┫",
-             "┗", "┷", "┛",
+                 "┣", "┿", "┫",
+                 "┗", "┷", "┛",
              "━", "┃","│"
            ]
     }
