@@ -13,7 +13,7 @@ class ParamConverter:
     def __init__(self):
         pass
 
-    def _convert_param(self, v):
+    def convert_param(self, v):
         """
         Convert a string parameter to its appropriate Python type.
 

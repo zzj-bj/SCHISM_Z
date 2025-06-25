@@ -77,8 +77,8 @@ class Training:
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
         #Loss parameters
-        self.weights = self.param_converter._convert_param(self.loss_params.get('weights', "False"))
-        self.ignore_background = self.param_converter._convert_param(self.loss_params.get('ignore_background', "False"))
+        self.weights = self.param_converter.convert_param(self.loss_params.get('weights', "False"))
+        self.ignore_background = self.param_converter.convert_param(self.loss_params.get('ignore_background', "False"))
 
         if self.ignore_background:
             self.ignore_index = -1
@@ -205,7 +205,7 @@ class Training:
             self.report .add(text,'')
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
 
-        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
+        converted_params = {k: self.param_converter.convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
         return optimizer_class(self.model.parameters(), **converted_params)
 
@@ -218,7 +218,7 @@ class Training:
             self.report .add(text,'')
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
 
-        converted_params = {k: self.param_converter._convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
+        converted_params = {k: self.param_converter.convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
             return scheduler_class(optimizer)
@@ -236,7 +236,7 @@ class Training:
 
         # Convert static parameters from config
         converted_params = {
-            k: self.param_converter._convert_param(v)
+            k: self.param_converter.convert_param(v)
             for k, v in self.loss_params.items()
             if k not in {'loss', 'ignore_background', 'weights'}  # Exclude unwanted params
         }
@@ -267,10 +267,10 @@ class Training:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter.convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter.convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         required_params.pop('model_type', None)

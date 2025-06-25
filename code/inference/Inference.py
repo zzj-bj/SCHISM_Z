@@ -1,3 +1,9 @@
+""""
+Inference module for performing predictions on large images using a trained model.
+
+This module handles the initialization of the model, loading of datasets,
+and performing patch-based predictions to reconstruct full-size output images.
+"""
 import sys
 import os
 import glob
@@ -7,7 +13,7 @@ from PIL import Image
 from tqdm import tqdm
 
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as nn_func
 from torch.utils.data import DataLoader
 import torchvision.transforms as Tc
@@ -21,7 +27,16 @@ from commun.model_registry import model_mapping
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class Inference:
+    """ 
+    A class for performing inference using a pre-trained model.
 
+    This class handles the initialization of the model, loading of datasets,
+    and performing patch-based predictions to reconstruct full-size output images.
+
+    It supports various model types and configurations, allowing for flexible inference
+    on large images by processing them in smaller patches.
+
+    """
     def __repr__(self):
         """
         Returns a string representation of the Inference class.
@@ -36,11 +51,11 @@ class Inference:
         Initializes the Inference class with the necessary parameters and model setup.
 
         Args:
-            **kwargs: Keyword arguments containing configuration parameters such as:
-                - data_dir (str): Directory containing the input data.
-                - run_dir (str): Directory for saving results and loading model weights.
-                - hyperparameters (Hyperparameters): An object containing model and training parameters.
-                - selected_metric (str): Metric used for model evaluation.
+        **kwargs: Keyword arguments containing configuration parameters such as:
+            - data_dir (str): Directory containing the input data.
+            - run_dir (str): Directory for saving results and loading model weights.
+            - hyperparameters (Hyperparameters): An object containing model and training parameters.
+            - selected_metric (str): Metric used for model evaluation.
         """
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -73,29 +88,34 @@ class Inference:
             nn.Module: The initialized model ready for inference.
 
         Raises:
-            ValueError: If the specified model type is not supported or if there is an error converting parameters.
+            ValueError: If the specified model type is not supported 
+            or if there is an error converting parameters.
         """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
             self.report .add(text,'')
-            raise ValueError(f" Model '{model_name}' is not supported.\n Check your 'model_mapping'.")
+            raise ValueError(f" Model '{model_name}' is not supported."
+                             "\n Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter.convert_param(v) for k,
+            v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter.convert_param(v) for k,
+            v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         # Ensure `model_type` is not included in the parameters
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
 
-        # Ensure 'num_classes' is only in the required parameters, remove it from optional if present
+        # Ensure 'num_classes' is only in the required parameters,
+        # remove it from optional if present
         if 'num_classes' in optional_params:
             del optional_params['num_classes']
 
@@ -107,7 +127,7 @@ class Inference:
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}':\n {e}"
             self.report .add(text,'')
-            raise ValueError(f" Error converting parameters for model '{model_name}':\n {e}")
+            raise ValueError(f" Error converting parameters for model '{model_name}':\n {e}") from e
 
         # Initialize the model
         model = model_class(**typed_required_params, **optional_params).to(self.device)
@@ -117,7 +137,8 @@ class Inference:
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
             self.report .add(text,'')
-            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n Ensure the path is correct.")
+            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'."
+                                     "\n Ensure the path is correct.")
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)
@@ -256,14 +277,17 @@ class Inference:
             for j in range(grid_size):
                 patch = patches[patch_index]
                 with torch.no_grad():
-                    # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
+                    # Perform inference on the patch
+                    # (model expects 4D input: [batch_size, channels, height, width])
                     patch_pred = self.model(patch.to(self.device))
 
                     if self.num_classes > 1:
-                        # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
+                        # Multiclass: Apply softmax to get probabilities
+                        # and then get the class with the highest probability for each pixel
                         patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)
                     else:
-                        # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
+                        # Binary: Apply sigmoid to get probabilities
+                        # and then threshold to get binary classification
                         patch_pred = torch.sigmoid(patch_pred).squeeze(0)
                         patch_pred = (patch_pred > 0.5).to(torch.uint8)
 
@@ -277,7 +301,8 @@ class Inference:
                 patch_index += 1
 
         # Resize the full prediction map to the original image size
-        predicted_patches_reshaped = np.reshape(predicted_patches, (grid_size, grid_size, self.crop_size, self.crop_size))
+        predicted_patches_reshaped = np.reshape(predicted_patches,
+                                            (grid_size, grid_size, self.crop_size, self.crop_size))
         reconstructed_image = unpatchify(predicted_patches_reshaped, (dimenssions, dimenssions))
         full_pred = torch.tensor(reconstructed_image).float()
 
@@ -294,7 +319,9 @@ class Inference:
             torch.Tensor: A tensor containing the scaled mask with class values.
         """
         if self.num_classes > 1:
-            class_values = torch.linspace(0, 255, self.num_classes, device=mask_tensor.device).round()
+            class_values = torch.linspace(0, 255,
+                                        self.num_classes,
+                                        device=mask_tensor.device).round()
             scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
             return scaled_mask
         else:

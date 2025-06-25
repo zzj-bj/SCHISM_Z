@@ -5,10 +5,9 @@ This class handles loading, preprocessing, and patch extraction from TIFF images
 import numpy as np
 from PIL import Image
 import torch
-import torchvision
-import torchvision.transforms.functional as func_torch
-from torchvision.datasets import VisionDataset
 import torch.nn.functional as nn_func
+import torchvision
+from torchvision.datasets import VisionDataset
 from patchify import patchify
 
 class TiffDatasetLoader(VisionDataset):
@@ -102,7 +101,7 @@ class TiffDatasetLoader(VisionDataset):
         Returns:
             tuple: Cropped image and mask.
         """
-        for attempt in range(max_attempts):
+        for _ in range(max_attempts):
             # Get random crop parameters
             i, j, h, w = self.get_random_crop_params()
             # Crop the mask
@@ -116,13 +115,13 @@ class TiffDatasetLoader(VisionDataset):
                 return crop_img, crop_mask
 
         # If max_attempts reached, perform center crop
-        h, w = self.image_dims
-        th, tw = self.crop_size
-        center_i = (h - th) // 2
-        center_j = (w - tw) // 2
+        center_i = (self.image_dims[0] - self.crop_size[0]) // 2
+        center_j = (self.image_dims[1] - self.crop_size[1]) // 2
 
-        crop_img = img[center_i:center_i+th, center_j:center_j+tw, :].copy()
-        crop_mask = mask[center_i:center_i+th, center_j:center_j+tw].copy()
+        crop_img = img[center_i:center_i+self.crop_size[0],
+                       center_j:center_j+self.crop_size[1], :].copy()
+        crop_mask = mask[center_i:center_i+self.crop_size[0],
+                         center_j:center_j+self.crop_size[1]].copy()
 
         return crop_img, crop_mask
 
