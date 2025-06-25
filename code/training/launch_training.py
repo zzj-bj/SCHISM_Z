@@ -85,7 +85,7 @@ def train_model():
         valid_subfolders = []
         num_file = 0
         if len(subfolders) == 0 :
-            report_training.add(" - No folder found in ", data_dir)
+            report_training.add(" - The data directory is Empty ", '')
         else:
             valid_subfolders, num_file = check_folder(subfolders, data_dir, report_training)
 
