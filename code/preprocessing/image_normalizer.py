@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 11 22:12:18 2025
+ This script normalizes images in a specified directory by scaling the unique pixel values
+ to a range from 0 to 255. It processes each image, applies the normalization
+ and saves the normalized images to an output directory.
 
-@author: Pierre.FANCELLI
+ @author : Pierre.FANCELLI
 """
-
 import os
 import numpy as np
 from tqdm import tqdm

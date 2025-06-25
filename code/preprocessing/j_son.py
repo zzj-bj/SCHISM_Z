@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 19 09:17:37 2025
+This script processes datasets to calculate the mean
+and standard deviation of RGB values for images.
+
+It iterates through specified subfolders, checks for the existence of an 'images' directory,
+calculates the mean and standard deviation of the RGB values for the images in that directory,
+and saves the results in a JSON file.
 
 @author: Pierre.FANCELLI
 """
-
 import os
 import json
 import numpy as np
@@ -17,6 +21,10 @@ from tools import folder as fo
 #---------------------------------------------------------------------------
 
 class DatasetProcessor:
+    """ 
+    This class processes datasets to calculate the mean 
+    and standard deviation of RGB values for images.
+    """
     def __init__(self, parent_dir, subfolders, json_file, report, percentage_to_process=1):
         self.parent_dir = parent_dir
         self.subfolders = subfolders
@@ -30,7 +38,8 @@ class DatasetProcessor:
         Process each dataset in the specified subfolders.
 
         This method iterates through each subfolder, checks if the 'images' directory exists.
-        Calculates the mean and standard deviation of the RGB values for the images in that directory.
+        Calculates the mean and standard deviation of the RGB values 
+        for the images in that directory.
         Results are stored in the `self.results` dictionary,
         and any warnings or errors are reported.
 
@@ -89,7 +98,9 @@ class DatasetProcessor:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.report.add(f"Unable to load image at path: {image_path}", "")
+                self.report.add(
+                    f"Unable to load image at path: {image_path}",
+                    f" - Skipping this image.")
                 print(f"Unable to load image at path: {image_path}")
                 continue
 

@@ -1,4 +1,4 @@
-""""
+"""
 Inference module for performing predictions on large images using a trained model.
 
 This module handles the initialization of the model, loading of datasets,
@@ -16,7 +16,6 @@ import torch
 from torch import nn
 import torch.nn.functional as nn_func
 from torch.utils.data import DataLoader
-import torchvision.transforms as Tc
 
 from patchify import unpatchify
 
@@ -158,7 +157,10 @@ class Inference:
         indices = []
 
         for subfolder in os.listdir(self.data_dir):
-            img_folder = os.path.join(self.data_dir, subfolder, "images")
+            img_folder = os.path.join(
+                self.data_dir,
+                subfolder,
+                "images")
 
             if not os.path.isdir(img_folder):
                 continue
@@ -197,7 +199,7 @@ class Inference:
         json_file_path = os.path.join(self.run_dir, 'data_stats.json')
         try:
             # Read the JSON file
-            with open(json_file_path, 'r') as file:
+            with open(json_file_path, 'r', encoding='utf-8') as file:
                 raw_data_stats = json.load(file)
 
             # Convert the JSON content to the desired format
@@ -230,7 +232,7 @@ class Inference:
           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
           ) as pbar:
 
-            for i, (img, dataset_id, img_path) in enumerate(dataloader):
+            for _,(img, _, img_path) in enumerate(dataloader):
 
                 with torch.no_grad():
                     # Perform patch-based prediction
@@ -243,8 +245,11 @@ class Inference:
 
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
-                preds = f"preds_{self.metric}"
-                pred_save_path = os.path.join(self.data_dir, subfolder, preds, f"{new_name}")
+                pred_save_path = os.path.join(
+                    self.data_dir,
+                    subfolder,
+                    f"preds_{self.metric}",
+                     f"{new_name}")
                 self._save_mask(full_pred, pred_save_path)
 
                 # Mettez à jour la barre de progression
@@ -273,8 +278,8 @@ class Inference:
         patch_index = 0
         predicted_patches = []
 
-        for i in range(grid_size):
-            for j in range(grid_size):
+        for _ in range(grid_size):
+            for _ in range(grid_size):
                 patch = patches[patch_index]
                 with torch.no_grad():
                     # Perform inference on the patch
@@ -324,8 +329,7 @@ class Inference:
                                         device=mask_tensor.device).round()
             scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
             return scaled_mask
-        else:
-            return mask_tensor * 255  # Converts 0 to 0 and 1 to 255
+        return mask_tensor * 255  # Converts 0 to 0 and 1 to 255
 
     def _save_mask(self, mask_tensor, save_path):
         """

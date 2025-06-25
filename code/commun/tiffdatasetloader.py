@@ -126,11 +126,12 @@ class TiffDatasetLoader(VisionDataset):
         return crop_img, crop_mask
 
     def extract_patches(self, img_np):
-        """"
-            Extracts patches from the input image.
+        """
+        Extracts patches from the input image.
             
-            This method pads the image if necessary to ensure that its dimensions are compatible
-            with the specified crop size, and then extracts patches of the specified size.
+        This method pads the image if necessary to ensure that its dimensions are compatible
+        with the specified crop size, and then extracts patches of the specified size.
+        
         Args:
             img_np (np.array): Input image in the format [C, H, W].
         """
@@ -192,6 +193,19 @@ class TiffDatasetLoader(VisionDataset):
         return sorted_values
 
     def _weights_calc(self, mask, temperature=50.0):
+        """
+        Calculates class weights based on the distribution of classes in the mask.
+
+        Args:
+            mask (np.array): The segmentation mask.
+            temperature (float): Temperature parameter for softmax scaling.
+
+        Returns:
+            torch.Tensor: A tensor containing the class weights.
+        
+        Raises:
+            RuntimeError: If NaN values are detected in the weights calculation.
+        """
         mask = mask.astype(np.int64)
         counts = np.bincount(mask.ravel(), minlength=self.num_classes)[self.class_values]
 

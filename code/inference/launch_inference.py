@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 14 13:54:43 2025
+Launches the inference process for a trained model.
 
-@author: Pierre.FANCELLI
+This script prompts the user for the necessary directories and hyperparameters,
+validates the input, and then runs the inference process using the specified model.
+
+@author : Pierre.FANCELLI
 """
 import os
+from commun.hyperparameters import Hyperparameters
 
 from tools import selection as sl
 from tools import folder as fo
 from tools import report as re
 
-from inference.Inference import Inference
-from commun.hyperparameters import Hyperparameters
-
+from inference.inference import Inference
 
 #===========================================================================
 def run_inference():
-    """Executes the inference process in CLI."""
+    """
+    Launches the inference process for a trained model.
+    """
     print("\n[ Inference Mode ]")
 
     report_inference = re.ErrorReport()

@@ -25,7 +25,7 @@ from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
-from training.TrainingLogger import TrainingLogger
+from training.trainingLogger import TrainingLogger
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

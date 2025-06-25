@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 
 
 class TrainingLogger:
+    """    
+    A class to log training metrics, save hyperparameters, and visualize results.
+    """
     def __init__(self, save_directory, num_classes, model_params, optimizer_params, scheduler_params, loss_params, training_params, data):
         """
         Initializes the TrainingLogger.

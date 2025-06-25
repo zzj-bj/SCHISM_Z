@@ -9,7 +9,7 @@ import os
 from tools import folder as fo
 from tools import report as re
 
-from training.Training import Training
+from training.training import Training
 from commun.hyperparameters import Hyperparameters
 
 #===========================================================================
