@@ -14,10 +14,12 @@ from tools import constants as ct
 
 class Menu :
     """
-    This class allows displaying a menu and controlling the choice.
-    You can chose the style of the pattern between:
-       simple, double, rounds, ASCII or Unicode.
-    The default value is 'double'
+    This class allows creating a menu and managing the input choice based on the selection.
+    You can choose the frame format of the menu.
+
+    You can choose the style of the menu frame between:
+    'simple', 'double', 'rounds', 'ASCII', or 'Unicode'.
+    The default style is 'double'.
     """
 
     def __init__(self, sel_menu,  dynamic_menu = None, style = None):
@@ -56,7 +58,9 @@ class Menu :
         self.vali = None
 
     def display_menu(self):
-        """ display the menu """
+        """        
+        Method to display the menu based on the selected style and content.
+        """
         if self.unknow_menu :
             print(f" '{self.sel_menu}' : This menu doesn't existe in the dictionary !!!")
             sys.exit()
@@ -79,15 +83,14 @@ class Menu :
 
     def selection(self):
         """
-        Choice an option
+        Method to manage the user's choice in the menu.
         """
         while True:
             try:
                 select = int(input("[?] Make your selection: "))
                 if 1 <= select <= self.ligne - 1 :
                     return select
-                else:
-                    print(f"[X] Invalid selection. Try again ! {ct.BELL}")
+                print(f"[X] Invalid selection. Try again ! {ct.BELL}")
             # Input is not a number
             except ValueError:
                 print(f"[X] Waiting for number. Try again ! {ct.BELL}")

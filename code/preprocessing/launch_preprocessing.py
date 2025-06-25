@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+Launches the preprocessing operations for datasets.
+This script provides functionalities for preprocessing datasets, including JSON generation and image normalization.
+It prompts the user for the necessary directories and parameters,
+validates the input, and then executes the preprocessing tasks.
+
 This module allows for the following operations:
     - Json generation   *** In development ***
     - Normalization of masks in 8-bit grayscale format.
@@ -20,8 +25,7 @@ from preprocessing import j_son as js
 
 def launch_json_generation():
     """
-    Json Generation
-
+    Generates a JSON file containing statistics about the datasets.
     """
     print("\n[ Json Generation Mode ]")
 

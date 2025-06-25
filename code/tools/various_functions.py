@@ -16,12 +16,18 @@ def answer_yes_or_non(message):
         reponse = input(f"[?] {message} (y/n) ? : ").strip().lower()
         if reponse in ['yes', 'y', 'oui', 'o']:
             return True
-        elif reponse in ['no', 'non', 'n']:
+        if reponse in ['no', 'non', 'n']:
             return False
-        else:
-            print("incorrect answer !!! ")
+        print("incorrect answer !!! ")
 
 def input_percentage(message):
+    """
+    This function allows you to enter a percentage value between 1 and 100.
+
+    It returns the value as a decimal (e.g., 50% becomes 0.5).
+    
+    If the input is not a valid number or is outside the range, it prompts the user
+    """
     while True:
         try:
             value = float(input(f"[?] {message} : "))
