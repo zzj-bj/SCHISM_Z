@@ -7,32 +7,38 @@ import sys
 from datetime import datetime
 import glob
 import json
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as nn_func
+import torch.backends.cudnn as cudnn
+from torch.cuda.amp import GradScaler
+from torch.nn import (
+    PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss,
+    GaussianNLLLoss, NLLLoss
+)
+from torch.optim import (
+    Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
+)
+from torch.optim.lr_scheduler import (
+    LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR,
+    LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR,
+    ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
+)
+from torch.utils.data import DataLoader
+from torchmetrics.classification import (
+    BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score,
+    BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision,
+    BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision,
+    BinaryRecall, MulticlassRecall
+)
+
+
 import numpy as np
 from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as nn_func
-from torch.nn import (PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss,
-                      GaussianNLLLoss, NLLLoss)
-from torch.optim import (Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD)
-from torch.optim.lr_scheduler import (LRScheduler, LambdaLR, MultiplicativeLR,
-                                       StepLR, MultiStepLR, ConstantLR,
-                                       LinearLR, ExponentialLR, PolynomialLR,
-                                       CosineAnnealingLR, SequentialLR,
-                                       ReduceLROnPlateau, CyclicLR,
-                                       OneCycleLR, CosineAnnealingWarmRestarts)
-from torchmetrics.classification import (BinaryJaccardIndex, MulticlassJaccardIndex,
-                                          MulticlassF1Score, BinaryF1Score,
-                                          BinaryAccuracy, MulticlassAccuracy,
-                                          BinaryAveragePrecision, MulticlassAveragePrecision,
-                                          BinaryConfusionMatrix, MulticlassConfusionMatrix,
-                                          BinaryPrecision, MulticlassPrecision,
-                                          BinaryRecall, MulticlassRecall)
-from torch.utils.data import DataLoader
-import torch.backends.cudnn as cudnn
 
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
@@ -91,6 +97,7 @@ class Training:
         self.hyperparameters = kwargs.get('hyperparameters')
         self.num_file = kwargs.get('num_file')
         self.report = kwargs.get('report')
+        self.dataloaders = {}  # Initialize dataloaders attribute
 
         # Extract category-wise parameters
         # Helper function to extract parameters from hyperparameters
@@ -379,7 +386,7 @@ class Training:
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
             self.add_to_report(text, '')
-            raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
+            raise ValueError(text) from e
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
 
@@ -394,7 +401,8 @@ class Training:
         filename = f"{self.model_params.get('model_type', 'UnetVanilla')}__" \
             f"{self.training_time}"
 
-        save_directory = os.path.join(self.run_dir, filename)
+        save_directory = os.path.join(str(self.run_dir),
+                                      str(filename))
 
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)
@@ -499,8 +507,14 @@ class Training:
         data_stats = load_data_stats(self.data_dir)
 
         for subfolder in self.subfolders:
-            img_folder = os.path.join(self.data_dir, subfolder, "images")
-            mask_folder = os.path.join(self.data_dir, subfolder, "masks")
+            img_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                "images")
+            mask_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                "masks")
             img_files = sorted(glob.glob(os.path.join(img_folder, "*")))
             mask_files = sorted(glob.glob(os.path.join(mask_folder, "*")))
             assert len(img_files) == len(mask_files), (
@@ -594,7 +608,7 @@ class Training:
 
         scaler = None
         if self.device == "cuda":
-            scaler = torch.amp.GradScaler()
+            scaler = GradScaler()
             cudnn.benchmark = True
 
         # Initialize metric instances and losses
@@ -609,7 +623,7 @@ class Training:
             for phase in ["train", "val"]
         }
         best_val_loss = float("inf")
-        best_val_metrics = {metric: 0 for metric in display_metrics}
+        best_val_metrics = {metric: 0.0 for metric in display_metrics}
 
         for epoch in range(1, self.epochs + 1):
 
@@ -617,7 +631,11 @@ class Training:
 
             for phase in ["train", "val"]:
                 is_training = phase == "train"
-                self.model.train() if is_training else self.model.eval()
+
+                if is_training:
+                    self.model.train()
+                else:
+                    self.model.eval()
 
                 running_loss = 0.0
                 running_metrics = {metric: 0.0 for metric in display_metrics}

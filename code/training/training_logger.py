@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+    This module 'Training logger'
+"""
 import os
 import json
 import configparser
@@ -7,6 +11,9 @@ import matplotlib.pyplot as plt
 
 
 class TrainingLogger:
+    """
+        This module 'Training logger'
+    """
     def __init__(self, save_directory, num_classes, model_params, optimizer_params,
                  scheduler_params, loss_params, training_params, data):
         """
@@ -208,7 +215,7 @@ class TrainingLogger:
             cm_percent = (cm.astype(np.float32) / (cm.sum(axis=1, keepdims=True) + 1e-6)) * 100
 
             plt.figure(figsize=(8, 6))
-            plt.imshow(cm_percent, interpolation='nearest', cmap=plt.cm.Blues)
+            plt.imshow(cm_percent, interpolation='nearest', cmap='Blues')
             plt.colorbar()
 
             tick_marks = [0, 1] if self.num_classes == 1 else list(range(self.num_classes))
