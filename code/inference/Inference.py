@@ -11,7 +11,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nn_func
 from torch.utils.data import DataLoader
-import torchvision.transforms as Tc
 
 from patchify import unpatchify
 
@@ -19,8 +18,10 @@ from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+#==============================================================================
 class Inference:
 
     def __repr__(self):
@@ -40,7 +41,8 @@ class Inference:
             **kwargs: Keyword arguments containing configuration parameters such as:
                 - data_dir (str): Directory containing the input data.
                 - run_dir (str): Directory for saving results and loading model weights.
-                - hyperparameters (Hyperparameters): An object containing model and training parameters.
+                - hyperparameters (Hyperparameters): An object containing model
+                                    and training parameters.
                 - selected_metric (str): Metric used for model evaluation.
         """
         self.param_converter = ParamConverter()
@@ -50,6 +52,21 @@ class Inference:
         self.hyperparameters = kwargs.get('hyperparameters')
         self.metric = kwargs.get('selected_metric')
         self.report = kwargs.get('report')
+
+        # if self.report is None:
+        #     text = "The report must be provided and not None."
+        #     self.report.add(text, '')
+        #     raise ValueError(text)
+
+        if self.hyperparameters is None:
+            text = "The 'hyperparameters' argument must be provided and not None."
+            self.report.add(text, '')
+            raise ValueError(text)
+
+        # if self.metric is None:
+        #     text = "The 'metric' argument must be provided and not None."
+        #     self.report.add(text, '')
+        #     raise ValueError(text)
 
         # Extract category-wise parameters
         self.model_params = self.hyperparameters.get_parameters()['Model']
@@ -80,8 +97,9 @@ class Inference:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.report .add(text,'')
-            raise ValueError(f" Model '{model_name}' is not supported.\n Check your 'model_mapping'.")
+            self.report.add(text,'')
+            raise ValueError(f" Model '{model_name}' is not supported.\n"
+                             " Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
@@ -99,7 +117,8 @@ class Inference:
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
 
-        # Ensure 'num_classes' is only in the required parameters, remove it from optional if present
+        # Ensure 'num_classes' is only in the required parameters,
+        # remove it from optional if present
         if 'num_classes' in optional_params:
             del optional_params['num_classes']
 
@@ -110,7 +129,7 @@ class Inference:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}':\n {e}"
-            self.report .add(text,'')
+            self.report.add(text,'')
             raise ValueError(f" Error converting parameters for model '{model_name}':\n {e}")
 
         # Initialize the model
@@ -120,8 +139,9 @@ class Inference:
         checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
-            self.report .add(text,'')
-            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n Ensure the path is correct.")
+            self.report.add(text,'')
+            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
+                                    " Ensure the path is correct.")
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)
@@ -180,7 +200,7 @@ class Inference:
         json_file_path = os.path.join(self.run_dir, 'data_stats.json')
         try:
             # Read the JSON file
-            with open(json_file_path, 'r') as file:
+            with open(json_file_path, 'r', encoding='utf-8') as file:
                 raw_data_stats = json.load(file)
 
             # Convert the JSON content to the desired format
@@ -195,7 +215,7 @@ class Inference:
         except Exception as e:
             print(f" Error loading data stats: {e}")
             text =f" - Error loading data stats: {e}"
-            self.report .add(text,'')
+            self.report.add(text,'')
             raise
 
     def predict(self):
@@ -213,7 +233,7 @@ class Inference:
           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
           ) as pbar:
 
-            for i, (img, dataset_id, img_path) in enumerate(dataloader):
+            for _, (img, _, img_path) in enumerate(dataloader):
 
                 with torch.no_grad():
                     # Perform patch-based prediction
@@ -256,18 +276,21 @@ class Inference:
         patch_index = 0
         predicted_patches = []
 
-        for i in range(grid_size):
-            for j in range(grid_size):
+        for _ in range(grid_size):
+            for _ in range(grid_size):
                 patch = patches[patch_index]
                 with torch.no_grad():
-                    # Perform inference on the patch (model expects 4D input: [batch_size, channels, height, width])
+                    # Perform inference on the patch
+                    # (model expects 4D input: [batch_size, channels, height, width])
                     patch_pred = self.model(patch.to(self.device))
 
                     if self.num_classes > 1:
-                        # Multiclass: Apply softmax to get probabilities and then get the class with the highest probability for each pixel
+                        # Multiclass: Apply softmax to get probabilities
+                        # and then get the class with the highest probability for each pixel
                         patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)
                     else:
-                        # Binary: Apply sigmoid to get probabilities and then threshold to get binary classification
+                        # Binary: Apply sigmoid to get probabilities
+                        # and then threshold to get binary classification
                         patch_pred = torch.sigmoid(patch_pred).squeeze(0)
                         patch_pred = (patch_pred > 0.5).to(torch.uint8)
 

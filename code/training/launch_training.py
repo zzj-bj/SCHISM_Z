@@ -104,7 +104,7 @@ def train_model():
 
                 train_object.load_segmentation_data()
                 train_object.train()
-            except ValueError as e:
+            except (IOError, ValueError) as e:
                 print(e)
 
     report_training.status("Training")

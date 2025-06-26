@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+    This module 'Training'
+"""
 import os
 import sys
 from datetime import datetime
@@ -45,7 +48,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #---------------------------------------------------------------------------
 class Training:
-
+    """
+        This module 'Training'
+    """
     def __repr__(self):
         """
         Returns a string representation of the Training class.
@@ -54,6 +59,14 @@ class Training:
             str: A string indicating the class name.
         """
         return 'Training'
+
+    def add_to_report(self, text, who):
+        """
+            Add a message to a report
+        """
+        if self.report is not None:
+            self.report.add(text, who)
+
 
     def __init__(self, **kwargs):
         """
@@ -122,10 +135,11 @@ class Training:
                 f' - num_samples ({self.num_samples}) > '
                 f'maximum number of images to process ({self.num_file})'
                 )
-            self.report .add(text,'')
+            self.add_to_report(text, '')
             raise ValueError
         if self.num_samples < 16 :
-            self.report .add(f'num_samples ({self.num_samples}) must be >= 16 ','')
+            text = f'num_samples ({self.num_samples}) must be >= 16 '
+            self.add_to_report(text,'')
             raise ValueError
 
         # Extract and parse metrics from the ini file
@@ -178,6 +192,9 @@ class Training:
                                     training_params=self.training_params,
                                     data=self.data)
 
+        self.metrics = []  # Initialize metrics attribute
+        self.metrics_mapping = {}  # Initialize metrics_mapping attribute
+
     def create_metric(self, binary_metric, multiclass_metric):
         """
         Creates a metric based on the number of classes.
@@ -228,7 +245,7 @@ class Training:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
                 text =f" - Metric '{metric}' not recognized"
-                self.report .add(text,'')
+                self.add_to_report(text,'')
                 raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
 
         return selected_metrics
@@ -245,7 +262,7 @@ class Training:
 
         if not optimizer_class:
             text =f" - Optimizer '{optimizer_name}' is not supported"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
                              " Check your 'optimizer_mapping'.")
 
@@ -269,7 +286,7 @@ class Training:
 
         if not scheduler_class:
             text =f" - Scheduler '{scheduler_name}' is not supported"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
                              "Check your 'scheduler_mapping'.")
 
@@ -296,7 +313,7 @@ class Training:
 
         if not loss_class:
             text =f" - Loss '{loss_name}' is not supported"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
         # Convert static parameters from config
@@ -331,7 +348,7 @@ class Training:
 
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
@@ -361,7 +378,7 @@ class Training:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
-            self.report .add(text,'')
+            self.add_to_report(text, '')
             raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
@@ -410,14 +427,15 @@ class Training:
             if not os.path.exists(json_file_path):
                 dc.display_color(f" File {json_file_path} not found.", "yellow")
                 dc.display_color(" Using default normalization stats." , "yellow")
-                self.report .add(" - File 'J_son' not found. Using default normalization", '')
+                text = " - File 'J_son' not found. Using default normalization"
+                self.add_to_report(text,'')
                 return {"default": neutral_stats}
             else:
                 print(f" File {json_file_path} found.")
                 print(" Using this one.")
 
             try:
-                with open(json_file_path, 'r') as file:
+                with open(json_file_path, 'r', encoding="utf-8") as file:
                     raw_data_stats = json.load(file)
 
                 data_stats_loaded = {}
@@ -425,7 +443,7 @@ class Training:
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" - Invalid format in data_stats.json for key {key}"
-                        self.report .add(text,'')
+                        self.add_to_report(text,'')
                         raise ValueError(f"Invalid format in data_stats.json for key {key}")
 
                     data_stats_loaded[key] = [
@@ -542,6 +560,8 @@ class Training:
                                  num_workers=2, drop_last=True)
 
         self.logger.save_indices_to_file([train_indices, val_indices, test_indices])
+
+        self.dataloaders = {}  # Initialize dataloaders attribute
 
         self.dataloaders = {
             'train': train_loader,

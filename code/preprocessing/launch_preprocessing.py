@@ -64,7 +64,7 @@ def launch_json_generation():
                                               percentage_to_process)
         try:
             json_generation.process_datasets()
-        except ValueError as e:
+        except (IOError, ValueError) as e:
             print(e)
 
     report_json.status("Json Generation Mode")
@@ -109,7 +109,7 @@ def launch_normalisation():
 
             try:
                 normalizer.normalize_images()
-            except ValueError as e:
+            except (IOError, ValueError) as e:
                 print(e)
 
     report_normal.status("Normalization")

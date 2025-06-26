@@ -98,12 +98,12 @@ def run_inference():
 
             try:
                 pred_object.predict()
-            except ValueError as e:
+            except (IOError, ValueError) as e:
                 print(f" ValueError during prediction:\n {e}")
 
         except FileNotFoundError as e:
             print(f" FileNotFoundError during model initialization:\n {e}")
-        except Exception as e:
+        except (IOError, ValueError) as e:
             print(f" An unexpected error occurred:\n {e}")
 
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=no-member
 """
 J_son Generation
 
@@ -29,6 +30,14 @@ class DatasetProcessor:
         self.json_file = json_file
         self.results = {}
 
+    def add_to_report(self, text, who):
+        """
+            Add a message to a report
+        """
+        if self.report is not None:
+            self.report.add(text, who)
+
+
     def process_datasets(self):
         """
         Process each dataset in the specified subfolders.
@@ -50,8 +59,8 @@ class DatasetProcessor:
             try:
                 std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path)
                 self.results[folder_name] = [std_dev, mean]
-            except Exception as e:
-                self.report.add(f" - Error processing {folder_name}: {e}", '')
+            except (IOError, ValueError) as e:
+                self.add_to_report(f" - Error processing {folder_name}: {e}", '')
                 print(f"Error processing {folder_name}: {e}")
 
         with open(self.json_file, "w", encoding="utf-8") as json_file:
@@ -90,8 +99,8 @@ class DatasetProcessor:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.report.add(f"Unable to load image at path: {image_path}", "")
-                print(f"Unable to load image at path: {image_path}")
+                self.add_to_report(f" - Unable to load image at path: {image_path}", "")
+                print(f" Unable to load image at path: {image_path}")
                 continue
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -106,10 +115,10 @@ class DatasetProcessor:
                    ):
 
             image_path = os.path.join(folder_path, image_files[idx])
-            image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+            image = cv2.imread(image_path, cv2.IMREAD_COLOR) # pylint: disable=no-member
             if image is None:
                 continue
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # pylint: disable=no-member
             pixel_variance += torch.sum((torch.tensor(image, dtype=torch.float32) - mean) ** 2,
                                         dim=(0, 1))
 
