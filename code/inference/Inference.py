@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+    Inference
+"""
 import sys
 import os
 import glob
@@ -23,7 +26,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #==============================================================================
 class Inference:
-
+    """
+        Inference
+    """
     def __repr__(self):
         """
         Returns a string representation of the Inference class.
@@ -103,11 +108,11 @@ class Inference:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v)
+            k: v
             for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v)
+            k: v
             for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
@@ -135,7 +140,7 @@ class Inference:
         model = model_class(**typed_required_params, **optional_params).to(self.device)
 
         # Load pre-trained weights
-        checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
+        checkpoint_path = os.path.join(str(self.run_dir), f"model_best_{self.metric}.pth")
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
             self.add_to_report(text,'')
@@ -160,7 +165,10 @@ class Inference:
         indices = []
 
         for subfolder in os.listdir(self.data_dir):
-            img_folder = os.path.join(self.data_dir, subfolder, "images")
+            img_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                "images")
 
             if not os.path.isdir(img_folder):
                 continue
@@ -172,7 +180,10 @@ class Inference:
                 indices.append((subfolder, i))
 
             preds = f"preds_{self.metric}"
-            preds_folder = os.path.join(self.data_dir, subfolder, preds)
+            preds_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                str(preds))
             os.makedirs(preds_folder, exist_ok=True)
 
         dataset = TiffDatasetLoader(
@@ -196,7 +207,7 @@ class Inference:
         Raises:
             Exception: If there is an error loading the JSON file.
         """
-        json_file_path = os.path.join(self.run_dir, 'data_stats.json')
+        json_file_path = os.path.join(str(self.run_dir), 'data_stats.json')
         try:
             # Read the JSON file
             with open(json_file_path, 'r', encoding='utf-8') as file:
@@ -246,7 +257,11 @@ class Inference:
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
                 preds = f"preds_{self.metric}"
-                pred_save_path = os.path.join(self.data_dir, subfolder, preds, f"{new_name}")
+                pred_save_path = os.path.join(
+                    str(self.data_dir),
+                    str(subfolder),
+                    str(preds),
+                    str(f"{new_name}"))
                 self._save_mask(full_pred, pred_save_path)
 
                 # Mettez à jour la barre de progression
