@@ -99,12 +99,17 @@ def run_inference():
             try:
                 pred_object.predict()
             except (IOError, ValueError) as e:
-                print(f" ValueError during prediction:\n {e}")
+                report_inference.add(e, '')
+                # print(f" ValueError during prediction:\n {e}")
 
         except FileNotFoundError as e:
-            print(f" FileNotFoundError during model initialization:\n {e}")
+            text = f" FileNotFoundError during model initialization:\n {e}"
+            report_inference.add(text, '')
+            # print(f" FileNotFoundError during model initialization:\n {e}")
         except (IOError, ValueError) as e:
-            print(f" An unexpected error occurred:\n {e}")
+            text = f" An unexpected error occurred:\n {e}"
+            report_inference.add(text, '')
+            # print(f" An unexpected error occurred:\n {e}")
 
 
     text = f"Inference with Metric '{selected_metric}'"

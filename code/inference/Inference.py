@@ -33,6 +33,13 @@ class Inference:
         """
         return 'Inference'
 
+    def add_to_report(self, text, who):
+        """
+            Add a message to a report
+        """
+        if self.report is not None:
+            self.report.add(text, who)
+
     def __init__(self, **kwargs):
         """
         Initializes the Inference class with the necessary parameters and model setup.
@@ -53,20 +60,11 @@ class Inference:
         self.metric = kwargs.get('selected_metric')
         self.report = kwargs.get('report')
 
-        # if self.report is None:
-        #     text = "The report must be provided and not None."
-        #     self.report.add(text, '')
-        #     raise ValueError(text)
 
         if self.hyperparameters is None:
             text = "The 'hyperparameters' argument must be provided and not None."
-            self.report.add(text, '')
+            self.add_to_report(text, '')
             raise ValueError(text)
-
-        # if self.metric is None:
-        #     text = "The 'metric' argument must be provided and not None."
-        #     self.report.add(text, '')
-        #     raise ValueError(text)
 
         # Extract category-wise parameters
         self.model_params = self.hyperparameters.get_parameters()['Model']
@@ -97,7 +95,7 @@ class Inference:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.report.add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f" Model '{model_name}' is not supported.\n"
                              " Check your 'model_mapping'.")
 
@@ -129,8 +127,9 @@ class Inference:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}':\n {e}"
-            self.report.add(text,'')
-            raise ValueError(f" Error converting parameters for model '{model_name}':\n {e}")
+            self.add_to_report(text,'')
+            raise ValueError(f" Error converting parameters for model '{model_name}':"
+                             "\n {e}") from e
 
         # Initialize the model
         model = model_class(**typed_required_params, **optional_params).to(self.device)
@@ -139,7 +138,7 @@ class Inference:
         checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
-            self.report.add(text,'')
+            self.add_to_report(text,'')
             raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
                                     " Ensure the path is correct.")
 
@@ -215,7 +214,7 @@ class Inference:
         except Exception as e:
             print(f" Error loading data stats: {e}")
             text =f" - Error loading data stats: {e}"
-            self.report.add(text,'')
+            self.add_to_report(text,'')
             raise
 
     def predict(self):

@@ -425,14 +425,13 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                dc.display_color(f" File {json_file_path} not found.", "yellow")
+                dc.display_color(" File 'json' not found ! ", "yellow")
                 dc.display_color(" Using default normalization stats." , "yellow")
-                text = " - File 'J_son' not found. Using default normalization"
+                text = " - File 'J_son' not found. Using file default normalization"
                 self.add_to_report(text,'')
                 return {"default": neutral_stats}
             else:
-                print(f" File {json_file_path} found.")
-                print(" Using this one.")
+                print(" File 'json' found : Using this one.")
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:

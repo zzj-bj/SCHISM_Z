@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 # pylint: disable=no-member
 """
 J_son Generation
@@ -60,8 +60,7 @@ class DatasetProcessor:
                 std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path)
                 self.results[folder_name] = [std_dev, mean]
             except (IOError, ValueError) as e:
-                self.add_to_report(f" - Error processing {folder_name}: {e}", '')
-                print(f"Error processing {folder_name}: {e}")
+                self.add_to_report(f" - Error processing {folder_name}:\n {e}", '')
 
         with open(self.json_file, "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
