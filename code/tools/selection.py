@@ -58,7 +58,7 @@ class Menu :
         """        
         Method to display the menu based on the selected style and content.
         """
-        if self.unknow_menu :
+        if self.unknown_menu :
             print(f" '{self.sel_menu}' : This menu doesn't existe in the dictionary !!!")
             sys.exit()
         else:
