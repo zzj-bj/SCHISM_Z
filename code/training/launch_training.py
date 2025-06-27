@@ -9,13 +9,14 @@ import os
 from tools import folder as fo
 from tools import report as re
 
-from training.training import Training
+from training import training as tr
 from commun.hyperparameters import Hyperparameters
 
 #===========================================================================
 def check_folder(folder, root, report):
     """
-    This function checks that all the directories passed as parameters comply with the expected requirements.
+    This function checks that all the directories passed as parameters comply
+    with the expected requirements.
 
     Parameters
     ----------
@@ -82,8 +83,9 @@ def train_model():
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
         valid_subfolders = []
+        num_file = 0
         if len(subfolders) == 0 :
-            report_training.add(" - No folder found in ", data_dir)
+            report_training.add(" - The data directory is Empty ", '')
         else:
             valid_subfolders, num_file = check_folder(subfolders, data_dir, report_training)
 
@@ -91,7 +93,7 @@ def train_model():
             print("[!] Starting training.")
 
             try:
-                train_object = Training(
+                train_object = tr.Training(
                     data_dir=data_dir,
                     subfolders=valid_subfolders,
                     run_dir=run_dir,
@@ -102,7 +104,7 @@ def train_model():
 
                 train_object.load_segmentation_data()
                 train_object.train()
-            except ValueError as e:
+            except (IOError, ValueError) as e:
                 print(e)
 
     report_training.status("Training")

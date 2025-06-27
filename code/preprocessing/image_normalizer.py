@@ -12,7 +12,7 @@ from tqdm import tqdm
 from PIL import Image
 import torch
 
-
+#=============================================================================
 class ImageNormalizer:
     """
     This class allows normalizing a group of images.
@@ -69,5 +69,5 @@ class ImageNormalizer:
                 output_file_path = os.path.join(self.output_path, output_name)
                 normalized_image.save(output_file_path)
 
-            except Exception as e:
+            except (IOError, ValueError) as e:
                 print(f"\n{e}")

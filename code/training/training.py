@@ -1,39 +1,58 @@
-import sys
+# -*- coding: utf-8 -*-
+"""
+A module for training a segmentation model using PyTorch.
+
+This module provides a `Training` class that handles the initialization of the model,
+data loading, optimizer and scheduler setup, loss function initialization,
+and the main training loop.
+"""
 import os
+import sys
 from datetime import datetime
-
-
 import glob
 import json
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as nn_func
-from torch.nn import PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss, GaussianNLLLoss, NLLLoss
-from torch.optim import Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
-from torch.optim.lr_scheduler import LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR, LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR, ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
-from torchmetrics.classification import BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score, BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision, BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision, BinaryRecall, MulticlassRecall
-from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
+from torch.cuda.amp import GradScaler
+from torch.nn import (
+    PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss,
+    GaussianNLLLoss, NLLLoss
+)
+from torch.optim import (
+    Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
+)
+from torch.optim.lr_scheduler import (
+    LRScheduler, LambdaLR, MultiplicativeLR, StepLR, MultiStepLR, ConstantLR,
+    LinearLR, ExponentialLR, PolynomialLR, CosineAnnealingLR, SequentialLR,
+    ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
+)
+from torch.utils.data import DataLoader
+from torchmetrics.classification import (
+    BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score,
+    BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision,
+    BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision,
+    BinaryRecall, MulticlassRecall
+)
 
 
 from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
-from training.trainingLogger import TrainingLogger
+from training import training_logger as tl
 
+
+# Add the system path at the end to avoid dependency issues.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from tools import display_color as dc
 
 #---------------------------------------------------------------------------
 class Training:
-
+    """
+        A module for training a segmentation model using PyTorch.
+    """
     def __repr__(self):
         """
         Returns a string representation of the Training class.
@@ -42,6 +61,14 @@ class Training:
             str: A string indicating the class name.
         """
         return 'Training'
+
+    def add_to_report(self, text, who):
+        """
+            Add a message to a report
+        """
+        if self.report is not None:
+            self.report.add(text, who)
+
 
     def __init__(self, **kwargs):
         """
@@ -52,7 +79,8 @@ class Training:
                 - subfolders (list): List of subfolder names containing the dataset.
                 - data_dir (str): Directory containing the dataset.
                 - run_dir (str): Directory for saving model outputs.
-                - hyperparameters (Hyperparameters): An object containing model and training parameters.
+                - hyperparameters (Hyperparameters): An object containing model
+                                                    and training parameters.
 
         Raises:
             Exception: If pathLogDir is not provided.
@@ -60,26 +88,39 @@ class Training:
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
+        if not self.subfolders or not isinstance(self.subfolders, list):
+            raise ValueError("The 'subfolders' argument must be provided as a non-empty list.")
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
         self.hyperparameters = kwargs.get('hyperparameters')
+        if self.hyperparameters is None:
+            raise ValueError("The 'hyperparameters' argument must be provided and not None.")
         self.num_file = kwargs.get('num_file')
         self.report = kwargs.get('report')
+        self.dataloaders = {}  # Initialize dataloaders attribute
 
         # Extract category-wise parameters
-        self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
-        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
-        self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
-        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
-        self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
-        self.num_classes = int(self.model_params.get('num_classes'))
+        # Helper function to extract parameters from hyperparameters
+        def extract_params(category):
+            return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
+
+        # Extracting parameters for different categories
+        self.model_params = extract_params('Model')
+        self.optimizer_params = extract_params('Optimizer')
+        self.scheduler_params = extract_params('Scheduler')
+        self.loss_params = extract_params('Loss')
+        self.training_params = extract_params('Training')
+        self.data = extract_params('Data')
+
+        # Determine the number of classes
+        self.num_classes = int(self.model_params.get('num_classes',1))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
         #Loss parameters
         self.weights = self.param_converter.convert_param(self.loss_params.get('weights', "False"))
-        self.ignore_background = self.param_converter.convert_param(self.loss_params.get('ignore_background', "False"))
-
+        self.ignore_background = bool( self.param_converter.convert_param(
+            self.loss_params.get('ignore_background', "False")
+        ))
         if self.ignore_background:
             self.ignore_index = -1
         else:
@@ -96,12 +137,21 @@ class Training:
         self.num_samples = int(self.data.get('num_samples', 500))
 
         # Control Num image to process
+        if self.num_file is None or self.num_samples is None:
+            text = "'num_file' and 'num_samples' must not be None."
+            self.add_to_report(text, '')
+            raise ValueError(text)
+
         if self.num_file <= self.num_samples :
-            text =f' - num_samples ({self.num_samples}) > maximum number of images to process ({self.num_file})'
-            self.report .add(text,'')
+            text = (
+                f' - num_samples ({self.num_samples}) > '
+                f'maximum number of images to process ({self.num_file})'
+                )
+            self.add_to_report(text, '')
             raise ValueError
         if self.num_samples < 16 :
-            self.report .add(f'num_samples ({self.num_samples}) must be >= 16 ','')
+            text = f'num_samples ({self.num_samples}) must be >= 16 '
+            self.add_to_report(text,'')
             raise ValueError
 
         # Extract and parse metrics from the ini file
@@ -145,7 +195,7 @@ class Training:
 
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
-        self.logger = TrainingLogger(save_directory=self.save_directory,
+        self.logger = tl.TrainingLogger(save_directory=self.save_directory,
                                     num_classes=self.num_classes,
                                     model_params=self.model_params,
                                     optimizer_params=self.optimizer_params,
@@ -154,11 +204,25 @@ class Training:
                                     training_params=self.training_params,
                                     data=self.data)
 
+        self.metrics = []  # Initialize metrics attribute
+        self.metrics_mapping = {}  # Initialize metrics_mapping attribute
+
     def create_metric(self, binary_metric, multiclass_metric):
+        """
+        Creates a metric based on the number of classes.
+
+        Args:
+            binary_metric: The binary metric to use.
+            multiclass_metric: The multiclass metric to use.
+
+        Returns:
+            Instance of the appropriate metric.
+        """
         return (
             binary_metric(ignore_index=self.ignore_index).to(self.device)
             if self.num_classes == 1
-            else multiclass_metric(num_classes=self.num_classes, ignore_index=self.ignore_index).to(self.device)
+            else multiclass_metric(num_classes=self.num_classes,
+                                   ignore_index=self.ignore_index).to(self.device)
         )
 
     def initialize_metrics(self):
@@ -175,14 +239,16 @@ class Training:
             "Jaccard": self.create_metric(BinaryJaccardIndex, MulticlassJaccardIndex),
             "F1": self.create_metric(BinaryF1Score, MulticlassF1Score),
             "Accuracy": self.create_metric(BinaryAccuracy, MulticlassAccuracy),
-            "AveragePrecision": self.create_metric(BinaryAveragePrecision, MulticlassAveragePrecision),
+            "AveragePrecision": self.create_metric(BinaryAveragePrecision,
+                                                   MulticlassAveragePrecision),
             "ConfusionMatrix": self.create_metric(BinaryConfusionMatrix, MulticlassConfusionMatrix),
             "Precision": self.create_metric(BinaryPrecision, MulticlassPrecision),
             "Recall": self.create_metric(BinaryRecall, MulticlassRecall),
         }
 
         # Parse metrics from string input or use default
-        self.metrics = [metric.strip() for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+        self.metrics = [metric.strip()
+                     for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
@@ -191,34 +257,53 @@ class Training:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
                 text =f" - Metric '{metric}' not recognized"
-                self.report .add(text,'')
+                self.add_to_report(text,'')
                 raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
 
         return selected_metrics
 
     def initialize_optimizer(self):
+        """
+        Initializes the optimizer based on the specified parameters.
+
+        Returns:
+            Optimizer configured.
+        """
         optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
         optimizer_class = self.optimizer_mapping.get(optimizer_name)
 
         if not optimizer_class:
             text =f" - Optimizer '{optimizer_name}' is not supported"
-            self.report .add(text,'')
-            raise ValueError(f"Optimizer '{optimizer_name}' is not supported. Check your 'optimizer_mapping'.")
+            self.add_to_report(text,'')
+            raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
+                             " Check your 'optimizer_mapping'.")
 
-        converted_params = {k: self.param_converter.convert_param(v) for k, v in self.optimizer_params.items() if k != 'optimizer'}
+        converted_params = {k: self.param_converter.convert_param(v)
+                            for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
         return optimizer_class(self.model.parameters(), **converted_params)
 
     def initialize_scheduler(self, optimizer):
+        """
+        Initializes the learning rate scheduler.
+
+        Args:
+            optimizer: The optimizer to use with the scheduler.
+
+        Returns:
+            Learning rate scheduler configured.
+        """
         scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
         scheduler_class = self.scheduler_mapping.get(scheduler_name)
 
         if not scheduler_class:
             text =f" - Scheduler '{scheduler_name}' is not supported"
-            self.report .add(text,'')
-            raise ValueError(f"Scheduler '{scheduler_name}' is not supported. Check your 'scheduler_mapping'.")
+            self.add_to_report(text,'')
+            raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
+                             "Check your 'scheduler_mapping'.")
 
-        converted_params = {k: self.param_converter.convert_param(v) for k, v in self.scheduler_params.items() if k != 'scheduler'}
+        converted_params = {k: self.param_converter.convert_param(v)
+                            for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
             return scheduler_class(optimizer)
@@ -226,12 +311,21 @@ class Training:
             return scheduler_class(optimizer, **converted_params)
 
     def initialize_loss(self, **dynamic_params):
+        """
+        Initializes the loss function based on the specified parameters.
+
+        Args:
+            **dynamic_params: Dynamic parameters to use for the loss function.
+
+        Returns:
+            Loss function configured.
+        """
         loss_name = self.loss_params.get('loss', 'CrossEntropyLoss')
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
             text =f" - Loss '{loss_name}' is not supported"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
         # Convert static parameters from config
@@ -256,21 +350,29 @@ class Training:
         return loss_class(**final_params)
 
     def initialize_model(self) -> nn.Module:
+        """
+        Initializes the model based on the specified parameters.
+
+        Returns:
+            nn.Module: Instance of the configured model.
+        """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter.convert_param(v) for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter.convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter.convert_param(v) for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter.convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         required_params.pop('model_type', None)
@@ -288,14 +390,15 @@ class Training:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
-            self.report .add(text,'')
-            raise ValueError(f"Error converting parameters for model '{model_name}': {e}")
+            self.add_to_report(text, '')
+            raise ValueError(text) from e
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
 
     def create_unique_folder(self):
         """
-        Creates a unique folder for saving model weights and logs based on the current training parameters.
+        Creates a unique folder for saving model weights
+        and logs based on the current training parameters.
 
         Returns:
             str: The path to the created directory.
@@ -303,7 +406,8 @@ class Training:
         filename = f"{self.model_params.get('model_type', 'UnetVanilla')}__" \
             f"{self.training_time}"
 
-        save_directory = os.path.join(self.run_dir, filename)
+        save_directory = os.path.join(str(self.run_dir),
+                                      str(filename))
 
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)
@@ -311,9 +415,11 @@ class Training:
 
     def load_segmentation_data(self):
         """
-        Loads segmentation data from the specified directories, prepares datasets, and creates data loaders.
+        Loads segmentation data from the specified directories,
+        prepares datasets, and creates data loaders.
 
-        This method also handles the loading of normalization statistics and the splitting of data into training,
+        This method also handles the loading of normalization statistics
+        and the splitting of data into training,
         validation, and test sets.
         """
 
@@ -332,16 +438,16 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                dc.display_color(f" File {json_file_path} not found.", "yellow")
+                dc.display_color(" File 'json' not found ! ", "yellow")
                 dc.display_color(" Using default normalization stats." , "yellow")
-                self.report .add(" - File 'J_son' not found. Using default normalization", '')
+                text = " - File 'J_son' not found. Using file default normalization"
+                self.add_to_report(text,'')
                 return {"default": neutral_stats}
             else:
-                print(f" File {json_file_path} found.")
-                print(" Using this one.")
+                print(" File 'json' found : Using this one.")
 
             try:
-                with open(json_file_path, 'r') as file:
+                with open(json_file_path, 'r', encoding="utf-8") as file:
                     raw_data_stats = json.load(file)
 
                 data_stats_loaded = {}
@@ -349,7 +455,7 @@ class Training:
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" - Invalid format in data_stats.json for key {key}"
-                        self.report .add(text,'')
+                        self.add_to_report(text,'')
                         raise ValueError(f"Invalid format in data_stats.json for key {key}")
 
                     data_stats_loaded[key] = [
@@ -360,18 +466,21 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
-                print(f" Error loading data stats from {json_file_path}: {e}. Using default normalization stats.")
+                print(f" Error loading data stats from {json_file_path}: {e}."
+                      " Using default normalization stats.")
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
             """
-            Generates random indices for splitting the dataset into training, validation, and test sets.
+            Generates random indices for splitting the dataset into training, validation,
+            and test sets.
 
             Args:
                 num_samples (int): Total number of samples in the dataset.
                 val_split (float): Proportion of the dataset to use for validation.
                 subfolders (list): List of subfolder names containing the dataset.
-                num_sample_subfolder (dict): Dictionary mapping subfolder names to the number of samples in each.
+                num_sample_subfolder (dict): Dictionary mapping subfolder names to
+                                            the number of samples in each.
 
             Returns:
                 tuple: Three lists containing the indices for training, validation, and test sets.
@@ -403,8 +512,14 @@ class Training:
         data_stats = load_data_stats(self.data_dir)
 
         for subfolder in self.subfolders:
-            img_folder = os.path.join(self.data_dir, subfolder, "images")
-            mask_folder = os.path.join(self.data_dir, subfolder, "masks")
+            img_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                "images")
+            mask_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                "masks")
             img_files = sorted(glob.glob(os.path.join(img_folder, "*")))
             mask_files = sorted(glob.glob(os.path.join(mask_folder, "*")))
             assert len(img_files) == len(mask_files), (
@@ -454,12 +569,17 @@ class Training:
             ignore_background=self.ignore_background
         )
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2,
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
+                                  shuffle=True, num_workers=2,
                                   pin_memory=True, drop_last=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False, num_workers=2, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size,
+                                shuffle=False, num_workers=2, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
+                                 num_workers=2, drop_last=True)
 
         self.logger.save_indices_to_file([train_indices, val_indices, test_indices])
+
+        self.dataloaders = {}  # Initialize dataloaders attribute
 
         self.dataloaders = {
             'train': train_loader,
@@ -469,7 +589,16 @@ class Training:
         }
 
     def training_loop(self, optimizer, scheduler):
+        """
+        Main training loop that handles the training and validation of the model.
 
+        Args:
+            optimizer: The optimizer to use for training.
+            scheduler: The learning rate scheduler to use.
+
+        Returns:
+            tuple: Dictionaries containing losses and metrics for each phase.
+        """
         def print_epoch_box(epoch, total_epochs):
             # Generate the epoch string
             epoch_str = f" Epoch {epoch}/{total_epochs} "
@@ -484,18 +613,22 @@ class Training:
 
         scaler = None
         if self.device == "cuda":
-            scaler = torch.amp.GradScaler()
+            scaler = GradScaler()
             cudnn.benchmark = True
 
         # Initialize metric instances and losses
-        metrics = self.initialize_metrics()  # This list includes your ConfusionMatrix instance if enabled
+        # This list includes your ConfusionMatrix instance if enabled
+        metrics = self.initialize_metrics()
         loss_dict = {"train": {}, "val": {}}
 
         # Build a list of display metric names (excluding "ConfusionMatrix")
         display_metrics = [m for m in self.metrics if m != "ConfusionMatrix"]
-        metrics_dict = {phase: {metric: [] for metric in display_metrics} for phase in ["train", "val"]}
+        metrics_dict = {
+            phase: {metric: [] for metric in display_metrics}
+            for phase in ["train", "val"]
+        }
         best_val_loss = float("inf")
-        best_val_metrics = {metric: 0 for metric in display_metrics}
+        best_val_metrics = {metric: 0.0 for metric in display_metrics}
 
         for epoch in range(1, self.epochs + 1):
 
@@ -503,19 +636,27 @@ class Training:
 
             for phase in ["train", "val"]:
                 is_training = phase == "train"
-                self.model.train() if is_training else self.model.eval()
+
+                if is_training:
+                    self.model.train()
+                else:
+                    self.model.eval()
 
                 running_loss = 0.0
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
-                with tqdm(total=len(self.dataloaders[phase]), ncols=100 ,
+                with tqdm(total=len(self.dataloaders[phase]), ncols=102 ,
                           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                           ) as pbar:
 
                     for inputs, labels, weights in self.dataloaders[phase]:
 
-                        inputs, labels, weights = inputs.to(self.device), labels.to(self.device), weights.to(self.device)
+                        inputs, labels, weights = (
+                                        inputs.to(self.device),
+                                        labels.to(self.device),
+                                        weights.to(self.device)
+                        )
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
 
@@ -551,7 +692,9 @@ class Training:
                                     loss.backward()
                                     optimizer.step()
 
-                                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                                if isinstance(
+                                    scheduler,
+                                    torch.optim.lr_scheduler.ReduceLROnPlateau):
                                     scheduler.step(loss)
                                 else:
                                     scheduler.step()
@@ -572,7 +715,8 @@ class Training:
 
                         pbar.set_postfix(
                             loss=running_loss / (pbar.n + 1),
-                            **{metric: running_metrics[metric] / (pbar.n + 1) for metric in display_metrics}
+                            **{metric: running_metrics[metric] / (pbar.n + 1)
+                               for metric in display_metrics}
                         )
                         pbar.update(1)
 
@@ -593,7 +737,8 @@ class Training:
 
                 if phase == "val" and epoch_loss < best_val_loss:
                     best_val_loss = epoch_loss
-                    torch.save(self.model.state_dict(), os.path.join(self.save_directory, "model_best_loss.pth"))
+                    torch.save(self.model.state_dict(), os.path.join(self.save_directory,
+                                                "model_best_loss.pth"))
 
                 if phase == "val":
                     for metric, value in epoch_metrics.items():
@@ -610,7 +755,9 @@ class Training:
         return loss_dict, metrics_dict, metrics
 
     def train(self):
-
+        """
+        Starts the training process for the model.
+        """
         text =f' Processing with {self.num_samples} images among {self.num_file}'
         print(text)
 
@@ -626,7 +773,8 @@ class Training:
         self.logger.save_hyperparameters()
         self.logger.save_data_stats(self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:
-            self.logger.save_confusion_matrix(conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
-                                            model=self.model,
-                                            val_dataloader=self.dataloaders["val"],
-                                            device=self.device)
+            self.logger.save_confusion_matrix(
+                conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
+                model=self.model,
+                val_dataloader=self.dataloaders["val"],
+                device=self.device)

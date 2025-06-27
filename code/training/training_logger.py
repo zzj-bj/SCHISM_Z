@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+A module for logging training metrics, saving hyperparameters, and visualizing results.
+This module provides a `TrainingLogger` class that handles the logging of training metrics,
+saving hyperparameters to an INI file, and visualizing results such as learning curves and confusion matrices.
+"""
 import os
 import json
 import configparser
@@ -39,7 +45,8 @@ class TrainingLogger:
         Saves the indices of the training, validation, and test sets to text files.
 
         Args:
-            indices_list (list): A list containing the indices for training, validation, and test sets.
+            indices_list (list): A list containing the indices for training,
+                                 validation, and test sets.
         """
         indices_map = {
             "train": indices_list[0],
@@ -48,7 +55,7 @@ class TrainingLogger:
         }
         for idx_type, idx_list in indices_map.items():
             file_path = os.path.join(self.save_directory, f'{idx_type}_indices.txt')
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 for subfolder_name, sample_idx in idx_list:
                     f.write(f"{subfolder_name}, {sample_idx}\n")
 
@@ -67,7 +74,7 @@ class TrainingLogger:
         }
 
         json_file_path = os.path.join(self.save_directory, 'data_stats.json')
-        with open(json_file_path, 'w') as json_file:
+        with open(json_file_path, 'w', encoding="utf-8") as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
         print(f" Data statistics saved to {json_file_path}")
@@ -103,7 +110,7 @@ class TrainingLogger:
             config.set('Data', key, str(value))
 
         ini_file_path = os.path.join(self.save_directory, 'hyperparameters.ini')
-        with open(ini_file_path, 'w') as configfile:
+        with open(ini_file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)
 
         print(f" Hyperparameters saved to {ini_file_path}")
@@ -118,7 +125,7 @@ class TrainingLogger:
         """
         file_path = os.path.join(self.save_directory, "val_metrics_history.txt")
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("Validation Metrics History\n")
             f.write("=" * 30 + "\n\n")
 
@@ -143,7 +150,7 @@ class TrainingLogger:
         train_loss_values = [loss_dict['train'][epoch] for epoch in epochs]
         val_loss_values = [loss_dict['val'][epoch] for epoch in epochs]
 
-        fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+        _, axes = plt.subplots(1, 2, figsize=(15, 5))
 
         ax0 = axes[0]
         ax0.plot(epochs, train_loss_values, 'b-', label='Train Loss')
@@ -209,7 +216,7 @@ class TrainingLogger:
             cm_percent = (cm.astype(np.float32) / (cm.sum(axis=1, keepdims=True) + 1e-6)) * 100
 
             plt.figure(figsize=(8, 6))
-            plt.imshow(cm_percent, interpolation='nearest', cmap=plt.cm.Blues)
+            plt.imshow(cm_percent, interpolation='nearest', cmap='Blues')
             plt.colorbar()
 
             tick_marks = [0, 1] if self.num_classes == 1 else list(range(self.num_classes))

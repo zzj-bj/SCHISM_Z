@@ -22,40 +22,37 @@ class Menu :
     The default style is 'double'.
     """
 
-    def __init__(self, sel_menu,  dynamic_menu = None, style = None):
+    def __init__(self, selected_menu,  dynamic_menu = None, style = ''):
 
-        self.sel_menu = sel_menu
+        self.selected_menu = selected_menu
         self.dynamic_menu = dynamic_menu
         self.style = style
 
         # Check selec menu
-        self.unknow_menu = False
-        if self.sel_menu == 'Dynamic':
+        self.unknown_menu = False
+        if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
                 self.board = [str(element) for element in self.dynamic_menu]
-        elif self.sel_menu in ct.MENUS:
-            self.board = [str(element) for element in ct.MENUS[self.sel_menu]]
+        elif self.selected_menu in ct.MENUS:
+            self.board = [str(element) for element in ct.MENUS[self.selected_menu]]
         else:
-            self.unknow_menu = True
+            self.unknown_menu = True
 
         # Select pattern
-        if self.style == 'simple' :
-            self.frame = ct.PATTERN['simple']
-        elif self.style == 'rounds' :
-            self.frame = ct.PATTERN['rounds']
-        elif self.style == 'ASCII' :
-            self.frame = ct.PATTERN['ASCII']
-        elif self.style == 'Unicode' :
-            self.frame = ct.PATTERN['Unicode']
-        else:
-            self.frame = ct.PATTERN['double']
+        style_mapping = {
+            'simple': ct.PATTERN['simple'],
+            'double' : ct.PATTERN['double'],
+            'rounds': ct.PATTERN['rounds'],
+            'ASCII': ct.PATTERN['ASCII'],
+            'Unicode': ct.PATTERN['Unicode']
+        }
+        self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
 
-        self.select = None
-        self.ligne = None
-        self.vali = None
+        self.ligne = 0
+
 
     def display_menu(self):
         """        
@@ -70,12 +67,12 @@ class Menu :
             box_width = max_length + 6
 
             # Create the pattern
-            print(f"{self.frame[0]}{self.frame[10] * box_width}{self.frame[2]}")
-            print(f"{self.frame[9]}{self.board[0].center(box_width )}{self.frame[9]}")
-            print(f"{self.frame[3]}{self.frame[10] * box_width}{self.frame[5]}")
+            print(f"{self.frame[1]}{self.frame[10] * box_width}{self.frame[3]}")
+            print(f"{self.frame[11]}{self.board[0].center(box_width )}{self.frame[11]}")
+            print(f"{self.frame[4]}{self.frame[10] * box_width}{self.frame[6]}")
             for i in range(1, self.ligne):
-                print(f"{self.frame[9]} {i} : {self.board[i].ljust(max_length)} {self.frame[9]}")
-            print(f"{self.frame[6]}{self.frame[10] * box_width}{self.frame[8]}")
+                print(f"{self.frame[11]} {i} : {self.board[i].ljust(max_length)} {self.frame[11]}")
+            print(f"{self.frame[7]}{self.frame[10] * box_width}{self.frame[9]}")
 
             if self.ligne < 2 :
                 print(f" '{self.board[0]}' : Menu without Choise !!!")
@@ -87,7 +84,7 @@ class Menu :
         """
         while True:
             try:
-                select = int(input("[?] Make your selection: "))
+                select = int(input("[?] Make your choice: "))
                 if 1 <= select <= self.ligne - 1 :
                     return select
                 print(f"[X] Invalid selection. Try again ! {ct.BELL}")

@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Collection of non-specific functions used in the program.
+    - Waiting for a Yes or No Answer
+    - Enter a percentage
 
 @author: Pierre.FANCELLI
 """
 
-def answer_yes_or_non(message):
+from tools import constants as ct
+
+#==============================================================================
+def answer_yes_or_no(message):
     """
     This function retum.
       True for yes, y, oui, o.
@@ -22,11 +27,8 @@ def answer_yes_or_non(message):
 
 def input_percentage(message):
     """
-    This function allows you to enter a percentage value between 1 and 100.
-
-    It returns the value as a decimal (e.g., 50% becomes 0.5).
-    
-    If the input is not a valid number or is outside the range, it prompts the user
+    This function returns a real number between 0 and 1
+    that corresponds to a percentage.
     """
     while True:
         try:
@@ -34,7 +36,6 @@ def input_percentage(message):
             if 1 <= value <= 100:
                 return value / 100
             else:
-                print("Error: The value must be between 1 and 100.")
+                print(f"Error: The value must be between 1 and 100. {ct.BELL}")
         except ValueError:
-            print("Error: Please enter a valid number.")
-
+            print(f"Error: Please enter a valid number. {ct.BELL}")

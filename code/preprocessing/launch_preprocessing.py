@@ -6,7 +6,7 @@ It prompts the user for the necessary directories and parameters,
 validates the input, and then executes the preprocessing tasks.
 
 This module allows for the following operations:
-    - Json generation   *** In development ***
+    - Json generation.
     - Normalization of masks in 8-bit grayscale format.
 
 @author: Pierre.FANCELLI
@@ -32,11 +32,11 @@ def launch_json_generation():
     report_json = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
-    select = vf.answer_yes_or_non("Used all the data")
+    select = vf.answer_yes_or_no("Used all the data (100%) ")
     if select :
-        vv = 1
+        percentage_to_process = 1.0
     else :
-        vv = vf.input_percentage("Enter a percentage between 1 & 100")
+        percentage_to_process = vf.input_percentage("Enter a percentage between 1 & 100")
 
     file_name_report = fo.create_name_path(data_dir, '', 'data_stats.json')
 
@@ -44,7 +44,7 @@ def launch_json_generation():
 
     valid_subfolders = []
     if len(subfolders) == 0 :
-        report_json.add(" - No folder found in ", data_dir)
+        report_json.add(" - The data directory is Empty ", '')
     else:
         for f in subfolders:
             images_path = fo.create_name_path(data_dir, f, 'images')
@@ -65,10 +65,10 @@ def launch_json_generation():
                                               valid_subfolders,
                                               file_name_report,
                                               report_json,
-                                              vv)
+                                              percentage_to_process)
         try:
             json_generation.process_datasets()
-        except ValueError as e:
+        except (IOError, ValueError) as e:
             print(e)
 
     report_json.status("Json Generation Mode")
@@ -87,7 +87,7 @@ def launch_normalisation():
 
     valid_subfolders = []
     if len(subfolders) == 0 :
-        report_normal.add(" - No folder found in ", data_dir)
+        report_normal.add(" - The data directory is Empty ", '')
     else:
         for f in subfolders:
             masks_path = fo.create_name_path(data_dir, f, 'masks')
@@ -113,7 +113,7 @@ def launch_normalisation():
 
             try:
                 normalizer.normalize_images()
-            except ValueError as e:
+            except (IOError, ValueError) as e:
                 print(e)
 
     report_normal.status("Normalization")

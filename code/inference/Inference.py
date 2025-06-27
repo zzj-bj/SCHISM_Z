@@ -23,8 +23,10 @@ from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+#==============================================================================
 class Inference:
     """ 
     A class for performing inference using a pre-trained model.
@@ -45,16 +47,24 @@ class Inference:
         """
         return 'Inference'
 
+    def add_to_report(self, text, who):
+        """
+            Add a message to a report
+        """
+        if self.report is not None:
+            self.report.add(text, who)
+
     def __init__(self, **kwargs):
         """
         Initializes the Inference class with the necessary parameters and model setup.
 
         Args:
-        **kwargs: Keyword arguments containing configuration parameters such as:
-            - data_dir (str): Directory containing the input data.
-            - run_dir (str): Directory for saving results and loading model weights.
-            - hyperparameters (Hyperparameters): An object containing model and training parameters.
-            - selected_metric (str): Metric used for model evaluation.
+            **kwargs: Keyword arguments containing configuration parameters such as:
+                - data_dir (str): Directory containing the input data.
+                - run_dir (str): Directory for saving results and loading model weights.
+                - hyperparameters (Hyperparameters): An object containing model
+                                    and training parameters.
+                - selected_metric (str): Metric used for model evaluation.
         """
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -63,6 +73,12 @@ class Inference:
         self.hyperparameters = kwargs.get('hyperparameters')
         self.metric = kwargs.get('selected_metric')
         self.report = kwargs.get('report')
+
+
+        if self.hyperparameters is None:
+            text = "The 'hyperparameters' argument must be provided and not None."
+            self.add_to_report(text, '')
+            raise ValueError(text)
 
         # Extract category-wise parameters
         self.model_params = self.hyperparameters.get_parameters()['Model']
@@ -87,26 +103,26 @@ class Inference:
             nn.Module: The initialized model ready for inference.
 
         Raises:
-            ValueError: If the specified model type is not supported 
+            ValueError: If the specified model type is not supported
             or if there is an error converting parameters.
         """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.report .add(text,'')
-            raise ValueError(f" Model '{model_name}' is not supported."
-                             "\n Check your 'model_mapping'.")
+            self.add_to_report(text,'')
+            raise ValueError(f" Model '{model_name}' is not supported.\n"
+                             " Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter.convert_param(v) for k,
-            v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter.convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter.convert_param(v) for k,
-            v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter.convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         # Ensure `model_type` is not included in the parameters
@@ -125,19 +141,20 @@ class Inference:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}':\n {e}"
-            self.report .add(text,'')
-            raise ValueError(f" Error converting parameters for model '{model_name}':\n {e}") from e
+            self.add_to_report(text,'')
+            raise ValueError(f" Error converting parameters for model '{model_name}':"
+                             "\n {e}") from e
 
         # Initialize the model
         model = model_class(**typed_required_params, **optional_params).to(self.device)
 
         # Load pre-trained weights
-        checkpoint_path = os.path.join(self.run_dir, f"model_best_{self.metric}.pth")
+        checkpoint_path = os.path.join(str(self.run_dir), f"model_best_{self.metric}.pth")
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
-            self.report .add(text,'')
-            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'."
-                                     "\n Ensure the path is correct.")
+            self.add_to_report(text,'')
+            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
+                                    " Ensure the path is correct.")
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)
@@ -158,8 +175,8 @@ class Inference:
 
         for subfolder in os.listdir(self.data_dir):
             img_folder = os.path.join(
-                self.data_dir,
-                subfolder,
+                str(self.data_dir),
+                str(subfolder),
                 "images")
 
             if not os.path.isdir(img_folder):
@@ -172,7 +189,10 @@ class Inference:
                 indices.append((subfolder, i))
 
             preds = f"preds_{self.metric}"
-            preds_folder = os.path.join(self.data_dir, subfolder, preds)
+            preds_folder = os.path.join(
+                str(self.data_dir),
+                str(subfolder),
+                str(preds))
             os.makedirs(preds_folder, exist_ok=True)
 
         dataset = TiffDatasetLoader(
@@ -196,7 +216,7 @@ class Inference:
         Raises:
             Exception: If there is an error loading the JSON file.
         """
-        json_file_path = os.path.join(self.run_dir, 'data_stats.json')
+        json_file_path = os.path.join(str(self.run_dir), 'data_stats.json')
         try:
             # Read the JSON file
             with open(json_file_path, 'r', encoding='utf-8') as file:
@@ -214,7 +234,7 @@ class Inference:
         except Exception as e:
             print(f" Error loading data stats: {e}")
             text =f" - Error loading data stats: {e}"
-            self.report .add(text,'')
+            self.add_to_report(text,'')
             raise
 
     def predict(self):
@@ -232,7 +252,7 @@ class Inference:
           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
           ) as pbar:
 
-            for _,(img, _, img_path) in enumerate(dataloader):
+            for _, (img, _, img_path) in enumerate(dataloader):
 
                 with torch.no_grad():
                     # Perform patch-based prediction
@@ -245,11 +265,12 @@ class Inference:
 
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
+                preds = f"preds_{self.metric}"
                 pred_save_path = os.path.join(
-                    self.data_dir,
-                    subfolder,
-                    f"preds_{self.metric}",
-                     f"{new_name}")
+                    str(self.data_dir),
+                    str(subfolder),
+                    str(preds),
+                    str(f"{new_name}"))
                 self._save_mask(full_pred, pred_save_path)
 
                 # Mettez à jour la barre de progression
@@ -307,7 +328,7 @@ class Inference:
 
         # Resize the full prediction map to the original image size
         predicted_patches_reshaped = np.reshape(predicted_patches,
-                                            (grid_size, grid_size, self.crop_size, self.crop_size))
+                                       (grid_size, grid_size, self.crop_size, self.crop_size))
         reconstructed_image = unpatchify(predicted_patches_reshaped, (dimenssions, dimenssions))
         full_pred = torch.tensor(reconstructed_image).float()
 
