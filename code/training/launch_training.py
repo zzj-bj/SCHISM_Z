@@ -5,14 +5,68 @@ Created on Mon Apr 14 13:54:43 2025
 @author: Pierre.FANCELLI
 """
 import os
+import re
 
 from tools import folder as fo
-from tools import report as re
+from tools import report as rp
 
 from training import training as tr
 from commun.hyperparameters import Hyperparameters
 
 #===========================================================================
+def compare_number(repertoire1, repertoire2):
+    """
+   Compares the numbers extracted from the filenames in two specified directories.
+
+   Parameters:
+   repertoire1 (str): The path to the first directory.
+   repertoire2 (str): The path to the second directory.
+
+   Returns:
+   tuple: A tuple containing:
+       - folder_ok (bool): True if the sets of numbers are identical, False otherwise.
+       - dif_1 (list): A sorted list of numbers found in the first directory but not in the second.
+       - dif_2 (list): A sorted list of numbers found in the second directory but not in the first.
+
+   The function works as follows:
+   1. It retrieves the list of files from both directories.
+   2. It initializes two sets to store the extracted numbers from each directory.
+   3. It uses a regular expression to find all numeric sequences in the filenames.
+   4. For each filename, it adds the last found number to the corresponding set.
+   5. After processing both directories, it compares the two sets of numbers.
+   6. If the sets are not equal, it identifies the differences and returns them.
+   """
+
+    fichiers1 = os.listdir(repertoire1)
+    fichiers2 = os.listdir(repertoire2)
+
+    numeros1 = set()
+    numeros2 = set()
+
+    pattern = re.compile(r'(\d+)')
+
+
+    for f in fichiers1:
+        matches = pattern.findall(f)
+        if matches:
+            numeros1.add(matches[-1])
+
+    for f in fichiers2:
+        matches = pattern.findall(f)
+        if matches:
+            numeros2.add(matches[-1])
+
+    dif_1 = []
+    dif_2 = []
+
+    folder_ok = True
+    if numeros1 != numeros2:
+        folder_ok = False
+        dif_1 = sorted(numeros1 - numeros2)
+        dif_2 = sorted(numeros2 - numeros1)
+
+    return folder_ok , dif_1, dif_2
+
 def check_folder(folder, root, report):
     """
     This function checks that all the directories passed as parameters comply
@@ -58,8 +112,15 @@ def check_folder(folder, root, report):
                         if nb_f_image != nb_f_masks :
                             report.add(" - 'images/masks' : Size not equal :", f)
                         else:
-                            num_file += nb_f_image
-                            valid_subfolders.append(f)
+                            ok ,ima_1, mask_1 = compare_number(images_path, masks_path)
+                            if not ok:
+                                report.add(f" - Single images whitout masks in {f} :\n"
+                                              f"   {ima_1}", '')
+                                report.add(f" - Single masks without images in {f}:\n"
+                                          f"   {mask_1}", '')
+                            else:
+                                num_file += nb_f_image
+                                valid_subfolders.append(f)
     return  valid_subfolders, num_file
 
 def train_model():
@@ -67,7 +128,7 @@ def train_model():
 
     print("\n[ Training Mode ]")
 
-    report_training = re.ErrorReport()
+    report_training = rp.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
     run_dir = fo.get_path("Enter the directory to save runs")
@@ -94,10 +155,10 @@ def train_model():
 
             try:
                 train_object = tr.Training(
-                    data_dir=data_dir,
-                    subfolders=valid_subfolders,
-                    run_dir=run_dir,
-                    hyperparameters=hyperparameters,
+                    data_dir = data_dir,
+                    subfolders = valid_subfolders,
+                    run_dir = run_dir,
+                    hyperparameters = hyperparameters,
                     report = report_training,
                     num_file = num_file
                     )

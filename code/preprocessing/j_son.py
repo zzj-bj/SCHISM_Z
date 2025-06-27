@@ -86,7 +86,7 @@ class DatasetProcessor:
         num_items_to_process = int(len(image_files) * self.percentage_to_process)
 
         num_items_to_process = min(num_items_to_process, len(image_files))
-        # np.random.seed(42)
+        np.random.seed(57)
         indices_to_process = np.random.choice(len(image_files), num_items_to_process, replace=False)
 
         pixel_sum = torch.zeros(3, dtype=torch.float32)

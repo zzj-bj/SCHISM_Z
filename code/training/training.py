@@ -39,7 +39,6 @@ from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
 
-from tools import display_color as dc
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
@@ -47,7 +46,7 @@ from commun.model_registry import model_mapping
 
 from training import training_logger as tl
 
-
+from tools import display_color as dc
 
 # Add the system path at the end to avoid dependency issues.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -442,13 +441,13 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                dc.display_color(" File 'json' not found ! ", "yellow")
+                dc.display_color(" File 'j_son' not found ! ", "yellow")
                 dc.display_color(" Using default normalization stats." , "yellow")
                 text = " - File 'J_son' not found. Using file default normalization"
                 self.add_to_report(text,'')
                 return {"default": neutral_stats}
             else:
-                print(" File 'json' found : Using this one.")
+                print(" Using the file 'j_son' found.")
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
