@@ -39,7 +39,7 @@ from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
 
-
+from tools import display_color as dc
 
 from commun.tiffdatasetloaderoader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
@@ -47,9 +47,9 @@ from commun.model_registry import model_mapping
 
 from training import training_logger as tl
 
-from tools import display_color as dc
 
-# Ajoutez le chemin du système à la fin pour éviter les problèmes de dépendance
+
+# Add the system path at the end to avoid dependency issues.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #---------------------------------------------------------------------------
