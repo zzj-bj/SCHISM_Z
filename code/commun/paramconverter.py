@@ -35,3 +35,6 @@ class ParamConverter:
             return v  # Return as a string if no conversion succeeded
 
         return v
+
+    def convert_param(self, value):
+        return self._convert_param(value)

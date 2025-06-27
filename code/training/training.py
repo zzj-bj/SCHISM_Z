@@ -92,9 +92,13 @@ class Training:
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
+        if not self.subfolders or not isinstance(self.subfolders, list):
+            raise ValueError("The 'subfolders' argument must be provided as a non-empty list.")
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
         self.hyperparameters = kwargs.get('hyperparameters')
+        if self.hyperparameters is None:
+            raise ValueError("The 'hyperparameters' argument must be provided and not None.")
         self.num_file = kwargs.get('num_file')
         self.report = kwargs.get('report')
         self.dataloaders = {}  # Initialize dataloaders attribute
@@ -113,14 +117,14 @@ class Training:
         self.data = extract_params('Data')
 
         # Determine the number of classes
-        self.num_classes = int(self.model_params.get('num_classes'))
+        self.num_classes = int(self.model_params.get('num_classes',1))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
         #Loss parameters
-        self.weights = self.param_converter._convert_param(self.loss_params.get('weights', "False"))
-        self.ignore_background = self.param_converter._convert_param(
+        self.weights = self.param_converter.convert_param(self.loss_params.get('weights', "False"))
+        self.ignore_background = bool( self.param_converter.convert_param(
             self.loss_params.get('ignore_background', "False")
-        )
+        ))
         if self.ignore_background:
             self.ignore_index = -1
         else:
@@ -137,6 +141,11 @@ class Training:
         self.num_samples = int(self.data.get('num_samples', 500))
 
         # Control Num image to process
+        if self.num_file is None or self.num_samples is None:
+            text = "'num_file' and 'num_samples' must not be None."
+            self.add_to_report(text, '')
+            raise ValueError(text)
+
         if self.num_file <= self.num_samples :
             text = (
                 f' - num_samples ({self.num_samples}) > '
@@ -273,7 +282,7 @@ class Training:
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
                              " Check your 'optimizer_mapping'.")
 
-        converted_params = {k: self.param_converter._convert_param(v)
+        converted_params = {k: self.param_converter.convert_param(v)
                             for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
         return optimizer_class(self.model.parameters(), **converted_params)
@@ -297,7 +306,7 @@ class Training:
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
                              "Check your 'scheduler_mapping'.")
 
-        converted_params = {k: self.param_converter._convert_param(v)
+        converted_params = {k: self.param_converter.convert_param(v)
                             for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
@@ -325,7 +334,7 @@ class Training:
 
         # Convert static parameters from config
         converted_params = {
-            k: self.param_converter._convert_param(v)
+            k: self.param_converter.convert_param(v)
             for k, v in self.loss_params.items()
             if k not in {'loss', 'ignore_background', 'weights'}  # Exclude unwanted params
         }
@@ -362,11 +371,11 @@ class Training:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v)
+            k: self.param_converter.convert_param(v)
             for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v)
+            k: self.param_converter.convert_param(v)
             for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 

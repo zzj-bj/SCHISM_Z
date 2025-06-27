@@ -108,11 +108,11 @@ class Inference:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter._convert_param(v)
+            k: self.param_converter.convert_param(v)
             for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter._convert_param(v)
+            k: self.param_converter.convert_param(v)
             for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
