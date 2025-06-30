@@ -51,12 +51,13 @@ class ErrorReport:
         Display the contents of the report
         """
         total_def = sum(len(liste)for liste in self.dictionary.values())
+        total_topic = len(self.dictionary)
 
         # Display the message in "MAGENTA" color
         print("\033[35m", end="")
-        print(f"*** !!! {total_def} problem(s) found(s) !!! :***")
+        print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topics !!! :***")
         for key, elements in self.dictionary.items():
-            print(f"{key} {', '.join(elements)}")
+            print(f"{key} {' // '.join(elements)}")
         # Return to a white display
         print("\033[0m")
 

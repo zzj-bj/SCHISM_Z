@@ -54,6 +54,7 @@ def launch_json_generation():
                 else:
                     valid_subfolders.append(f)
 
+    vf.warning_message(subfolders, valid_subfolders)
 
     if len(valid_subfolders) != 0 :
         print("[!] Starting Json generation")
@@ -96,6 +97,8 @@ def launch_normalisation():
                     report_normal.add(" - No file (*.tif') in folder 'masks'  :", f)
                 else:
                     valid_subfolders.append(f)
+
+    vf.warning_message(subfolders, valid_subfolders)
 
     if len(valid_subfolders) != 0 :
         print("[!] Starting normalisation")

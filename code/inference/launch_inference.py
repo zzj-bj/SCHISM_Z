@@ -9,6 +9,7 @@ import os
 from tools import selection as sl
 from tools import folder as fo
 from tools import report as re
+from tools import various_functions as vf
 
 from inference import inference as nf
 from commun.hyperparameters import Hyperparameters
@@ -82,6 +83,7 @@ def run_inference():
                 else:
                     valid_subfolders.append(f)
 
+    vf.warning_message(subfolders, valid_subfolders)
 
     if initial_condition and len(valid_subfolders) != 0 :
         print("[!] Starting inference...")

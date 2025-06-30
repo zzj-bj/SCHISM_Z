@@ -9,6 +9,8 @@ import re
 
 from tools import folder as fo
 from tools import report as rp
+from tools import various_functions as vf
+from tools import display_color as dc
 
 from training import training as tr
 from commun.hyperparameters import Hyperparameters
@@ -104,20 +106,20 @@ def check_folder(folder, root, report):
                 nb_f_image = fo.count_tif_files(images_path)
                 nb_f_masks = fo.count_tif_files(masks_path)
                 if nb_f_image == 0:
-                    report.add(" - No file (*.tif') in folder 'image'  :", f)
+                    report.add(" - No file (*.tif') in folder 'image' :", f)
                 else:
                     if nb_f_masks == 0:
-                        report.add(" - No file (*.tif') in folder 'masks'  :", f)
+                        report.add(" - No file (*.tif') in folder 'masks' :", f)
                     else:
                         if nb_f_image != nb_f_masks :
                             report.add(" - 'images/masks' : Size not equal :", f)
                         else:
                             ok ,ima_1, mask_1 = compare_number(images_path, masks_path)
                             if not ok:
-                                report.add(f" - Single images whitout masks in {f} :\n"
-                                              f"   {ima_1}", '')
-                                report.add(f" - Single masks without images in {f}:\n"
-                                          f"   {mask_1}", '')
+                                report.add(" - Single images whitout masks :",
+                                              f"   in {f} : {ima_1} ")
+                                report.add(" - Single masks without images :",
+                                              f"   in {f} : {mask_1} ")
                             else:
                                 num_file += nb_f_image
                                 valid_subfolders.append(f)
@@ -149,6 +151,9 @@ def train_model():
             report_training.add(" - The data directory is Empty ", '')
         else:
             valid_subfolders, num_file = check_folder(subfolders, data_dir, report_training)
+
+
+        vf.warning_message(subfolders, valid_subfolders)
 
         if len(valid_subfolders) != 0 :
             print("[!] Starting training.")
