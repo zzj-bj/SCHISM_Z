@@ -8,26 +8,29 @@ and hyperparameters, making it suitable for machine learning and deep learning t
 
 import configparser
 
+
 class Hyperparameters:
     """
     Hyperparameters class for managing model parameters.
     """
+
     def __init__(self, file_path):
         """
         Initialize the Hyperparameters class and load parameters from an INI file.
-        
+
         Args:
             file_path (str): Path to the INI file containing hyperparameters.
         """
         config = configparser.ConfigParser()
         config.optionxform = str  # Preserve key case
         config.read(file_path)
-        self.parameters = {section: dict(config[section]) for section in config.sections()}
+        self.parameters = {section: dict(
+            config[section]) for section in config.sections()}
 
     def get_parameters(self):
         """
         Get all hyperparameters as a dictionary.
-        
+
         Returns:
             dict: Dictionary of all hyperparameters grouped by section.
         """
@@ -40,7 +43,7 @@ class Hyperparameters:
     def save_to_ini(self, file_path):
         """
         Saves hyperparameters to an INI file.
-        
+
         Args:
             file_path (str): The path to the INI file where hyperparameters will be saved.
         """

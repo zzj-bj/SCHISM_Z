@@ -202,10 +202,10 @@ class Inference:
             num_classes=self.num_classes,
             img_res=self.img_res,
             crop_size=(self.crop_size, self.crop_size),
-            inference_mode=True
+            inference_mode=True,
         )
-        return DataLoader(dataset, batch_size=1, shuffle=False)
-
+        return DataLoader(dataset, batch_size=1, shuffle=False,pin_memory=torch.cuda.is_available())
+   
     def load_data_stats_from_json(self):
         """
         Loads normalization statistics from a JSON file and populates self.data_stats.

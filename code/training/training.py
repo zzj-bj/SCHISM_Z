@@ -9,11 +9,12 @@ and the main training loop.
 import os
 import sys
 from datetime import datetime
+from tools import display_color as dc
+
 import glob
 import json
 import numpy as np
 from tqdm import tqdm
-from tools import display_color as dc
 
 import torch
 import torch.nn as nn
@@ -45,17 +46,20 @@ from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
-from training import training_logger as tl
+from training.training_logger import TrainingLogger
 
 
 # Add the system path at the end to avoid dependency issues.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
+
 class Training:
     """
         A module for training a segmentation model using PyTorch.
     """
+
     def __repr__(self):
         """
         Returns a string representation of the Training class.
@@ -71,7 +75,6 @@ class Training:
         """
         if self.report is not None:
             self.report.add(text, who)
-
 
     def __init__(self, **kwargs):
         """
@@ -92,12 +95,14 @@ class Training:
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
         if not self.subfolders or not isinstance(self.subfolders, list):
-            raise ValueError("The 'subfolders' argument must be provided as a non-empty list.")
+            raise ValueError(
+                "The 'subfolders' argument must be provided as a non-empty list.")
         self.data_dir = kwargs.get('data_dir')
         self.run_dir = kwargs.get('run_dir')
         self.hyperparameters = kwargs.get('hyperparameters')
         if self.hyperparameters is None:
-            raise ValueError("The 'hyperparameters' argument must be provided and not None.")
+            raise ValueError(
+                "The 'hyperparameters' argument must be provided and not None.")
         self.num_file = kwargs.get('num_file')
         self.report = kwargs.get('report')
         self.dataloaders = {}  # Initialize dataloaders attribute
@@ -116,12 +121,13 @@ class Training:
         self.data = extract_params('Data')
 
         # Determine the number of classes
-        self.num_classes = int(self.model_params.get('num_classes',1))
+        self.num_classes = int(self.model_params.get('num_classes', 1))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
 
-        #Loss parameters
-        self.weights = self.param_converter.convert_param(self.loss_params.get('weights', "False"))
-        self.ignore_background = bool( self.param_converter.convert_param(
+        # Loss parameters
+        self.weights = self.param_converter.convert_param(
+            self.loss_params.get('weights', "False"))
+        self.ignore_background = bool(self.param_converter.convert_param(
             self.loss_params.get('ignore_background', "False")
         ))
         if self.ignore_background:
@@ -145,16 +151,16 @@ class Training:
             self.add_to_report(text, '')
             raise ValueError(text)
 
-        if self.num_file <= self.num_samples :
+        if self.num_file <= self.num_samples:
             text = (
                 f' - num_samples ({self.num_samples}) > '
                 f'maximum number of images to process ({self.num_file})'
-                )
+            )
             self.add_to_report(text, '')
             raise ValueError
-        if self.num_samples < 16 :
+        if self.num_samples < 16:
             text = f'num_samples ({self.num_samples}) must be >= 16 '
-            self.add_to_report(text,'')
+            self.add_to_report(text, '')
             raise ValueError
 
         # Extract and parse metrics from the ini file
@@ -163,19 +169,19 @@ class Training:
         self.model_mapping = model_mapping
 
         self.optimizer_mapping = {
-            'Adagrad' : Adagrad,
-            'Adam' : Adam,
-            'AdamW' : AdamW,
-            'NAdam' : NAdam,
-            'RMSprop' : RMSprop,
-            'RAdam' : RAdam,
-            'SGD' : SGD
+            'Adagrad': Adagrad,
+            'Adam': Adam,
+            'AdamW': AdamW,
+            'NAdam': NAdam,
+            'RMSprop': RMSprop,
+            'RAdam': RAdam,
+            'SGD': SGD
         }
 
         self.loss_mapping = {
-            'CrossEntropyLoss' : CrossEntropyLoss,
-            'BCEWithLogitsLoss' : BCEWithLogitsLoss,
-            'NLLLoss' : NLLLoss,
+            'CrossEntropyLoss': CrossEntropyLoss,
+            'BCEWithLogitsLoss': BCEWithLogitsLoss,
+            'NLLLoss': NLLLoss,
         }
 
         self.scheduler_mapping = {
@@ -198,14 +204,14 @@ class Training:
 
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
-        self.logger = tl.TrainingLogger(save_directory=self.save_directory,
-                                    num_classes=self.num_classes,
-                                    model_params=self.model_params,
-                                    optimizer_params=self.optimizer_params,
-                                    scheduler_params=self.scheduler_params,
-                                    loss_params=self.loss_params,
-                                    training_params=self.training_params,
-                                    data=self.data)
+        self.logger = TrainingLogger(save_directory=self.save_directory,
+                                     num_classes=self.num_classes,
+                                     model_params=self.model_params,
+                                     optimizer_params=self.optimizer_params,
+                                     scheduler_params=self.scheduler_params,
+                                     loss_params=self.loss_params,
+                                     training_params=self.training_params,
+                                     data=self.data)
 
         self.metrics = []  # Initialize metrics attribute
         self.metrics_mapping = {}  # Initialize metrics_mapping attribute
@@ -251,7 +257,7 @@ class Training:
 
         # Parse metrics from string input or use default
         self.metrics = [metric.strip()
-                     for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+                        for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
@@ -259,9 +265,10 @@ class Training:
             if metric in self.metrics_mapping:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
-                text =f" - Metric '{metric}' not recognized"
-                self.add_to_report(text,'')
-                raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
+                text = f" - Metric '{metric}' not recognized"
+                self.add_to_report(text, '')
+                raise ValueError(
+                    f"Metric '{metric}' not recognized. Please check the name.")
 
         return selected_metrics
 
@@ -276,8 +283,8 @@ class Training:
         optimizer_class = self.optimizer_mapping.get(optimizer_name)
 
         if not optimizer_class:
-            text =f" - Optimizer '{optimizer_name}' is not supported"
-            self.add_to_report(text,'')
+            text = f" - Optimizer '{optimizer_name}' is not supported"
+            self.add_to_report(text, '')
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
                              " Check your 'optimizer_mapping'.")
 
@@ -300,8 +307,8 @@ class Training:
         scheduler_class = self.scheduler_mapping.get(scheduler_name)
 
         if not scheduler_class:
-            text =f" - Scheduler '{scheduler_name}' is not supported"
-            self.add_to_report(text,'')
+            text = f" - Scheduler '{scheduler_name}' is not supported"
+            self.add_to_report(text, '')
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
                              "Check your 'scheduler_mapping'.")
 
@@ -327,15 +334,17 @@ class Training:
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
-            text =f" - Loss '{loss_name}' is not supported"
-            self.add_to_report(text,'')
-            raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
+            text = f" - Loss '{loss_name}' is not supported"
+            self.add_to_report(text, '')
+            raise ValueError(
+                f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
         # Convert static parameters from config
         converted_params = {
             k: self.param_converter.convert_param(v)
             for k, v in self.loss_params.items()
-            if k not in {'loss', 'ignore_background', 'weights'}  # Exclude unwanted params
+            # Exclude unwanted params
+            if k not in {'loss', 'ignore_background', 'weights'}
         }
 
         # Merge with dynamic parameters (e.g., batch-specific weights)
@@ -343,12 +352,14 @@ class Training:
 
         # Check if ignore_index should be included (for all losses except BCEWithLogitsLoss)
         if loss_name == 'BCEWithLogitsLoss':
-            final_params.pop('ignore_index', None)  # Remove ignore_index if not needed
+            # Remove ignore_index if not needed
+            final_params.pop('ignore_index', None)
         else:
             if self.num_classes > 1:
                 final_params['ignore_index'] = self.ignore_index
             else:
-                final_params.pop('ignore_index', None)  # Remove ignore_index if not needed
+                # Remove ignore_index if not needed
+                final_params.pop('ignore_index', None)
 
         return loss_class(**final_params)
 
@@ -362,9 +373,10 @@ class Training:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
-            text =f" - Model '{model_name}' is not supported"
-            self.add_to_report(text,'')
-            raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
+            text = f" - Model '{model_name}' is not supported"
+            self.add_to_report(text, '')
+            raise ValueError(
+                f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
@@ -392,7 +404,7 @@ class Training:
                 for k, v in optional_params.items()
             }
         except ValueError as e:
-            text =f" - Error converting parameters for model '{model_name}' : {e}"
+            text = f" - Error converting parameters for model '{model_name}' : {e}"
             self.add_to_report(text, '')
             raise ValueError(text) from e
 
@@ -437,14 +449,17 @@ class Training:
             Returns:
                 dict: A dictionary containing the loaded data statistics.
             """
-            neutral_stats = [np.array([0.5] * 3), np.array([0.5] * 3)]  # Default mean and std
+            neutral_stats = [
+                # Default mean and std
+                np.array([0.5] * 3), np.array([0.5] * 3)]
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
                 dc.display_color(" File 'json' not found ! ", "yellow")
-                dc.display_color(" Using default normalization stats." , "yellow")
+                dc.display_color(
+                    " Using default normalization stats.", "yellow")
                 text = " - File 'J_son' not found. Using file default normalization"
-                self.add_to_report(text,'')
+                self.add_to_report(text, '')
                 return {"default": neutral_stats}
             else:
                 print(" File 'json' found : Using this one.")
@@ -457,9 +472,10 @@ class Training:
                 for key, value in raw_data_stats.items():
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
-                        text =f" - Invalid format in data_stats.json for key {key}"
-                        self.add_to_report(text,'')
-                        raise ValueError(f"Invalid format in data_stats.json for key {key}")
+                        text = f" - Invalid format in data_stats.json for key {key}"
+                        self.add_to_report(text, '')
+                        raise ValueError(
+                            f"Invalid format in data_stats.json for key {key}")
 
                     data_stats_loaded[key] = [
                         np.array(value[0]),
@@ -496,11 +512,12 @@ class Training:
                 for sample_id in range(num_sample_subfolder[sub_folder_temp])
             ]
             np.random.shuffle(all_indices)
-            val_indices_temp = np.random.choice(len(all_indices), size=num_val, replace=False)
+            val_indices_temp = np.random.choice(
+                len(all_indices), size=num_val, replace=False)
             val_set = set(val_indices_temp)
             train_indices_temp = [
-                                     idx for idx in range(len(all_indices)) if idx not in val_set
-                                 ][:num_train]
+                idx for idx in range(len(all_indices)) if idx not in val_set
+            ][:num_train]
             train_set = set(train_indices_temp)
             all_indices_set = set(range(len(all_indices)))
             test_indices_temp = list(all_indices_set - train_set - val_set)
@@ -573,14 +590,17 @@ class Training:
         )
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
-                                  shuffle=True, num_workers=2,
-                                  pin_memory=True, drop_last=True)
+                                  shuffle=True, num_workers=2,drop_last=True,
+                                  pin_memory=torch.cuda.is_available())
         val_loader = DataLoader(val_dataset, batch_size=self.batch_size,
-                                shuffle=False, num_workers=2, drop_last=True)
+                                shuffle=False, num_workers=2, drop_last=True,
+                                pin_memory=torch.cuda.is_available())
         test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
-                                 num_workers=2, drop_last=True)
+                                 num_workers=2, drop_last=True,
+                                 pin_memory=torch.cuda.is_available())
 
-        self.logger.save_indices_to_file([train_indices, val_indices, test_indices])
+        self.logger.save_indices_to_file(
+            [train_indices, val_indices, test_indices])
 
         self.dataloaders = {}  # Initialize dataloaders attribute
 
@@ -649,16 +669,16 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
-                with tqdm(total=len(self.dataloaders[phase]), ncols=102 ,
+                with tqdm(total=len(self.dataloaders[phase]), ncols=102,
                           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                           ) as pbar:
 
                     for inputs, labels, weights in self.dataloaders[phase]:
 
                         inputs, labels, weights = (
-                                        inputs.to(self.device),
-                                        labels.to(self.device),
-                                        weights.to(self.device)
+                            inputs.to(self.device),
+                            labels.to(self.device),
+                            weights.to(self.device)
                         )
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
@@ -667,7 +687,8 @@ class Training:
                             with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
                                 outputs = self.model(inputs)
                                 if self.loss_params.get('loss') in ['NLLLoss']:
-                                    outputs = nn_func.log_softmax(outputs, dim=1)
+                                    outputs = nn_func.log_softmax(
+                                        outputs, dim=1)
 
                                 if self.num_classes == 1:
                                     outputs = outputs.squeeze()
@@ -675,10 +696,11 @@ class Training:
                                 else:
                                     labels = labels.squeeze().long()
 
-                                #only apply class weights to multiclass segmentation
+                                # only apply class weights to multiclass segmentation
                                 if self.num_classes > 1:
                                     if self.weights:
-                                        loss_fn = self.initialize_loss(weight=batch_weights)
+                                        loss_fn = self.initialize_loss(
+                                            weight=batch_weights)
                                     else:
                                         loss_fn = self.initialize_loss()
                                 else:
@@ -696,8 +718,8 @@ class Training:
                                     optimizer.step()
 
                                 if isinstance(
-                                    scheduler,
-                                    torch.optim.lr_scheduler.ReduceLROnPlateau):
+                                        scheduler,
+                                        torch.optim.lr_scheduler.ReduceLROnPlateau):
                                     scheduler.step(loss)
                                 else:
                                     scheduler.step()
@@ -714,7 +736,8 @@ class Training:
                             # Update display metrics only (skip ConfusionMatrix)
                             for metric_name, metric_fn in zip(self.metrics, metrics):
                                 if metric_name != "ConfusionMatrix":
-                                    running_metrics[metric_name] += metric_fn(preds, labels).item()
+                                    running_metrics[metric_name] += metric_fn(
+                                        preds, labels).item()
 
                         pbar.set_postfix(
                             loss=running_loss / (pbar.n + 1),
@@ -741,7 +764,7 @@ class Training:
                 if phase == "val" and epoch_loss < best_val_loss:
                     best_val_loss = epoch_loss
                     torch.save(self.model.state_dict(), os.path.join(self.save_directory,
-                                                "model_best_loss.pth"))
+                                                                     "model_best_loss.pth"))
 
                 if phase == "val":
                     for metric, value in epoch_metrics.items():
@@ -749,10 +772,12 @@ class Training:
                             best_val_metrics[metric] = value
                             torch.save(
                                 self.model.state_dict(),
-                                os.path.join(self.save_directory, f"model_best_{metric}.pth")
+                                os.path.join(self.save_directory,
+                                             f"model_best_{metric}.pth")
                             )
 
-        formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
+        formatted_metrics = {
+            metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
         print(f" Best Validation Metrics: {formatted_metrics}")
 
         return loss_dict, metrics_dict, metrics
@@ -761,20 +786,21 @@ class Training:
         """
         Starts the training process for the model.
         """
-        text =f' Processing with {self.num_samples} images among {self.num_file}'
+        text = f' Processing with {self.num_samples} images among {self.num_file}'
         print(text)
 
         optimizer = self.initialize_optimizer()
         scheduler = self.initialize_scheduler(optimizer=optimizer)
         loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer,
-                                                            scheduler=scheduler)
+                                                              scheduler=scheduler)
 
         self.logger.save_best_metrics(loss_dict=loss_dict,
-                                    metrics_dict=metrics_dict)
+                                      metrics_dict=metrics_dict)
         self.logger.plot_learning_curves(loss_dict=loss_dict,
-                                        metrics_dict=metrics_dict)
+                                         metrics_dict=metrics_dict)
         self.logger.save_hyperparameters()
-        self.logger.save_data_stats(self.dataloaders["train"].dataset.data_stats)
+        self.logger.save_data_stats(
+            self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:
             self.logger.save_confusion_matrix(
                 conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
