@@ -10,7 +10,6 @@ import re
 from tools import folder as fo
 from tools import report as rp
 from tools import various_functions as vf
-from tools import display_color as dc
 
 from training import training as tr
 from commun.hyperparameters import Hyperparameters
