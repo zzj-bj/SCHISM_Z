@@ -8,15 +8,19 @@ from datetime import datetime
 import glob
 import json
 
+from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.paramconverter import ParamConverter
+from commun.model_registry import model_mapping
+
+from training import training_logger as tl
+from tools import display_color as dc
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as nn_func
 import torch.backends.cudnn as cudnn
 from torch.cuda.amp import GradScaler
-from torch.nn import (
-    PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss,
-    GaussianNLLLoss, NLLLoss
-)
+from torch.nn import (CrossEntropyLoss, BCEWithLogitsLoss, NLLLoss )
 from torch.optim import (
     Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
 )
@@ -40,13 +44,6 @@ import matplotlib
 matplotlib.use('Agg')
 
 
-from commun.tiffdatasetloaderoader import TiffDatasetLoader
-from commun.paramconverter import ParamConverter
-from commun.model_registry import model_mapping
-
-from training import training_logger as tl
-
-from tools import display_color as dc
 
 # Add the system path at the end to avoid dependency issues.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

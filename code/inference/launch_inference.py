@@ -61,7 +61,6 @@ def run_inference():
                 metric_menu.display_menu()
                 choice = metric_menu.selection()
                 selected_metric = metrics[choice - 1]
-                print(f' - Metric selected : {selected_metric}')
 
                 # Check for the existence of the *.pth files
                 files = [f for f in os.listdir(run_dir) if f.endswith(".pth")]
@@ -86,7 +85,7 @@ def run_inference():
     vf.warning_message(subfolders, valid_subfolders)
 
     if initial_condition and len(valid_subfolders) != 0 :
-        print("[!] Starting inference...")
+        print("[!] Starting inference.with Metric : {selected_metric}.")
 
         try:
             pred_object = nf.Inference(
