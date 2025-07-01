@@ -53,8 +53,8 @@ def warning_message(folder_1, folder_2):
     warning = len(folder_1) - len(folder_2)
     if warning != 0 :
         text = f" {warning} directories removed because they do not comply the rules"
-        dc.display_color(text, 'ORANGE', bold=True)
-        dc.display_color(' See the report at the end of the process.', 'ORANGE')
+        dc.display_color(text, 'yellow', bold=True)
+        dc.display_color(' See the report at the end of the process.', 'yellow')
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
     """
