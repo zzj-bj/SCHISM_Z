@@ -85,7 +85,7 @@ def run_inference():
     vf.warning_message(subfolders, valid_subfolders)
 
     if initial_condition and len(valid_subfolders) != 0 :
-        print("[!] Starting inference.with Metric : {selected_metric}.")
+        print(f"[!] Starting inference with Metric : {selected_metric}.")
 
         try:
             pred_object = nf.Inference(

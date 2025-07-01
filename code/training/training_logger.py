@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-    This module 'Training logger'
+A module for logging training metrics, saving hyperparameters, and visualizing results.
+This module provides a `TrainingLogger` class that handles the logging of training metrics,
+saving hyperparameters to an INI file, and visualizing results such as learning curves and confusion matrices.
 """
 import os
 import json
@@ -11,11 +13,10 @@ import matplotlib.pyplot as plt
 
 
 class TrainingLogger:
+    """    
+    A class to log training metrics, save hyperparameters, and visualize results.
     """
-        This module 'Training logger'
-    """
-    def __init__(self, save_directory, num_classes, model_params, optimizer_params,
-                 scheduler_params, loss_params, training_params, data):
+    def __init__(self, save_directory, num_classes, model_params, optimizer_params, scheduler_params, loss_params, training_params, data):
         """
         Initializes the TrainingLogger.
 

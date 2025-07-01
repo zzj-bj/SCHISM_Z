@@ -8,11 +8,10 @@ from datetime import datetime
 import glob
 import json
 
-from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
-from training import training_logger as tl
 from tools import display_color as dc
 
 import torch
@@ -37,6 +36,7 @@ from torchmetrics.classification import (
     BinaryRecall, MulticlassRecall
 )
 
+from training.training_logger import TrainingLogger
 
 import numpy as np
 from tqdm import tqdm
@@ -102,6 +102,8 @@ class Training:
         # Extract category-wise parameters
         # Helper function to extract parameters from hyperparameters
         def extract_params(category):
+            if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
+                raise ValueError("The 'hyperparameters' object must have a 'get_parameters' method and not be None.")
             return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
 
         # Extracting parameters for different categories
@@ -195,7 +197,7 @@ class Training:
 
         self.model = self.initialize_model()
         self.save_directory = self.create_unique_folder()
-        self.logger = tl.TrainingLogger(save_directory=self.save_directory,
+        self.logger = TrainingLogger(save_directory=self.save_directory,
                                     num_classes=self.num_classes,
                                     model_params=self.model_params,
                                     optimizer_params=self.optimizer_params,
@@ -510,6 +512,9 @@ class Training:
         mask_data = {}
         num_sample_per_subfolder = {}
         data_stats = load_data_stats(self.data_dir)
+
+        if not self.subfolders or not isinstance(self.subfolders, list):
+            raise ValueError("The 'subfolders' attribute must be a non-empty list before loading data.")
 
         for subfolder in self.subfolders:
             img_folder = os.path.join(

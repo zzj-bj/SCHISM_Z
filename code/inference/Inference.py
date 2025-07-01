@@ -15,12 +15,11 @@ import torch.nn as nn
 import torch.nn.functional as nn_func
 from torch.utils.data import DataLoader
 
-from patchify import unpatchify
-
-from commun.tiffdatasetloaderoader import TiffDatasetLoader
+from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 
+from patchify import unpatchify
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

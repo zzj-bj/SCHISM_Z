@@ -1,6 +1,14 @@
+"""
+This module defines a class for managing hyperparameters in a machine learning model.
+It allows loading hyperparameters from an INI file, retrieving them as a dictionary,
+and saving them back to an INI file.
+"""
 import configparser
 
 class Hyperparameters:
+    """
+    A class to manage hyperparameters for a machine learning model.
+    """
     def __init__(self, file_path):
         """
         Initialize the Hyperparameters class and load parameters from an INI file.
@@ -9,7 +17,7 @@ class Hyperparameters:
             file_path (str): Path to the INI file containing hyperparameters.
         """
         config = configparser.ConfigParser()
-        config.optionxform = str  # Preserve key case
+        config.optionxform = str  # type: ignore # Preserve key case
         config.read(file_path)
         self.parameters = {section: dict(config[section]) for section in config.sections()}
 
@@ -34,8 +42,8 @@ class Hyperparameters:
             file_path (str): The path to the INI file where hyperparameters will be saved.
         """
         config = configparser.ConfigParser()
-        config.optionxform = str  # Preserve key case on saving as well
+        config.optionxform = str  # type: ignore # Preserve key case on saving as well
         for section, params in self.parameters.items():
             config[section] = {k: str(v) for k, v in params.items()}
-        with open(file_path, 'w') as configfile:
+        with open(file_path, 'w', encoding='utf-8') as configfile:
             config.write(configfile)
