@@ -42,17 +42,9 @@ def launch_json_generation():
     if len(subfolders) == 0 :
         report_json.add(" - The data directory is Empty ", '')
     else:
-        for f in subfolders:
-            images_path = fo.create_name_path(data_dir, f, 'images')
+        vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_json,
+                            folder_type='images')
 
-            if not os.path.isdir(images_path):
-                report_json.add(" - Folder 'images' missing in :", f)
-            else:
-                nb_f_images = fo.count_tif_files(images_path)
-                if nb_f_images == 0:
-                    report_json.add(" - No file (*.tif') in folder 'images'  :", f)
-                else:
-                    valid_subfolders.append(f)
 
     vf.warning_message(subfolders, valid_subfolders)
 
@@ -86,17 +78,9 @@ def launch_normalisation():
     if len(subfolders) == 0 :
         report_normal.add(" - The data directory is Empty ", '')
     else:
-        for f in subfolders:
-            masks_path = fo.create_name_path(data_dir, f, 'masks')
+        vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_normal,
+                            folder_type='masks')
 
-            if not os.path.isdir(masks_path):
-                report_normal.add(" - Folder 'masks' missing in :", f)
-            else:
-                nb_f_masks = fo.count_tif_files(masks_path)
-                if nb_f_masks == 0:
-                    report_normal.add(" - No file (*.tif') in folder 'masks'  :", f)
-                else:
-                    valid_subfolders.append(f)
 
     vf.warning_message(subfolders, valid_subfolders)
 

@@ -74,13 +74,9 @@ def run_inference():
                 report_inference.add(f" File {json_file_path} not found", "")
                 initial_condition = False
 
+            vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_inference,
+                                folder_type='images')
 
-            for f in subfolders:
-                images_path = fo.create_name_path(data_dir, f, 'images')
-                if not os.path.isdir(images_path):
-                    report_inference.add(" - Folder 'images' missing in :", f)
-                else:
-                    valid_subfolders.append(f)
 
     vf.warning_message(subfolders, valid_subfolders)
 
