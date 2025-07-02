@@ -146,7 +146,7 @@ class Inference:
             raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
                                     " Ensure the path is correct.")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
         model.load_state_dict(checkpoint)
         model.eval()  # Set the model to evaluation mode
 
