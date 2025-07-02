@@ -111,7 +111,8 @@ def check_folder(folder, root, report):
                         report.add(" - No file (*.tif') in folder 'masks' :", f)
                     else:
                         if nb_f_image != nb_f_masks :
-                            report.add(" - number of images not equal between 'images/masks' : :", f)
+                            text = " - number of images not equal between 'images/masks' :"
+                            report.add(text, f)
                         else:
                             ok ,ima_1, mask_1 = compare_number(images_path, masks_path)
                             if not ok:
