@@ -14,11 +14,16 @@ from commun.model_registry import model_mapping
 
 from tools import display_color as dc
 
+
+from torch.cuda.amp import GradScaler
 import torch
+import torch.backends.cudnn as cudnn
+
 import torch.nn as nn
 import torch.nn.functional as nn_func
-import torch.backends.cudnn as cudnn
-from torch.cuda.amp import GradScaler
+
+
+
 from torch.nn import (CrossEntropyLoss, BCEWithLogitsLoss, NLLLoss )
 from torch.optim import (
     Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
@@ -103,7 +108,9 @@ class Training:
         # Helper function to extract parameters from hyperparameters
         def extract_params(category):
             if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
-                raise ValueError("The 'hyperparameters' object must have a 'get_parameters' method and not be None.")
+                text = "The 'hyperparameters' object must have a 'get_parameters' method ,"\
+                    " and not be None."
+                raise ValueError(text)
             return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
 
         # Extracting parameters for different categories
@@ -514,7 +521,8 @@ class Training:
         data_stats = load_data_stats(self.data_dir)
 
         if not self.subfolders or not isinstance(self.subfolders, list):
-            raise ValueError("The 'subfolders' attribute must be a non-empty list before loading data.")
+            text = "The 'subfolders' attribute must be a non-empty list before loading data."
+            raise ValueError(text)
 
         for subfolder in self.subfolders:
             img_folder = os.path.join(
@@ -617,12 +625,16 @@ class Training:
             print(f" ║{epoch_str.center(box_width)}║")
             print(f" ╚{'═' * (box_width)}╝")
 
+
         scaler = None
         if self.device == "cuda":
             scaler = torch.amp.GradScaler('cuda')
             cudnn.benchmark = True
 
-
+        # scaler = None
+        # if self.device == "cuda":
+        #     scaler = GradScaler()  # Pas besoin de spécifier 'cuda' ici
+        #     cudnn.benchmark = True
 
 
         # Initialize metric instances and losses

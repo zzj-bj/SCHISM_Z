@@ -83,7 +83,7 @@ MENUS = {
         "Quit"    ],
     'Preprocessing': [
         "PREPROCESSING",
-        "Json generation",
+        "Json Generation",
         "Normalization",
         "Return Main Menu"]
 }

@@ -28,7 +28,7 @@ def launch_json_generation():
     report_json = re.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
-    select = vf.answer_yes_or_no("Used all the data (100%) ")
+    select = vf.answer_yes_or_no("Use all the data (100%) ")
     if select :
         percentage_to_process = 1.0
     else :
@@ -85,7 +85,7 @@ def launch_normalisation():
     vf.warning_message(subfolders, valid_subfolders)
 
     if len(valid_subfolders) != 0 :
-        print("[!] Starting normalisation")
+        print("[!] Starting normalization")
         for f in valid_subfolders:
             print(f" - {f} :")
             in_path = fo.create_name_path(data_dir, f, 'masks')

@@ -6,11 +6,12 @@ It also computes class weights based on the segmentation masks.
 
 import numpy as np
 from PIL import Image
+from patchify import patchify
+
 import torch
+import torch.nn.functional as nn_func
 import torchvision
 from torchvision.datasets import VisionDataset
-import torch.nn.functional as nn_func
-from patchify import patchify
 
 class TiffDatasetLoader(VisionDataset):
     """
@@ -134,6 +135,34 @@ class TiffDatasetLoader(VisionDataset):
         return crop_img, crop_mask
 
     def extract_patches(self, img_np):
+        """
+    Extracts patches from an input image represented as a NumPy array.
+
+    This function takes an image in the format [C, H, W] (channels, height, width)
+    and extracts non-overlapping patches of a specified size. If the image
+    dimensions are not multiples of the patch size, the function pads the image
+    with zeros to ensure that the resulting patches are  correctly sized.
+
+    Parameters:
+    - img_np (numpy.ndarray): The input image as a NumPy array with shape [C, H, W],
+    where C is the number of channels, H is the height, and W is the width.
+
+    Returns:
+    - numpy.ndarray: A NumPy array containing the extracted patches with shape
+      [num_patches, C, patch_h, patch_w], where num_patches is the total number
+      of patches extracted from the image, and patch_h and patch_w are the height
+      and width of each patch.
+
+    Notes:
+    - The function first transposes the input image to [H, W, C] for padding operations.
+    - If the input image is not square or its dimensions are not multiples of the
+    specified crop size, it calculates the necessary padding and applies it.
+    - After padding, the image is transposed back to its original format before
+    extracting patches.
+
+    Example:
+    >>> patches = extract_patches(img_np)
+    """
         height, width = self.image_dims
         patch_h, patch_w = self.crop_size
 
