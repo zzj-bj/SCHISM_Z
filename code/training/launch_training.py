@@ -155,6 +155,7 @@ def train_model():
 
         vf.warning_message(subfolders, valid_subfolders)
 
+
         if len(valid_subfolders) != 0 :
             print("[!] Starting training.")
 

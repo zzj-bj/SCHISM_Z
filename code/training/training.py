@@ -574,9 +574,10 @@ class Training:
             ignore_background=self.ignore_background
         )
 
+        pin_memory = self.device == 'cuda'
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
                                   shuffle=True, num_workers=2,
-                                  pin_memory=True, drop_last=True)
+                                  pin_memory= pin_memory, drop_last=True)
         val_loader = DataLoader(val_dataset, batch_size=self.batch_size,
                                 shuffle=False, num_workers=2, drop_last=True)
         test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
@@ -618,8 +619,11 @@ class Training:
 
         scaler = None
         if self.device == "cuda":
-            scaler = GradScaler()
+            scaler = torch.amp.GradScaler('cuda')
             cudnn.benchmark = True
+
+
+
 
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled

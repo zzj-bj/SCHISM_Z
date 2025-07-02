@@ -6,13 +6,11 @@ It also computes class weights based on the segmentation masks.
 
 import numpy as np
 from PIL import Image
-from patchify import patchify
-
 import torch
-import torch.nn.functional as nn_func
 import torchvision
-import torchvision.transforms.functional as func_torch
 from torchvision.datasets import VisionDataset
+import torch.nn.functional as nn_func
+from patchify import patchify
 
 class TiffDatasetLoader(VisionDataset):
     """
