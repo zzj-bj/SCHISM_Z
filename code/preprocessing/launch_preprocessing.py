@@ -42,10 +42,10 @@ def launch_json_generation():
     if len(subfolders) == 0 :
         report_json.add(" - The data directory is Empty ", '')
     else:
-        vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_json,
-                            folder_type='images')
-
-
+        for f in subfolders :
+            path = fo.create_name_path(data_dir, f, 'images')
+            vf.validate_subfolders_0_(path, f, valid_subfolders, report_json,
+                                folder_type='images')
     vf.warning_message(subfolders, valid_subfolders)
 
     if len(valid_subfolders) != 0 :
@@ -78,10 +78,10 @@ def launch_normalisation():
     if len(subfolders) == 0 :
         report_normal.add(" - The data directory is Empty ", '')
     else:
-        vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_normal,
-                            folder_type='masks')
-
-
+        for f in subfolders :
+            path = fo.create_name_path(data_dir, f, 'masks')
+            vf.validate_subfolders_0_(path, f, valid_subfolders, report_normal,
+                                folder_type='masks')
     vf.warning_message(subfolders, valid_subfolders)
 
     if len(valid_subfolders) != 0 :

@@ -130,6 +130,7 @@ def train_model():
 
     print("\n[ Training Mode ]")
 
+    initial_condition = True
     report_training = rp.ErrorReport()
 
     data_dir = fo.get_path("Enter the data directory")
@@ -139,39 +140,57 @@ def train_model():
 
     hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
-        report_training.add("hyperparameters.ini file was not found", "")
+        initial_condition = False
+        report_training.add(' - hyperparameters', 'The hyperparameters file was not found')
     else:
-        hyperparameters = Hyperparameters(hyperparameters_path)
+        try:
+            hyperparameters = Hyperparameters(hyperparameters_path)
+        except FileNotFoundError:
+            initial_condition = False
+            text = f" The file '{hyperparameters_path}' was not found."
+            report_training.add(' - hyperparameters', text)
+        except ValueError as ve:
+            initial_condition = False
+            text = f"ValueError: {ve}"
+            report_training.add(' - hyperparameters', text)
+        except IOError as ioe:
+            initial_condition = False
+            text = f"IOError: An error occurred while trying to read the file: {ioe}"
+            report_training.add(' - hyperparameters', text)
+        except Exception as e:
+            initial_condition = False
+            text = f"{e}"
+            report_training.add(' - hyperparameters', text)
 
-        subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
-        valid_subfolders = []
-        num_file = 0
-        if len(subfolders) == 0 :
-            report_training.add(" - The data directory is Empty ", '')
-        else:
-            valid_subfolders, num_file = check_folder(subfolders, data_dir, report_training)
-
-
-        vf.warning_message(subfolders, valid_subfolders)
+    valid_subfolders = []
+    num_file = 0
+    if len(subfolders) == 0 :
+        report_training.add(" - The data directory is Empty ", '')
+    else:
+        valid_subfolders, num_file = check_folder(subfolders, data_dir, report_training)
 
 
-        if len(valid_subfolders) != 0 :
-            print("[!] Starting training.")
+    vf.warning_message(subfolders, valid_subfolders)
 
-            try:
-                train_object = Training(
-                    data_dir = data_dir,
-                    subfolders = valid_subfolders,
-                    run_dir = run_dir,
-                    hyperparameters = hyperparameters,
-                    report = report_training,
-                    num_file = num_file
-                    )
 
-                train_object.load_segmentation_data()
-                train_object.train()
-            except (IOError, ValueError) as e:
-                print(e)
+    if initial_condition and len(valid_subfolders) != 0 :
+        print("[!] Starting training.")
+
+        try:
+            train_object = Training(
+                data_dir = data_dir,
+                subfolders = valid_subfolders,
+                run_dir = run_dir,
+                hyperparameters = hyperparameters,
+                report = report_training,
+                num_file = num_file
+                )
+
+            train_object.load_segmentation_data()
+            train_object.train()
+        except (IOError, ValueError) as e:
+            print(e)
 
     report_training.status("Training")

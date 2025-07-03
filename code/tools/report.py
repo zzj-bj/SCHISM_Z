@@ -55,7 +55,7 @@ class ErrorReport:
 
         # Display the message in "MAGENTA" color
         print("\033[35m", end="")
-        print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topic(s) !!! :***")
+        print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topic(s) !!! ***")
         for key, elements in self.dictionary.items():
             print(f"{key} \n   {' / '.join(elements)}")
         # Return to a white display

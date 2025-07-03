@@ -107,11 +107,26 @@ class Training:
         # Extract category-wise parameters
         # Helper function to extract parameters from hyperparameters
         def extract_params(category):
-            if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
-                text = "The 'hyperparameters' object must have a 'get_parameters' method ,"\
-                    " and not be None."
-                raise ValueError(text)
-            return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
+
+            try:
+                if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
+                      text = "The 'hyperparameters' object must have a 'get_parameters' method,"\
+                            " and not be None."
+                      raise ValueError(text)
+
+                return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
+
+            except KeyError:
+                # Handle the case where the category does not exist.
+                text = f"Error: The category '{category}' does not exist in the hyperparameters."
+                self.add_to_report(text, '')
+                return None
+
+            except Exception as e:
+                # Handle other potential exceptions.
+                text = f"An error occurred: {e}"
+                self.add_to_report(text, '')
+                return None
 
         # Extracting parameters for different categories
         self.model_params = extract_params('Model')
