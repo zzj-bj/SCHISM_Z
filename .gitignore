@@ -11,5 +11,10 @@ code/classes/__pycache__
 code/commun/__pycache__
 code/inference/__pycache__
 code/preprocessing/__pycache__
+code/test_cuda.py
 data
 runs
+data2
+.vscode
+
+code/settings.json

@@ -13,6 +13,7 @@ from transformers import AutoModel, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from classes.linear_head import LinearHead
 from classes.cnn_head import CNNHead
+from classes.cnn_head import CNNHeadConfig
 
 class DinoV2Segmentor(nn.Module):
     """
@@ -97,8 +98,10 @@ class DinoV2Segmentor(nn.Module):
         if self.linear_head:
             self.seg_head = LinearHead(self.embedding_size, self.num_classes, self.n_features)
         else:
-            self.seg_head = CNNHead(self.embedding_size,self.channels,self.num_classes,
-                                    self.k_size,self.n_features,self.activation)
+            self.seg_head = CNNHead(CNNHeadConfig(self.embedding_size,
+                                                  self.channels,self.num_classes,
+                                                  self.k_size,self.n_features,
+                                                  self.activation))
         print(f"Number of parameters:{sum(p.numel() for p in self.parameters()
                                       if p.requires_grad)}")
 

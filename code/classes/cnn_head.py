@@ -7,42 +7,48 @@ activation functions, and the number of output classes.
 
 @author: Florent.BRONDOLO
 """
+from dataclasses import dataclass
 import torch
 from torch import nn
 import torch.nn.functional as F
+from commun.activation_mixin import ActivationMixin
 
+@dataclass
+class CNNHeadConfig:
+    """
+    CNNHeadConfig Class for Configuring CNNHead
 
-class CNNHead(nn.Module):
+    This class defines the configuration parameters for the CNNHead.
+    
+    It includes parameters such as embedding size, number of channels,
+    number of classes, kernel size, number of features, and activation function.
+    """
+    embedding_size: int
+    channels: int = 512
+    num_classes: int = 3
+    k_size: int = 3
+    n_features: int = 1
+    activation: str = 'relu'
+
+class CNNHead(nn.Module, ActivationMixin):
     """
     CNNHead Class for Semantic Segmentation
     """
 
     def __init__(
         self,
-        embedding_size,
-        channels=512,
-        num_classes=3,
-        k_size=3,
-        n_features=1,
-        activation='relu'
+        cnn_head_config
     ):
         super().__init__()
-        """  self.n_features = n_features
-        self.embedding_size = embedding_size * self.n_features
-        self.n_block = 4 # Hardcoded for now
-        self.channels = channels
-        self.k_size = k_size
-        self.num_classes = num_classes
-        self.activation = activation 
-        """
-        self.config = {
-            "n_features": n_features,
-            "embedding_size": embedding_size * n_features,
+
+        self.config =  {
+            "n_features": cnn_head_config.n_features,
+            "embedding_size": cnn_head_config.embedding_size * cnn_head_config.n_features,
             "n_block": 4,
-            "channels": channels,
-            "k_size": k_size,
-            "num_classes": num_classes,
-            "activation": activation,
+            "channels": cnn_head_config.channels,
+            "k_size": cnn_head_config.k_size,
+            "num_classes": cnn_head_config.num_classes,
+            "activation": cnn_head_config.activation,
         }
 
         self.input_conv = nn.Conv2d(
@@ -60,38 +66,19 @@ class CNNHead(nn.Module):
             if self.upscale_fn[i] == "interpolate":
                 self.decoder_convs.append(
                     self._create_decoder_conv_block(
-                        channels=channels, kernel_size=self.config["k_size"])
+                        channels=self.config["channels"], kernel_size=self.config["k_size"])
                 )
             else:
-                channels = channels // 4
+                channels_by_4 = self.config["channels"] // 4
                 self.decoder_convs.append(
                     self._create_decoder_up_conv_block(
-                        channels=channels, kernel_size=self.config["k_size"])
+                        channels=channels_by_4, kernel_size=self.config["k_size"])
                 )
 
         self.seg_conv = nn.Sequential(
-            nn.Conv2d(channels, num_classes,
+            nn.Conv2d(self.config["channels"], self.config["num_classes"],
                       kernel_size=self.config["k_size"], padding=1)
         )
-
-    def _get_activation(self):
-        """Returns the specified activation function.
-
-        Supported activation types: 'relu', 'leakyrelu', 'sigmoid', 'tanh'.
-        Returns:
-            nn.Module: Activation function module.
-        Raises:
-            ValueError: If the specified activation function is not supported.
-        """
-        if self.activation == 'relu':
-            return nn.ReLU()
-        if self.activation == 'leakyrelu':
-            return nn.LeakyReLU()
-        if self.activation == 'sigmoid':
-            return nn.Sigmoid()
-        if self.activation == 'tanh':
-            return nn.Tanh()
-        raise ValueError(f"Unsupported activation: {self.activation}")
 
     def _create_decoder_conv_block(self, channels, kernel_size):
         """
@@ -143,11 +130,10 @@ class CNNHead(nn.Module):
         x = self.input_conv(features)
         for i in range(self.config["n_block"]):
             if self.upscale_fn[i] == "interpolate":
-                resize_shape = x.shape[-1] * \
-                    2 if i >= 1 else x.shape[-1] * 1.75
+                resize_shape = x.shape[-1] * 2 if i >= 1 else x.shape[-1] * 1.75
                 x = F.interpolate(input=x, size=(int(resize_shape),
                                                  int(resize_shape)),
-                                  mode="bicubic")
+                                                 mode="bicubic")
             else:
                 x = F.pixel_shuffle(x, 2)
             x = x + self.decoder_convs[i](x)
