@@ -11,8 +11,27 @@ It consists of encoder blocks, decoder blocks, and a bridge layer.
 """
 from torch import nn
 import torch.nn.functional as nn_func
+from commun.activation_mixin import ActivationMixin
+from dataclasses import dataclass
 
-class UnetSegmentor(nn.Module):
+@dataclass
+class UnetSegmentorConfig:
+    """
+    LinearHeadConfig Class for Configuring CNNHead
+
+    This class defines the configuration parameters for the CNNHead.
+    
+    It includes parameters such as embedding size, number of channels,
+    number of classes, kernel size, number of features, and activation function.
+    """
+    n_block=4,
+    channels=8,
+    num_classes=3,
+    p=0.5,
+    k_size=3,
+    activation='relu'
+
+class UnetSegmentor(nn.Module,ActivationMixin):
     """
     UnetSegmentor: A U-Net based segmentation model for image segmentation tasks.
     """
@@ -29,42 +48,39 @@ class UnetSegmentor(nn.Module):
     }
 
     def __init__(self,
-                 n_block=4,
-                 channels=8,
-                 num_classes=3,
-                 p=0.5,
-                 k_size=3,
-                 activation='relu'
+                 unet_segmentor_config: UnetSegmentorConfig
                  ):
         super().__init__()
-        self.n_block = n_block
-        self.channels = channels
-        self.num_classes = num_classes
-        self.p = p
-        self.k_size = k_size
-        self.activation = activation.lower()
-        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels,
-                                    kernel_size=self.k_size, padding=1)
-        self.encoder_convs = nn.ModuleList([
-            self._create_encoder_conv_block(channels= self.channels * 2 ** i)
-            for i in range(0, self.n_block - 1)
-        ])
+        self.config = {
+            "n_block" : unet_segmentor_config.n_block,
+            "channels" : unet_segmentor_config.channels,
+            "num_classes" : unet_segmentor_config.num_classes,
+            "p" : unet_segmentor_config.p,
+            "k_size" : unet_segmentor_config.k_size,
+            "activation" : unet_segmentor_config.activation.lower(),
+            "input_conv" : nn.Conv2d(in_channels=3, out_channels=unet_segmentor_config.channels,
+                                kernel_size=unet_segmentor_config.k_size, padding=1),
+            "encoder_convs" : nn.ModuleList([
+                                self._create_encoder_conv_block(channels= unet_segmentor_config.channels * 2 ** i)
+                                for i in range(0, unet_segmentor_config.n_block - 1)]),
+            }
+        
         self.mid_conv = self._create_encoder_conv_block(
-            channels=self.channels*2**(self.n_block - 1))
+            channels = self.config["channels"]*2**(self.config["n_block"] - 1))
         self.decoder_deconvs = nn.ModuleList([
             nn.ConvTranspose2d(
-                in_channels= self.channels * 2 ** (i + 1),
-                out_channels= self.channels * 2 ** i,
+                in_channels = self.config["channels"] * 2 ** (i + 1),
+                out_channels = self.config["channels"] * 2 ** i,
                 kernel_size=3,
                 stride=2,
                 padding=1,
                 output_padding=1
             )
-            for i in reversed(range(self.n_block))
+            for i in reversed(range(self.config["n_block"]))
         ])
         self.decoder_convs = nn.ModuleList([
-            self._create_decoder_conv_block(channels=self.channels * 2 ** i)
-            for i in reversed(range(self.n_block))
+            self._create_decoder_conv_block(channels=self.config["channels"] * 2 ** i)
+            for i in reversed(range(self.config["n_block"]))
         ])
         self.seg_conv = nn.Conv2d(
             in_channels=self.channels,
@@ -86,10 +102,10 @@ class UnetSegmentor(nn.Module):
         return nn.Sequential(
             nn.Conv2d(channels, channels * 2, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels * 2),
-            self._get_activation(),
+            self._get_activation(self.config["activation"]),
             nn.Conv2d(channels * 2, channels * 2, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels * 2),
-            self._get_activation(),
+            self._get_activation(self.config["activation"]),
         )
 
     def _create_decoder_conv_block(self, channels):
@@ -105,31 +121,11 @@ class UnetSegmentor(nn.Module):
         return nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels),
-            self._get_activation(),
+            self._get_activation(self.config["activation"]),
             nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels),
-            self._get_activation(),
+            self._get_activation(self.config["activation"]),
         )
-
-    def _get_activation(self):
-        """
-        Returns the specified activation function.
-
-        Supported activation types: 'relu', 'leakyrelu', 'sigmoid', 'tanh'.
-        Returns:
-            nn.Module: Activation function module.
-        Raises:
-            ValueError: If the specified activation function is not supported.
-        """
-        if self.activation == 'relu':
-            return nn.ReLU()
-        if self.activation == 'leakyrelu':
-            return nn.LeakyReLU()
-        if self.activation == 'sigmoid':
-            return nn.Sigmoid()
-        if self.activation == 'tanh':
-            return nn.Tanh()
-        raise ValueError(f"Unsupported activation: {self.activation}")
 
     def forward(self, x):
         """

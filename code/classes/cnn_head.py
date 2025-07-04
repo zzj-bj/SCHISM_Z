@@ -37,7 +37,7 @@ class CNNHead(nn.Module, ActivationMixin):
 
     def __init__(
         self,
-        cnn_head_config
+        cnn_head_config : CNNHeadConfig
     ):
         super().__init__()
 
@@ -139,5 +139,5 @@ class CNNHead(nn.Module, ActivationMixin):
             x = x + self.decoder_convs[i](x)
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=0.2)
-                x = self._get_activation()(x)
+                x = self._get_activation(self.config["activation"])(x)
         return self.seg_conv(x)

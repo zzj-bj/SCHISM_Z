@@ -12,8 +12,9 @@ It consists of encoder blocks, decoder blocks, and a bridge layer.
 import torch
 from torch import nn
 import torch.nn.functional as F
+from commun.activation_mixin import ActivationMixin
 
-class UnetVanilla(nn.Module):
+class UnetVanilla(nn.Module,ActivationMixin):
     """
     UnetVanilla: A simple U-Net implementation in PyTorch.
     """
@@ -66,26 +67,6 @@ class UnetVanilla(nn.Module):
                                        self.channels * (2 ** n_block))
         self.start = self.simple_conv(3, self.channels)
 
-    def _get_activation(self):
-        """
-        This method returns the activation function based on the specified type.
-
-        Supported activation types: 'relu', 'leakyrelu', 'sigmoid', 'tanh'.
-        Returns:
-            nn.Module: Activation function module.
-        Raises:
-            ValueError: If the specified activation function is not supported.
-        """
-        if self.activation == 'relu':
-            return nn.ReLU()
-        if self.activation == 'leakyrelu':
-            return nn.LeakyReLU()
-        if self.activation == 'sigmoid':
-            return nn.Sigmoid()
-        if self.activation == 'tanh':
-            return nn.Tanh()
-        raise ValueError(f"Unsupported activation function: {self.activation}")
-
     def simple_conv(self, in_channels, out_channels):
         """
         Creates a simple convolutional block with activation.
@@ -99,7 +80,7 @@ class UnetVanilla(nn.Module):
         """
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=self.k_size, padding=self.k_size // 2),
-            self._get_activation()
+            self._get_activation(self.config["activation"])
         )
 
     def encoder_block(self, in_channels):
@@ -117,7 +98,7 @@ class UnetVanilla(nn.Module):
                       kernel_size=self.k_size,
                       padding=self.k_size // 2),
             nn.BatchNorm2d(in_channels * 2),
-            self._get_activation()
+            self._get_activation(self.config["activation"])
         )
 
     def decoder_block(self, in_channels):
@@ -135,7 +116,7 @@ class UnetVanilla(nn.Module):
                       kernel_size=self.k_size,
                       padding=self.k_size // 2),
             nn.BatchNorm2d(in_channels // 2),
-            self._get_activation()
+            self._get_activation(self.config["activation"])
         )
 
     def forward(self, x):
