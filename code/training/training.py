@@ -119,13 +119,13 @@ class Training:
             except KeyError:
                 # Handle the case where the category does not exist.
                 text = f"Error: The category '{category}' does not exist in the hyperparameters."
-                self.add_to_report(text, '')
+                self.add_to_report(' - Hyperparameters', text)
                 return None
 
             except Exception as e:
                 # Handle other potential exceptions.
                 text = f"An error occurred: {e}"
-                self.add_to_report(text, '')
+                self.add_to_report(' - Hyperparameters', text)
                 return None
 
         # Extracting parameters for different categories
@@ -171,11 +171,11 @@ class Training:
                 f' - num_samples ({self.num_samples}) > '
                 f'maximum number of images to process ({self.num_file})'
                 )
-            self.add_to_report(text, '')
+            self.add_to_report(' - Hyperparameters', text)
             raise ValueError
         if self.num_samples < 16 :
             text = f'num_samples ({self.num_samples}) must be >= 16 '
-            self.add_to_report(text,'')
+            self.add_to_report(' - Hyperparameters', text)
             raise ValueError
 
         # Extract and parse metrics from the ini file
@@ -281,7 +281,7 @@ class Training:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
                 text =f" - Metric '{metric}' not recognized"
-                self.add_to_report(text,'')
+                self.add_to_report(' - Hyperparameters', text)
                 raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
 
         return selected_metrics
@@ -298,7 +298,7 @@ class Training:
 
         if not optimizer_class:
             text =f" - Optimizer '{optimizer_name}' is not supported"
-            self.add_to_report(text,'')
+            self.add_to_report(' - Hyperparameters', text)
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
                              " Check your 'optimizer_mapping'.")
 
@@ -322,7 +322,7 @@ class Training:
 
         if not scheduler_class:
             text =f" - Scheduler '{scheduler_name}' is not supported"
-            self.add_to_report(text,'')
+            self.add_to_report(' - Hyperparameters', text)
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
                              "Check your 'scheduler_mapping'.")
 
@@ -349,7 +349,7 @@ class Training:
 
         if not loss_class:
             text =f" - Loss '{loss_name}' is not supported"
-            self.add_to_report(text,'')
+            self.add_to_report(' - Hyperparameters', text)
             raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
         # Convert static parameters from config
@@ -384,7 +384,7 @@ class Training:
 
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.add_to_report(text,'')
+            self.add_to_report(' - Hyperparameters', text)
             raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
@@ -414,7 +414,7 @@ class Training:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
-            self.add_to_report(text, '')
+            self.add_to_report(' - Hyperparameter',text)
             raise ValueError(text) from e
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
@@ -464,8 +464,8 @@ class Training:
             if not os.path.exists(json_file_path):
                 dc.display_color(" File 'j_son' not found ! ", "yellow", bold = True)
                 dc.display_color(" Using default normalization stats." , "yellow")
-                text = " - File 'J_son' not found. Using file default normalization"
-                self.add_to_report(text,'')
+                text = " File not found. Using file default normalization"
+                self.add_to_report(" - J_son", text)
                 return {"default": neutral_stats}
             else:
                 print(" Using the file 'j_son' found.")
@@ -478,8 +478,8 @@ class Training:
                 for key, value in raw_data_stats.items():
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
-                        text =f" - Invalid format in data_stats.json for key {key}"
-                        self.add_to_report(text,'')
+                        text =f" Invalid format in data_stats.json for key {key}"
+                        self.add_to_report(" - J_son", text)
                         raise ValueError(f"Invalid format in data_stats.json for key {key}")
 
                     data_stats_loaded[key] = [
@@ -490,8 +490,13 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
-                print(f" Error loading data stats from {json_file_path}: {e}."
+
+                text = (" Error loading data stats : "
+                      "Using default normalization stats.")
+                dc.display_color(text,'YELLOW', bold = True)
+                text = (f" Error loading data stats from {json_file_path}:\n {e}."
                       " Using default normalization stats.")
+                self.add_to_report(" - J_son", text)
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
