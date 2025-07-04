@@ -190,20 +190,15 @@ def train_model():
 
             train_object.load_segmentation_data()
             train_object.train()
-        except Exception as e :
-        # except (IOError, ValueError) as e:
-            report_training.add(" - Training", f"{e}")
-            print(e)
+
 
         except ValueError as e :
-            print(e)
-            report_training.add(" - Training", f"{e}")
+            # report_training.add(" - Training", f"{e}")
+            pass
 
         except  KeyError  as e :
             report_training.add(" - Training",
                                 "Caught KeyError in DataLoader worker process :\n"
                                 f"{e}")
-
-
 
     report_training.status("Training")

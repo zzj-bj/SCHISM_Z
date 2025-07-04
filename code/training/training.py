@@ -282,7 +282,7 @@ class Training:
             else:
                 text =f" - Metric '{metric}' not recognized"
                 self.add_to_report(' - Hyperparameters', text)
-                raise ValueError(f"Metric '{metric}' not recognized. Please check the name.")
+                raise ValueError()
 
         return selected_metrics
 
@@ -299,8 +299,8 @@ class Training:
         if not optimizer_class:
             text =f" - Optimizer '{optimizer_name}' is not supported"
             self.add_to_report(' - Hyperparameters', text)
-            raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
-                             " Check your 'optimizer_mapping'.")
+            raise ValueError()
+
 
         converted_params = {k: self.param_converter.convert_param(v)
                             for k, v in self.optimizer_params.items() if k != 'optimizer'}
@@ -323,8 +323,7 @@ class Training:
         if not scheduler_class:
             text =f" - Scheduler '{scheduler_name}' is not supported"
             self.add_to_report(' - Hyperparameters', text)
-            raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
-                             "Check your 'scheduler_mapping'.")
+            raise ValueError()
 
         converted_params = {k: self.param_converter.convert_param(v)
                             for k, v in self.scheduler_params.items() if k != 'scheduler'}
@@ -350,7 +349,7 @@ class Training:
         if not loss_class:
             text =f" - Loss '{loss_name}' is not supported"
             self.add_to_report(' - Hyperparameters', text)
-            raise ValueError(f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
+            raise ValueError()
 
         # Convert static parameters from config
         converted_params = {
@@ -385,7 +384,8 @@ class Training:
         if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
             self.add_to_report(' - Hyperparameters', text)
-            raise ValueError(f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
+            raise ValueError()
+
 
         model_class = self.model_mapping[model_name]
         self.model_params['num_classes'] = self.num_classes
@@ -415,7 +415,7 @@ class Training:
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
             self.add_to_report(' - Hyperparameter',text)
-            raise ValueError(text) from e
+            raise ValueError()
 
         return model_class(**typed_required_params, **typed_optional_params).to(self.device)
 
@@ -480,7 +480,7 @@ class Training:
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" Invalid format in data_stats.json for key {key}"
                         self.add_to_report(" - J_son", text)
-                        raise ValueError(f"Invalid format in data_stats.json for key {key}")
+                        raise ValueError()
 
                     data_stats_loaded[key] = [
                         np.array(value[0]),
