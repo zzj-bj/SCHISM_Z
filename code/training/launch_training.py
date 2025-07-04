@@ -196,6 +196,7 @@ def train_model():
             print(e)
 
         except ValueError as e :
+            print(e)
             report_training.add(" - Training", f"{e}")
 
         except  KeyError  as e :
