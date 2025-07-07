@@ -135,7 +135,7 @@ class CNNHead(nn.Module, ActivationMixin):
                                                  int(resize_shape)),
                                                  mode="bicubic")
             else:
-                x = F.pixel_shuffle(x, 2)
+                x = nn.PixelShuffle(2)(x)
             x = x + self.decoder_convs[i](x)
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=0.2)

@@ -45,6 +45,7 @@ from torchmetrics.classification import (
 from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
+from commun.model_registry import model_config_mapping
 
 from training.training_logger import TrainingLogger
 
@@ -167,6 +168,7 @@ class Training:
         self.metrics_str = self.training_params.get('metrics', '')
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
         self.model_mapping = model_mapping
+        self.model_config_mapping = model_config_mapping
 
         self.optimizer_mapping = {
             'Adagrad': Adagrad,
@@ -379,6 +381,8 @@ class Training:
                 f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
+        model_config_class = self.model_config_mapping[model_name]
+
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
@@ -408,7 +412,7 @@ class Training:
             self.add_to_report(text, '')
             raise ValueError(text) from e
 
-        return model_class(**typed_required_params, **typed_optional_params).to(self.device)
+        return model_class(model_config_class(**typed_required_params, **typed_optional_params)).to(self.device)
 
     def create_unique_folder(self):
         """

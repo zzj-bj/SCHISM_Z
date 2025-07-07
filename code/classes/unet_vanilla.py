@@ -9,10 +9,19 @@ It consists of encoder blocks, decoder blocks, and a bridge layer.
 
 @author: Florent.BRONDOLO
 """
+from dataclasses import dataclass
 import torch
 from torch import nn
 import torch.nn.functional as F
 from commun.activation_mixin import ActivationMixin
+
+@dataclass
+class UnetVanillaConfig:
+    n_block: int = 4
+    channels: int = 8
+    num_classes: int = 3
+    k_size: int = 3
+    activation: str = 'relu'
 
 class UnetVanilla(nn.Module,ActivationMixin):
     """
