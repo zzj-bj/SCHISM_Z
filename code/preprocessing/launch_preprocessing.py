@@ -48,7 +48,7 @@ def launch_json_generation():
                                 folder_type='images')
     vf.warning_message(subfolders, valid_subfolders)
 
-    if len(valid_subfolders) != 0 :
+    if report_json.is_report() == 0 :
         print("[!] Starting Json generation")
         json_generation = js.DatasetProcessor(data_dir,
                                               valid_subfolders,
@@ -84,7 +84,7 @@ def launch_normalisation():
                                 folder_type='masks')
     vf.warning_message(subfolders, valid_subfolders)
 
-    if len(valid_subfolders) != 0 :
+    if report_normal.is_report() == 0 :
         print("[!] Starting normalization")
         for f in valid_subfolders:
             print(f" - {f} :")

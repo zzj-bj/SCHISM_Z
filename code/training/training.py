@@ -347,9 +347,9 @@ class Training:
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
-            text =f" - Loss '{loss_name}' is not supported"
+            text =f" - Loss '{loss_name}' is not supported !!!!!!!!"
             self.add_to_report(' - Hyperparameters', text)
-            raise ValueError()
+            raise ValueError(text)
 
         # Convert static parameters from config
         converted_params = {

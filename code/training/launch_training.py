@@ -174,8 +174,8 @@ def train_model():
 
     vf.warning_message(subfolders, valid_subfolders)
 
-
-    if initial_condition and len(valid_subfolders) != 0 :
+    if initial_condition and report_training.is_report() == 0 :
+    # if initial_condition and len(valid_subfolders) != 0 :
         print("[!] Starting training.")
 
         try:
@@ -192,13 +192,13 @@ def train_model():
             train_object.train()
 
 
-        except ValueError as e :
-            # report_training.add(" - Training", f"{e}")
-            pass
-
-        except  KeyError  as e :
+        except KeyError as e:
             report_training.add(" - Training",
                                 "Caught KeyError in DataLoader worker process :\n"
                                 f"{e}")
+        except ValueError as e:
+            report_training.add(" - hyperparameters :", f"{e}" )
+        except Exception as e:
+            report_training.add("  ET LA  ", f"{e}")
 
     report_training.status("Training")
