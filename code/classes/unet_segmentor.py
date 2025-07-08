@@ -9,10 +9,10 @@ It consists of encoder blocks, decoder blocks, and a bridge layer.
 
 @author: Florent.BRONDOLO
 """
+from dataclasses import dataclass
 from torch import nn
 import torch.nn.functional as nn_func
 from commun.activation_mixin import ActivationMixin
-from dataclasses import dataclass
 
 @dataclass
 class UnetSegmentorConfig:
@@ -24,11 +24,11 @@ class UnetSegmentorConfig:
     It includes parameters such as embedding size, number of channels,
     number of classes, kernel size, number of features, and activation function.
     """
-    n_block=4,
-    channels=8,
-    num_classes=3,
-    p=0.5,
-    k_size=3,
+    n_block=4
+    channels=8
+    num_classes=3
+    p=0.5
+    k_size=3
     activation='relu'
 
 class UnetSegmentor(nn.Module,ActivationMixin):
@@ -61,10 +61,11 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             "input_conv" : nn.Conv2d(in_channels=3, out_channels=unet_segmentor_config.channels,
                                 kernel_size=unet_segmentor_config.k_size, padding=1),
             "encoder_convs" : nn.ModuleList([
-                                self._create_encoder_conv_block(channels= unet_segmentor_config.channels * 2 ** i)
+                                self._create_encoder_conv_block(
+                                    channels= unet_segmentor_config.channels * 2 ** i)
                                 for i in range(0, unet_segmentor_config.n_block - 1)]),
             }
-        
+
         self.mid_conv = self._create_encoder_conv_block(
             channels = self.config["channels"]*2**(self.config["n_block"] - 1))
         self.decoder_deconvs = nn.ModuleList([

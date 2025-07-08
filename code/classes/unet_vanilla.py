@@ -1,3 +1,4 @@
+# pylint: disable=too-many-instance-attributes
 """
 UnetVanilla: A simple U-Net implementation in PyTorch.
 
@@ -17,6 +18,13 @@ from commun.activation_mixin import ActivationMixin
 
 @dataclass
 class UnetVanillaConfig:
+    """
+    UnetVanillaConfig Class for Configuring UnetVanilla
+
+    This class defines the configuration parameters for the UnetVanilla.
+
+    It includes parameters such as number of blocks, number of channels,
+    number of classes, kernel size, and activation function."""
     n_block: int = 4
     channels: int = 8
     num_classes: int = 3
@@ -39,42 +47,50 @@ class UnetVanilla(nn.Module,ActivationMixin):
     }
 
     def __init__(self,
-                 n_block=4,
-                 channels=8,
-                 num_classes=3,
-                 k_size=3,
-                 activation='relu'
+                 unet_vanilla_config: UnetVanillaConfig
                  ):
         super().__init__()
-        self.n_block = n_block
-        self.channels = channels
-        self.num_classes = num_classes
-        self.k_size = k_size
-        self.activation = activation.lower()
+        self.config = {
+            "n_block" : unet_vanilla_config["n_block"],
+            "channels" : unet_vanilla_config["channels"],
+            "num_classes" : unet_vanilla_config["num_classes"],
+            "k_size" : unet_vanilla_config["k_size"],
+            "activation" : unet_vanilla_config["activation"].lower(),
+            }
 
         self.encoder_blocks = nn.ModuleList()
         self.max_pools = nn.ModuleList()
-        for i in range(n_block):
-            self.encoder_blocks.append(self.encoder_block(channels * (2 ** i)))
+        for i in range(self.config["n_block"]):
+            self.encoder_blocks.append(self.encoder_block(self.config["channels"] * (2 ** i)))
             self.max_pools.append(nn.MaxPool2d(kernel_size=2, ceil_mode=True))
 
         # Define up sampling path
         self.decoder_blocks = nn.ModuleList()
         self.up_convs = nn.ModuleList()
-        for i in range(n_block, -1, -1):
+        for i in range(self.config["n_block"], -1, -1):
             if i > 0:
-                self.decoder_blocks.append(self.decoder_block(channels * (2 ** i)))
-                self.up_convs.append(nn.ConvTranspose2d(
-                    channels * (2 ** i), channels * (2 ** i) // 2,
-                    kernel_size=3, stride=2, padding=1, output_padding=1  # Allow a small correction
-                ))
+                self.decoder_blocks.append(self.decoder_block(self.config["channels"] * (2 ** i)))
+                self.up_convs.append(
+                    nn.ConvTranspose2d(
+                        self.config["channels"] * (2 ** i),
+                        self.config["channels"] * (2 ** i) // 2,
+                        kernel_size=3,
+                        stride=2,
+                        padding=1,
+                        output_padding=1  # Allow a small correction
+                    ))
 
         # Define output layer
-        self.output_conv = nn.Conv2d(self.channels, self.num_classes, kernel_size=1)
+        self.output_conv = nn.Conv2d(
+            self.config["channels"],
+            self.config["num_classes"],
+            kernel_size=1)
 
-        self.bridge = self.simple_conv(self.channels * (2 ** n_block)// 2,
-                                       self.channels * (2 ** n_block))
-        self.start = self.simple_conv(3, self.channels)
+        self.bridge = self.simple_conv(
+            self.config["channels"] * (2 ** self.config["n_block"])// 2,
+            self.config["channels"] * (2 ** self.config["n_block"]))
+
+        self.start = self.simple_conv(3, self.config["channels"])
 
     def simple_conv(self, in_channels, out_channels):
         """
@@ -88,8 +104,13 @@ class UnetVanilla(nn.Module,ActivationMixin):
             and an activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=self.k_size, padding=self.k_size // 2),
-            self._get_activation(self.config["activation"])
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=self.config["k_size"],
+                padding=self.config["k_size"] // 2),
+                self._get_activation(self.config["activation"]
+                )
         )
 
     def encoder_block(self, in_channels):
@@ -103,11 +124,16 @@ class UnetVanilla(nn.Module,ActivationMixin):
             batch normalization and an activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(in_channels, in_channels * 2,
-                      kernel_size=self.k_size,
-                      padding=self.k_size // 2),
-            nn.BatchNorm2d(in_channels * 2),
-            self._get_activation(self.config["activation"])
+            nn.Conv2d(
+                in_channels,
+                in_channels * 2,
+                kernel_size=self.config["k_size"],
+                padding=self.config["k_size"] // 2
+                ),
+            nn.BatchNorm2d(
+                in_channels * 2),
+                self._get_activation(self.config["activation"]
+                )
         )
 
     def decoder_block(self, in_channels):
@@ -121,11 +147,16 @@ class UnetVanilla(nn.Module,ActivationMixin):
             batch normalization and an activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(in_channels, in_channels // 2,
-                      kernel_size=self.k_size,
-                      padding=self.k_size // 2),
-            nn.BatchNorm2d(in_channels // 2),
-            self._get_activation(self.config["activation"])
+            nn.Conv2d(
+                in_channels,
+                in_channels // 2,
+                kernel_size=self.config["k_size"],
+                padding=self.config["k_size"] // 2
+                ),
+            nn.BatchNorm2d(
+                in_channels // 2),
+                self._get_activation(self.config["activation"]
+                )
         )
 
     def forward(self, x):
