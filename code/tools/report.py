@@ -5,9 +5,13 @@ This class allows for tracking errors during the execution of processes
 @author: Pierre.FANCELLI
 """
 
+from datetime import datetime
+
 from tools import display_color as dc
 
 #============================================================================
+# Formar for Date & Time
+F_DATE = "%Y-%m-%d <> %H:%M:%S"
 
 class ErrorReport:
     """
@@ -57,12 +61,28 @@ class ErrorReport:
         print("\033[35m", end="")
         print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topic(s) !!! ***")
         for key, elements in self.dictionary.items():
-            print(f"{key} \n   {' / '.join(elements)}")
+            print(f"\033[31m{key}\033[35m \n   {' / '.join(elements)}")
         # Return to a white display
         print("\033[0m")
 
+    def print_report(self, process, instance_name):
+        """ Write report into a file """
+        now = datetime.now()
+        total_def = sum(len(liste)for liste in self.dictionary.values())
 
-    def status(self, process):
+        filename = f"{instance_name}_report.txt"
+        with open(filename, 'a', encoding="utf-8") as file:
+            file.write("\n*------------------------------------------\n")
+            file.write(f"-- {now.strftime(F_DATE  )} -- \n")
+            if total_def == 0:
+                file.write(f" - {process} finished whitout error\n")
+            else:
+                file.write(f" *** !!! {total_def} problems founds !!! :***\n")
+                for key, elements in self.dictionary.items():
+                    file.write(f"{key} : {', '.join(elements)}\n")
+            file.write("------------------------------------------*\n")
+
+    def status(self, process, file):
         """
         Displaying the correct end process message
         """
@@ -71,3 +91,5 @@ class ErrorReport:
             self.display_report()
         else:
             dc.display_color(f"[√] {process} completed without error\n", "green")
+
+        self.print_report(process, file)

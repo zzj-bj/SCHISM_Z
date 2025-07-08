@@ -603,6 +603,8 @@ class Training:
         )
 
         pin_memory = self.device == 'cuda'
+        pin_memory = True
+
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
                                   shuffle=True, num_workers=2,
                                   pin_memory= pin_memory, drop_last=True)
@@ -655,7 +657,6 @@ class Training:
         # if self.device == "cuda":
         #     scaler = GradScaler()  # Pas besoin de spécifier 'cuda' ici
         #     cudnn.benchmark = True
-
 
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled

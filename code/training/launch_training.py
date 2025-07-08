@@ -136,8 +136,6 @@ def train_model():
     data_dir = fo.get_path("Enter the data directory")
     run_dir = fo.get_path("Enter the directory to save runs")
     hyperparameters_path = fo.get_path("Enter the path to the hyperparameters INI file")
-
-
     hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
         initial_condition = False
@@ -199,6 +197,7 @@ def train_model():
         except ValueError as e:
             report_training.add(" - hyperparameters :", f"{e}" )
         except Exception as e:
-            report_training.add(" - Other defects", f"{e}")
+            report_training.add(" - Other defects ", f"{e}")
 
-    report_training.status("Training")
+    file_name_1 = fo.create_name_path(data_dir, '', 'Training')
+    report_training.status("Training", file_name_1)

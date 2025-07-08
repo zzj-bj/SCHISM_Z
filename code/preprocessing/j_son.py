@@ -60,7 +60,8 @@ class DatasetProcessor:
                 std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path)
                 self.results[folder_name] = [std_dev, mean]
             except (IOError, ValueError) as e:
-                self.add_to_report(f" - Error processing {folder_name}:\n {e}", '')
+                trxt = f" - Error processing {folder_name}:\n {e}"
+                self.add_to_report(" - J_son ", trxt)
 
         with open(self.json_file, "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
@@ -98,7 +99,7 @@ class DatasetProcessor:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.add_to_report(f" - Unable to load image at path: {image_path}", "")
+                self.add_to_report(" - J_son ", f" - Unable to load image at path: {image_path}")
                 print(f" Unable to load image at path: {image_path}")
                 continue
 

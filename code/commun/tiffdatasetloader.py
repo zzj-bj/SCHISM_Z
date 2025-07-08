@@ -236,6 +236,24 @@ class TiffDatasetLoader(VisionDataset):
         return sorted_values
 
     def _weights_calc(self, mask, temperature=50.0):
+        """
+        Calculate class weights based on the provided mask.
+
+        This function computes the weights for each class in a classification problem,
+        particularly useful in scenarios with class imbalance. The weights are calculated
+        as the inverse of the class ratios, normalized using the softmax function.
+
+        Parameters:
+        mask (np.ndarray): An array of class labels (integers) for which to calculate weights.
+        temperature (float): A parameter that controls the softness of the softmax distribution.
+                            Higher values result in a more uniform distribution of weights.
+
+        Returns:
+        torch.Tensor: A tensor containing the calculated weights for each class.
+
+        Raises:
+        RuntimeError: If NaN values are detected in the weights calculation.
+        """
         mask = mask.astype(np.int64)
         counts = np.bincount(mask.ravel(), minlength=self.num_classes)[self.class_values]
 
