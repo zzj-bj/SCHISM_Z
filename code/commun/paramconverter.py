@@ -6,6 +6,7 @@ It uses `ast.literal_eval` for safe evaluation of complex structures.
 """
 import ast
 
+# pylint: disable=too-few-public-methods
 class ParamConverter:
     """
     ParamConverter class for converting string parameters to appropriate Python types.
@@ -23,31 +24,26 @@ class ParamConverter:
         Returns:
             The converted value in its appropriate Python type.
         """
+        result = v
         if isinstance(v, str):
-            v = v.strip("'\"")  # Remove surrounding quotes
-
-            # Handle None, booleans
+            v = v.strip("'\"")
             if v.lower() == "none":
-                return None
-            if v.lower() == "true":
-                return True
-            if v.lower() == "false":
-                return False
-
-            # Try parsing numbers directly
-            try:
-                if "." in v or "e" in v.lower():  # Likely a float or scientific notation
-                    return float(v)
-                return int(v)  # Try integer conversion
-            except ValueError:
-                pass  # Continue processing
-
-            # Use `literal_eval` for safer conversion of lists, tuples, and dictionaries
-            try:
-                parsed = ast.literal_eval(v)
-                if isinstance(parsed, (list, tuple, dict)):
-                    return parsed
-            except (ValueError, SyntaxError):
-                pass  # Ignore errors and treat as a string
-
-        return v # Return as a string if no conversion succeeded
+                result = None
+            elif v.lower() == "true":
+                result = True
+            elif v.lower() == "false":
+                result = False
+            else:
+                try:
+                    if "." in v or "e" in v.lower():
+                        result = float(v)
+                    else:
+                        result = int(v)
+                except ValueError:
+                    try:
+                        parsed = ast.literal_eval(v)
+                        if isinstance(parsed, (list, tuple, dict)):
+                            result = parsed
+                    except (ValueError, SyntaxError):
+                        pass
+        return result

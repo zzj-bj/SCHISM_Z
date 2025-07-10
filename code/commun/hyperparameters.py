@@ -37,7 +37,9 @@ class Hyperparameters:
         return self.parameters
 
     def __repr__(self):
-        """Returns a string representation of the Hyperparameters instance."""
+        """
+        Returns a string representation of the Hyperparameters instance.
+        """
         return f"Hyperparameters({self.parameters})"
 
     def save_to_ini(self, file_path):
