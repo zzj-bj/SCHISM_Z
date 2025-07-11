@@ -9,8 +9,9 @@ import os
 from tools import folder as fo
 from tools import report as re
 
-from training import training as tr
 from commun.hyperparameters import Hyperparameters
+from training import training as tr
+
 
 #===========================================================================
 def check_folder(folder, root, report):

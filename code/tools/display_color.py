@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 This class displays messages in the requested color.
 The allowed colors are 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray', and 'white'.
@@ -7,6 +8,7 @@ If the color is not specified, the text is displayed in white.
 @author: Pierre.FANCELLI
 """
 
+# pylint: disable=too-few-public-methods
 class DisplayColor:
     """
     This class displays messages in the requested color.

@@ -13,6 +13,7 @@ from PIL import Image
 import torch
 
 #=============================================================================
+# pylint: disable=too-few-public-methods
 class ImageNormalizer:
     """
     This class allows normalizing a group of images.
@@ -34,18 +35,13 @@ class ImageNormalizer:
 
             try:
                 # Load the image and convert it to grayscale
-                image = Image.open(file).convert('L')
-                masks = np.array(image)
+                masks = np.array(Image.open(file).convert('L'))
 
                 # Retrieve the unique classes in the image
                 unique_classes = np.unique(masks)
-                num_classes = len(unique_classes)
-
-                # Create a mapping of classes to scaled values
-                scaling = np.linspace(0, 255, num_classes)
 
                 # Create a mapping dictionary
-                class_mapping = {value: int(scaling[i]) for i,
+                class_mapping = {value: int(np.linspace(0, 255, len(unique_classes))[i]) for i,
                                  value in enumerate(unique_classes)}
 
                 # Convert masks to a PyTorch tensor
@@ -57,17 +53,12 @@ class ImageNormalizer:
                 for value, scaled_value in class_mapping.items():
                     compliant_masks[masks_tensor == value] = scaled_value
 
-                # Move the compliant masks back to CPU and convert to NumPy array
-                compliant_masks_cpu = compliant_masks.cpu().numpy()
-
                 # Create a new image from the compliant masks
-                normalized_image = Image.fromarray(compliant_masks_cpu.astype(np.uint8))
+                normalized_image = Image.fromarray(compliant_masks.cpu().numpy().astype(np.uint8))
 
                 # Save the normalized image
                 name, ext = os.path.splitext(os.path.basename(file))
-                output_name = f"{name}{ext}"
-                output_file_path = os.path.join(self.output_path, output_name)
-                normalized_image.save(output_file_path)
+                normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
 
             except (IOError, ValueError) as e:
                 print(f"\n{e}")

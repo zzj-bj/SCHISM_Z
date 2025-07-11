@@ -2,7 +2,8 @@
 """
 A module for logging training metrics, saving hyperparameters, and visualizing results.
 This module provides a `TrainingLogger` class that handles the logging of training metrics,
-saving hyperparameters to an INI file, and visualizing results such as learning curves and confusion matrices.
+saving hyperparameters to an INI file, 
+and visualizing results such as learning curves and confusion matrices.
 """
 import os
 import json

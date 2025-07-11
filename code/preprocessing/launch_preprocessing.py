@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Launches the preprocessing operations for datasets.
-This script provides functionalities for preprocessing datasets, including JSON generation and image normalization.
+This script provides functionalities for preprocessing datasets,
+including JSON generation and image normalization.
 It prompts the user for the necessary directories and parameters,
 validates the input, and then executes the preprocessing tasks.
 
@@ -61,11 +62,14 @@ def launch_json_generation():
 
     if len(valid_subfolders) != 0 :
         print("[!] Starting Json generation")
-        json_generation = js.DatasetProcessor(data_dir,
-                                              valid_subfolders,
-                                              file_name_report,
-                                              report_json,
-                                              percentage_to_process)
+        json_generation = js.DatasetProcessor(
+                                js.DatasetProcessorConfig(
+                                    parent_dir = data_dir,
+                                    subfolders=valid_subfolders,
+                                    json_file=file_name_report,
+                                    report=report_json,
+                                    percentage_to_process=percentage_to_process
+                                ))
         try:
             json_generation.process_datasets()
         except (IOError, ValueError) as e:

@@ -62,12 +62,12 @@ class UnetSegmentor(nn.Module,ActivationMixin):
 
         self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.config["channels"],
                                 kernel_size=self.config["k_size"], padding=1)
-        
+
         self.encoder_convs = nn.ModuleList([
                                 self._create_encoder_conv_block(
                                     channels= self.config["channels"] * 2 ** i)
                                     for i in range(0, self.config["n_block"] - 1)])
-        
+
         self.mid_conv = self._create_encoder_conv_block(
             channels=self.config["channels"]*2**(self.config["n_block"] - 1))
 
