@@ -20,9 +20,10 @@ from torch.utils.data import DataLoader
 from patchify import unpatchify
 
 from commun.tiffdatasetloader import TiffDatasetLoader
+from commun.tiffdatasetloader import TiffDatasetLoaderConfig
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
-
+from commun.model_registry import model_config_mapping
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -92,6 +93,8 @@ class Inference:
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.data_stats = self.load_data_stats_from_json()
         self.model_mapping = model_mapping
+        self.model_config_mapping = model_config_mapping
+
 
         self.model = self.initialize_model()
 
@@ -114,6 +117,8 @@ class Inference:
                              " Check your 'model_mapping'.")
 
         model_class = self.model_mapping[model_name]
+        model_config_class = self.model_config_mapping[model_name]
+
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
@@ -146,7 +151,7 @@ class Inference:
                              "\n {e}") from e
 
         # Initialize the model
-        model = model_class(**typed_required_params, **optional_params).to(self.device)
+        model = model_class(model_config_class(**typed_required_params, **optional_params)).to(self.device)
 
         # Load pre-trained weights
         checkpoint_path = os.path.join(str(self.run_dir), f"model_best_{self.metric}.pth")
@@ -196,13 +201,15 @@ class Inference:
             os.makedirs(preds_folder, exist_ok=True)
 
         dataset = TiffDatasetLoader(
-            img_data=img_data,
-            indices=indices,
-            data_stats=self.data_stats,
-            num_classes=self.num_classes,
-            img_res=self.img_res,
-            crop_size=(self.crop_size, self.crop_size),
-            inference_mode=True,
+            TiffDatasetLoaderConfig(
+                img_data=img_data,
+                indices=indices,
+                data_stats=self.data_stats,
+                num_classes=self.num_classes,
+                img_res=self.img_res,
+                crop_size=(self.crop_size, self.crop_size),
+                inference_mode=True,
+            )
         )
         return DataLoader(dataset, batch_size=1, shuffle=False,pin_memory=torch.cuda.is_available())
    
