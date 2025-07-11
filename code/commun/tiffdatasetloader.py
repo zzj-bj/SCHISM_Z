@@ -1,3 +1,4 @@
+# pylint: disable=too-many-instance-attributes
 """
 TiffDatasetLoader: A PyTorch Dataset for loading TIFF images and their corresponding masks.
 This class handles loading, preprocessing, and patch extraction from TIFF images and masks.
@@ -41,6 +42,7 @@ class TiffDatasetLoaderConfig:
     p: float = 0.5
     inference_mode: bool = False
     ignore_background: bool = True
+
 
 class TiffDatasetLoader(VisionDataset):
     """    
@@ -267,43 +269,106 @@ class TiffDatasetLoader(VisionDataset):
         dataset_id, sample_id = self.config["indices"][idx]
         img_path = self.config["img_data"][dataset_id][sample_id]
 
-        if dataset_id in self.config["data_stats"]:
-            m, s = self.config["data_stats"][dataset_id]
-        else:
-            m, s = self.config["data_stats"]["default"]
-
         if self.config["inference_mode"]:
-            img = np.array(Image.open(img_path).convert("RGB"))
-            img_tensor = torch.from_numpy(img).float()
-            img_tensor = img_tensor.permute(2, 0, 1).contiguous() / 255
-            img_normalized = torchvision.transforms.functional.normalize(img_tensor, mean=m, std=s)
-            patches = self.extract_patches(img_normalized)
-            processed_patches = []
+            return self._get_inference_item(dataset_id, img_path)
 
-            for i in range(patches.shape[0]):
-                patch = patches[i]
-                patch_tensor = torch.tensor(patch).unsqueeze(0)
-                patch_resized = nn_func.interpolate(patch_tensor,
-                                                    size=(self.config["img_res"],
-                                                          self.config["img_res"]),
-                                                    mode="bicubic",
-                                                    align_corners=False).squeeze()
-                processed_patches.append(patch_resized)
+        return self._get_training_item(dataset_id, sample_id, img_path)
 
-            return processed_patches, dataset_id, img_path
+    def _get_inference_item(self, dataset_id, img_path):
+        """"
+        Retrieves an inference item from the dataset,
+        including image processing and patch extraction.
+        
+        Args:
+            dataset_id (int): Identifier for the dataset.
+            img_path (str): Path to the image file.
+        
+        Returns:
+            tuple: A tuple containing the processed patches, dataset ID, and image path.
+        """
+        m, s = self._get_mean_std(dataset_id)
+        img = np.array(Image.open(img_path).convert("RGB"))
+        img_tensor = torch.from_numpy(img).float()
+        img_tensor = img_tensor.permute(2, 0, 1).contiguous() / 255
+        img_normalized = torchvision.transforms.functional.normalize(img_tensor, mean=m, std=s)
+        patches = self.extract_patches(img_normalized)
+        processed_patches = []
+        for i in range(patches.shape[0]):
+            patch = patches[i]
+            patch_tensor = torch.tensor(patch).unsqueeze(0)
+            patch_resized = nn_func.interpolate(
+                patch_tensor,
+                size=(self.config["img_res"], self.config["img_res"]),
+                mode="bicubic",
+                align_corners=False
+            ).squeeze()
+            processed_patches.append(patch_resized)
+        return processed_patches, dataset_id, img_path
 
+    def _get_training_item(self, dataset_id, sample_id, img_path):
+        """
+        Retrieves a training item from the dataset,
+        including image and mask processing.
+        
+        Args:
+            dataset_id (int): Identifier for the dataset.
+            sample_id (int): Identifier for the sample within the dataset.
+            img_path (str): Path to the image file.
+        
+        Returns:
+            tuple: A tuple containing the normalized image tensor,
+            mask tensor (if not inference mode),
+            class weights, dataset ID, and image path.
+        
+        Raises:
+            AssertionError: If the dimensions of the image and mask do not match.
+        """
+        m, s = self._get_mean_std(dataset_id)
         mask_path = self.config["mask_data"][dataset_id][sample_id]
         img = np.array(Image.open(img_path).convert("RGB"))
         mask = np.array(Image.open(mask_path).convert("L"))
-
         assert img.shape[:2] == mask.shape, (
             f"Mismatch in dimensions: Image {img.shape} vs Mask {mask.shape} for {img_path}"
         )
-
         img, mask = self.get_valid_crop(img, mask, threshold=0.8, max_attempts=20)
-
         img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255
 
+        mask_tensor, weights = self._prepare_mask_and_weights(mask)
+
+        img_resized = nn_func.interpolate(img_tensor.unsqueeze(0),
+                                        size=(self.config["img_res"], self.config["img_res"]),
+                                        mode="bicubic",
+                                        align_corners=False).squeeze()
+        mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0).float(),
+                                        size=(self.config["img_res"], self.config["img_res"]),
+                                        mode="nearest").squeeze()
+
+        if torch.rand(1).item() < self.config["p"]:
+            img_resized = torchvision.transforms.functional.hflip(img_resized)
+            mask_resized = torchvision.transforms.functional.hflip(mask_resized)
+        if torch.rand(1).item() < self.config["p"]:
+            img_resized = torchvision.transforms.functional.vflip(img_resized)
+            mask_resized = torchvision.transforms.functional.vflip(mask_resized)
+
+        img_normalized = torchvision.transforms.functional.normalize(
+            img_resized, mean=m, std=s).float()
+
+        if self.config["num_classes"] > 1:
+            if self.config["ignore_background"]:
+                mask_resized = (mask_resized * self.config["num_classes"]).long() - 1
+            else:
+                mask_resized = (mask_resized * (self.config["num_classes"] - 1)).long()
+
+        return img_normalized, mask_resized, weights
+
+    def _prepare_mask_and_weights(self, mask):
+        """
+        Prepares the mask tensor and class weights based on the number of classes.
+        Args:
+            mask (np.array): The segmentation mask.
+            Returns:
+                tuple: A tuple containing the mask tensor and class weights.
+        """
         if self.config["num_classes"] > 1:
             mask_tensor = torch.from_numpy(mask).contiguous() / 255
             weights = self._weights_calc(mask)
@@ -312,42 +377,24 @@ class TiffDatasetLoader(VisionDataset):
             mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())
             mask = mask.astype(np.int64)
             mask_tensor = torch.from_numpy(mask).contiguous()
-            weights = torch.zeros(self.config["num_classes"]) #Avoid setting to None
+            weights = torch.zeros(self.config["num_classes"])
+        return mask_tensor, weights
 
-        img_resized = nn_func.interpolate(img_tensor.unsqueeze(0),
-                                          size=(self.config["img_res"],
-                                                self.config["img_res"]),
-                                          mode="bicubic",
-                                          align_corners=False).squeeze()
-        mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0).float(),
-                                           size=(self.config["img_res"],
-                                                 self.config["img_res"]),
-                                           mode="nearest").squeeze()
+    def _get_mean_std(self, dataset_id):
+        """
+        Retrieves the mean and standard deviation for normalization based on the dataset ID.
+        
+        Args:
+            dataset_id (int): Identifier for the dataset.
+        
+        Returns:
+            tuple: A tuple containing the mean and
+            standard deviation for normalization.
+        """
+        if dataset_id in self.config["data_stats"]:
+            return self.config["data_stats"][dataset_id]
 
-        if torch.rand(1).item() < self.config["p"]:
-            img_resized = torchvision.transforms.functional.hflip(img_resized)
-            mask_resized = torchvision.transforms.functional.hflip(mask_resized)
-
-        if torch.rand(1).item() < self.config["p"]:
-            img_resized = torchvision.transforms.functional.vflip(img_resized)
-            mask_resized = torchvision.transforms.functional.vflip(mask_resized)
-
-        #TODO: as many image treatment as required
-        #shear
-
-        img_normalized = torchvision.transforms.functional.normalize(img_resized,
-                                                                    mean=m,
-                                                                    std=s).float()
-
-        if self.config["num_classes"] > 1:
-            if self.config["ignore_background"]:
-                # ignore index is -1
-                mask_resized = (mask_resized * self.config["num_classes"]).long() - 1
-            else:
-                # no ignore index but rescale to int
-                mask_resized = (mask_resized * (self.config["num_classes"]- 1)).long()
-
-        return img_normalized, mask_resized, weights
+        return self.config["data_stats"]["default"]
 
     def __len__(self):
         """

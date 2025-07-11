@@ -24,27 +24,27 @@ class UnetSegmentorConfig:
     It includes parameters such as embedding size, number of channels,
     number of classes, kernel size, number of features, and activation function.
     """
-    n_block=4
-    channels=8
-    num_classes=3
-    p=0.5
-    k_size=3
-    activation='relu'
+    num_classes:int = 3
+    n_block: int=4
+    channels: int=8
+    k_size:int =3
+    activation:int ='relu'
+    p:int =0.5
 
 class UnetSegmentor(nn.Module,ActivationMixin):
     """
     UnetSegmentor: A U-Net based segmentation model for image segmentation tasks.
     """
     REQUIRED_PARAMS = {
-        'num_classes': int
+        "num_classes": int
     }
 
     OPTIONAL_PARAMS = {
-        'n_block': int,
-        'channels': int,
-        'k_size': int,  
-        'activation': str, 
-        'p': float
+        "n_block": int,
+        "channels": int,
+        "k_size": int,  
+        "activation": str, 
+        "p": float
     }
 
     def __init__(self,
@@ -58,16 +58,19 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             "p" : unet_segmentor_config.p,
             "k_size" : unet_segmentor_config.k_size,
             "activation" : unet_segmentor_config.activation.lower(),
-            "input_conv" : nn.Conv2d(in_channels=3, out_channels=unet_segmentor_config.channels,
-                                kernel_size=unet_segmentor_config.k_size, padding=1),
-            "encoder_convs" : nn.ModuleList([
-                                self._create_encoder_conv_block(
-                                    channels= unet_segmentor_config.channels * 2 ** i)
-                                for i in range(0, unet_segmentor_config.n_block - 1)]),
             }
 
+        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.config["channels"],
+                                kernel_size=self.config["k_size"], padding=1)
+        
+        self.encoder_convs = nn.ModuleList([
+                                self._create_encoder_conv_block(
+                                    channels= self.config["channels"] * 2 ** i)
+                                    for i in range(0, self.config["n_block"] - 1)])
+        
         self.mid_conv = self._create_encoder_conv_block(
-            channels = self.config["channels"]*2**(self.config["n_block"] - 1))
+            channels=self.config["channels"]*2**(self.config["n_block"] - 1))
+
         self.decoder_deconvs = nn.ModuleList([
             nn.ConvTranspose2d(
                 in_channels = self.config["channels"] * 2 ** (i + 1),
@@ -84,8 +87,8 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             for i in reversed(range(self.config["n_block"]))
         ])
         self.seg_conv = nn.Conv2d(
-            in_channels=self.channels,
-            out_channels=self.num_classes,
+            in_channels=self.config["channels"],
+            out_channels=self.config["num_classes"],
             kernel_size=3,
             padding=1
         )
@@ -101,10 +104,10 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             batch normalization, and the specified activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(channels, channels * 2, kernel_size=self.k_size, padding=1),
+            nn.Conv2d(channels, channels * 2, kernel_size=self.config["k_size"], padding=1),
             nn.BatchNorm2d(channels * 2),
             self._get_activation(self.config["activation"]),
-            nn.Conv2d(channels * 2, channels * 2, kernel_size=self.k_size, padding=1),
+            nn.Conv2d(channels * 2, channels * 2, kernel_size=self.config["k_size"], padding=1),
             nn.BatchNorm2d(channels * 2),
             self._get_activation(self.config["activation"]),
         )
@@ -120,10 +123,10 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             batch normalization, and the specified activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
+            nn.Conv2d(channels, channels, kernel_size=self.config["k_size"], padding=1),
             nn.BatchNorm2d(channels),
             self._get_activation(self.config["activation"]),
-            nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
+            nn.Conv2d(channels, channels, kernel_size=self.config["k_size"], padding=1),
             nn.BatchNorm2d(channels),
             self._get_activation(self.config["activation"]),
         )
@@ -142,18 +145,18 @@ class UnetSegmentor(nn.Module,ActivationMixin):
         x = self.input_conv(x)
         feature_list.append(x)
         x = nn_func.max_pool2d(x, kernel_size=2)
-        x = nn_func.dropout(x, p=self.p)
-        for i in range(self.n_block - 1):
+        x = nn_func.dropout(x, p=self.config["p"])
+        for i in range(self.config["n_block"] - 1):
             x = self.encoder_convs[i](x)
             feature_list.append(x)
             x = nn_func.max_pool2d(x, kernel_size=2)
-            x = nn_func.dropout(x, p=self.p)
+            x = nn_func.dropout(x, p=self.config["p"])
 
         x = self.mid_conv(x)
 
-        for i in range(self.n_block):
+        for i in range(self.config["n_block"]):
             x = self.decoder_deconvs[i](x)
-            x = nn_func.dropout(x, p=self.p)
+            x = nn_func.dropout(x, p=self.config["p"])
             x = self.decoder_convs[i](x + feature_list[::-1][i])
 
         return self.seg_conv(x)

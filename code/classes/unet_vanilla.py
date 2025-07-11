@@ -175,15 +175,15 @@ class UnetVanilla(nn.Module,ActivationMixin):
         x = self.start(x)
         encodings.append(x)
 
-        for i in range(self.n_block):
+        for i in range(self.config["n_block"]):
             x = self.max_pools[i](x)
-            if i < self.n_block - 1:
+            if i < self.config["n_block"] - 1:
                 x = self.encoder_blocks[i](x)
                 encodings.append(x)
 
         x = self.bridge(x)
 
-        for i in range(self.n_block):
+        for i in range(self.config["n_block"]):
             x = self.up_convs[i](x)
             enc = F.interpolate(encodings[-(i + 1)],
                                 size=(x.shape[2],

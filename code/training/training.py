@@ -8,22 +8,22 @@ and the main training loop.
 """
 import os
 import sys
+import glob
+import json
 from datetime import datetime
 from tools import display_color as dc
 
-import glob
-import json
 import numpy as np
 from tqdm import tqdm
 
 import torch
-import torch.nn as nn
+from torch import nn
+from torch.backends import cudnn
 import torch.nn.functional as nn_func
-import torch.backends.cudnn as cudnn
 from torch.cuda.amp import GradScaler
 from torch.nn import (
-    PoissonNLLLoss, CrossEntropyLoss, BCEWithLogitsLoss,
-    GaussianNLLLoss, NLLLoss
+    CrossEntropyLoss, BCEWithLogitsLoss,
+    NLLLoss
 )
 from torch.optim import (
     Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
@@ -43,6 +43,7 @@ from torchmetrics.classification import (
 
 
 from commun.tiffdatasetloader import TiffDatasetLoader
+from commun.tiffdatasetloader import TiffDatasetLoaderConfig
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
 from commun.model_registry import model_config_mapping
@@ -259,7 +260,8 @@ class Training:
 
         # Parse metrics from string input or use default
         self.metrics = [metric.strip()
-                        for metric in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+                        for metric
+                        in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
@@ -319,8 +321,8 @@ class Training:
 
         if not converted_params:
             return scheduler_class(optimizer)
-        else:
-            return scheduler_class(optimizer, **converted_params)
+
+        return scheduler_class(optimizer, **converted_params)
 
     def initialize_loss(self, **dynamic_params):
         """
@@ -412,7 +414,11 @@ class Training:
             self.add_to_report(text, '')
             raise ValueError(text) from e
 
-        return model_class(model_config_class(**typed_required_params, **typed_optional_params)).to(self.device)
+        return model_class(
+                model_config_class(
+                    **typed_required_params, **typed_optional_params
+                )
+            ).to(self.device)
 
     def create_unique_folder(self):
         """
@@ -465,8 +471,8 @@ class Training:
                 text = " - File 'J_son' not found. Using file default normalization"
                 self.add_to_report(text, '')
                 return {"default": neutral_stats}
-            else:
-                print(" File 'json' found : Using this one.")
+
+            print(" File 'json' found : Using this one.")
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
@@ -563,34 +569,42 @@ class Training:
         indices = [train_indices, val_indices, test_indices]
 
         train_dataset = TiffDatasetLoader(
-            indices=train_indices,
-            img_data=img_data,
-            mask_data=mask_data,
-            num_classes=self.num_classes,
-            crop_size=(self.crop_size, self.crop_size),
-            data_stats=data_stats,
-            img_res=self.img_res,
-            ignore_background=self.ignore_background
+            TiffDatasetLoaderConfig(
+                indices=train_indices,
+                img_data=img_data,
+                mask_data=mask_data,
+                num_classes=self.num_classes,
+                crop_size=(self.crop_size, self.crop_size),
+                data_stats=data_stats,
+                img_res=self.img_res,
+                ignore_background=self.ignore_background
+            )
         )
+
         val_dataset = TiffDatasetLoader(
-            indices=val_indices,
-            img_data=img_data,
-            mask_data=mask_data,
-            num_classes=self.num_classes,
-            crop_size=(self.crop_size, self.crop_size),
-            data_stats=data_stats,
-            img_res=self.img_res,
-            ignore_background=self.ignore_background
+            TiffDatasetLoaderConfig(
+                indices=train_indices,
+                img_data=img_data,
+                mask_data=mask_data,
+                num_classes=self.num_classes,
+                crop_size=(self.crop_size, self.crop_size),
+                data_stats=data_stats,
+                img_res=self.img_res,
+                ignore_background=self.ignore_background
+            )
         )
+
         test_dataset = TiffDatasetLoader(
-            indices=test_indices,
-            img_data=img_data,
-            mask_data=mask_data,
-            num_classes=self.num_classes,
-            crop_size=(self.crop_size, self.crop_size),
-            data_stats=data_stats,
-            img_res=self.img_res,
-            ignore_background=self.ignore_background
+            TiffDatasetLoaderConfig(
+                indices=train_indices,
+                img_data=img_data,
+                mask_data=mask_data,
+                num_classes=self.num_classes,
+                crop_size=(self.crop_size, self.crop_size),
+                data_stats=data_stats,
+                img_res=self.img_res,
+                ignore_background=self.ignore_background
+            )
         )
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
@@ -804,7 +818,7 @@ class Training:
                                          metrics_dict=metrics_dict)
         self.logger.save_hyperparameters()
         self.logger.save_data_stats(
-            self.dataloaders["train"].dataset.data_stats)
+            self.dataloaders["train"].dataset.config["data_stats"])
         if "ConfusionMatrix" in self.metrics:
             self.logger.save_confusion_matrix(
                 conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
