@@ -51,7 +51,7 @@ def menu_preprocessing():
 def main():
     """Displays the CLI menu and handles user choices."""
     dc.display_color(ct.LOGO_IN, "Yellow")
- 
+
     if torch.cuda.is_available():
         dc.display_color("CUDA is available! Running on GPU.\n", "green")
     else:

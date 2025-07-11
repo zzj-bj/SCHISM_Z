@@ -60,8 +60,7 @@ def launch_json_generation():
         except (IOError, ValueError) as e:
             print(e)
 
-    file_name = fo.create_name_path(data_dir, '', 'J_son')
-    report_json.status("Json Generation Mode", file_name)
+    report_json.status("Json Generation Mode")
 
 def launch_normalisation():
     """
@@ -100,5 +99,4 @@ def launch_normalisation():
             except (IOError, ValueError) as e:
                 print(e)
 
-    file_name = fo.create_name_path(data_dir, '', 'Normalization')
-    report_normal.status("Normalization", file_name)
+    report_normal.status("Normalization")

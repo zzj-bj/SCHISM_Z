@@ -45,6 +45,22 @@ def input_percentage(message):
         except ValueError:
             print(f"Error: Please enter a valid number. {ct.BELL}")
 
+def input_int(message):
+    """
+    This function returns a integer number between 1 and 200
+    
+    """
+    while True:
+        try:
+            value = int(input(f"[?] {message} : "))
+            if 1 <= value <= 200:
+                return value
+            else:
+                print(f"Error: The value must be between 1 and 200. {ct.BELL}")
+        except ValueError:
+            print(f"Error: Please enter a valid number. {ct.BELL}")
+
+
 def warning_message(folder_1, folder_2):
     """
     This function displays a warning message if directories have been removed
