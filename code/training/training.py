@@ -49,7 +49,7 @@ from commun.model_registry import model_mapping
 from commun.model_registry import model_config_mapping
 
 from training.training_logger import TrainingLogger
-
+from training.training_logger import TrainingLoggerConfig
 
 # Add the system path at the end to avoid dependency issues.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -75,8 +75,8 @@ class Training:
         """
             Add a message to a report
         """
-        if self.report is not None:
-            self.report.add(text, who)
+        if self.config["report"] is not None:
+            self.config["report"].add(text, who)
 
     def __init__(self, **kwargs):
         """
@@ -93,85 +93,116 @@ class Training:
         Raises:
             Exception: If pathLogDir is not provided.
         """
-        self.param_converter = ParamConverter()
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.subfolders = kwargs.get('subfolders')
-        if not self.subfolders or not isinstance(self.subfolders, list):
+        self.config = {
+            "param_converter": ParamConverter(),
+            "device": 'cuda' if torch.cuda.is_available() else 'cpu',
+            "subfolders": kwargs.get('subfolders', []),
+            "data_dir": kwargs.get('data_dir', None),
+            "run_dir": kwargs.get('run_dir', None),
+            "hyperparameters": kwargs.get('hyperparameters', None),
+            "num_file": kwargs.get('num_file', None),
+            "report": kwargs.get('report', None),
+            "num_classes" : None,
+            "weights": None,
+            "ignore_background": None,
+            "ignore_index": None,
+            "dataloaders": {},
+            "model_params" : {},
+            "optimizer_params": {},
+            "scheduler_params": {},
+            "loss_params": {},
+            "training_params": {},
+            "data": {},
+            "metrics": [],
+            "metrics_mapping": {},
+            "metrics_str": "",
+            "training_time": "",
+            "model_mapping": model_mapping,
+            "model_config_mapping": model_config_mapping,
+            "model": None,
+            "save_directory": None,
+            "logger": None,
+            "optimizer_mapping": {},
+            "loss_mapping": {},
+            "scheduler_mapping": {},
+
+        }
+
+
+        if not self.config["subfolders"] or not isinstance(self.config["subfolders"], list):
             raise ValueError(
                 "The 'subfolders' argument must be provided as a non-empty list.")
-        self.data_dir = kwargs.get('data_dir')
-        self.run_dir = kwargs.get('run_dir')
-        self.hyperparameters = kwargs.get('hyperparameters')
-        if self.hyperparameters is None:
+
+        if self.config["hyperparameters"] is None:
             raise ValueError(
                 "The 'hyperparameters' argument must be provided and not None.")
-        self.num_file = kwargs.get('num_file')
-        self.report = kwargs.get('report')
-        self.dataloaders = {}  # Initialize dataloaders attribute
+
 
         # Extract category-wise parameters
         # Helper function to extract parameters from hyperparameters
         def extract_params(category):
-            return {k: v for k, v in self.hyperparameters.get_parameters()[category].items()}
+            return dict(self.config["hyperparameters"].get_parameters()[category])
 
         # Extracting parameters for different categories
-        self.model_params = extract_params('Model')
-        self.optimizer_params = extract_params('Optimizer')
-        self.scheduler_params = extract_params('Scheduler')
-        self.loss_params = extract_params('Loss')
-        self.training_params = extract_params('Training')
-        self.data = extract_params('Data')
+        self.config["model_params"] = extract_params('Model')
+        self.config["optimizer_params"] = extract_params('Optimizer')
+        self.config["scheduler_params"] = extract_params('Scheduler')
+        self.config["loss_params"] = extract_params('Loss')
+        self.config["training_params"] = extract_params('Training')
+        self.config["data"] = extract_params('Data')
 
         # Determine the number of classes
-        self.num_classes = int(self.model_params.get('num_classes', 1))
-        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
+        self.config["num_classes"] = int(self.config["model_params"].get('num_classes', 1))
+        self.config["num_classes"] = (
+            1 if self.config["num_classes"] <= 2 else self.config["num_classes"]
+        )
 
         # Loss parameters
-        self.weights = self.param_converter.convert_param(
-            self.loss_params.get('weights', "False"))
-        self.ignore_background = bool(self.param_converter.convert_param(
-            self.loss_params.get('ignore_background', "False")
+        self.config["weights"] = self.config["param_converter"].convert_param(
+            self.config["loss_params"].get('weights', "False"))
+        self.config["ignore_background"] = bool(self.config["param_converter"].convert_param(
+            self.config["loss_params"].get('ignore_background', "False")
         ))
-        if self.ignore_background:
-            self.ignore_index = -1
+        if self.config["ignore_background"]:
+            self.config["ignore_index"] = -1
         else:
-            self.ignore_index = -100
+            self.config["ignore_index"] = -100
 
         # Training parameters
-        self.batch_size = int(self.training_params.get('batch_size', 8))
-        self.val_split = float(self.training_params.get('val_split', 0.8))
-        self.epochs = int(self.training_params.get('epochs', 10))
+        self.config["batch_size"] = int(self.config["training_params"].get('batch_size', 8))
+        self.config["val_split"] = float(self.config["training_params"].get('val_split', 0.8))
+        self.config["epochs"] = int(self.config["training_params"].get('epochs', 10))
 
         # Data parameters
-        self.img_res = int(self.data.get('img_res', 560))
-        self.crop_size = int(self.data.get('crop_size', 224))
-        self.num_samples = int(self.data.get('num_samples', 500))
+        self.config["img_res"] = int(self.config["data"].get('img_res', 560))
+        self.config["crop_size"] = int(self.config["data"].get('crop_size', 224))
+        self.config["num_samples"] = int(self.config["data"].get('num_samples', 500))
 
         # Control Num image to process
-        if self.num_file is None or self.num_samples is None:
+        if self.config["num_file"] is None or self.config["num_samples"] is None:
             text = "'num_file' and 'num_samples' must not be None."
             self.add_to_report(text, '')
             raise ValueError(text)
 
-        if self.num_file <= self.num_samples:
+        if self.config["num_file"] <= self.config["num_samples"]:
             text = (
-                f' - num_samples ({self.num_samples}) > '
-                f'maximum number of images to process ({self.num_file})'
+                f' - num_samples ({self.config["num_samples"]}) > '
+                f'maximum number of images to process ({self.config["num_file"]})'
             )
             self.add_to_report(text, '')
             raise ValueError
-        if self.num_samples < 16:
-            text = f'num_samples ({self.num_samples}) must be >= 16 '
+        if self.config["num_samples"] < 16:
+            text = f'num_samples ({self.config["num_samples"]}) must be >= 16 '
             self.add_to_report(text, '')
             raise ValueError
 
         # Extract and parse metrics from the ini file
-        self.metrics_str = self.training_params.get('metrics', '')
-        self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
-        self.model_mapping = model_mapping
-        self.model_config_mapping = model_config_mapping
+        self.config["metrics_str"] = self.config["training_params"].get('metrics', '')
+        self.config["training_time"] = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
+        self.config["model_mapping"] = model_mapping
+        self.config["model_config_mapping"] = model_config_mapping
 
-        self.optimizer_mapping = {
+        self.config["optimizer_mapping"] = {
             'Adagrad': Adagrad,
             'Adam': Adam,
             'AdamW': AdamW,
@@ -181,13 +212,13 @@ class Training:
             'SGD': SGD
         }
 
-        self.loss_mapping = {
+        self.config["loss_mapping"] = {
             'CrossEntropyLoss': CrossEntropyLoss,
             'BCEWithLogitsLoss': BCEWithLogitsLoss,
             'NLLLoss': NLLLoss,
         }
 
-        self.scheduler_mapping = {
+        self.config["scheduler_mapping"] = {
             'LRScheduler': LRScheduler,
             'LambdaLR': LambdaLR,
             'MultiplicativeLR': MultiplicativeLR,
@@ -205,19 +236,21 @@ class Training:
             'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
         }
 
-        self.model = self.initialize_model()
-        self.save_directory = self.create_unique_folder()
-        self.logger = TrainingLogger(save_directory=self.save_directory,
-                                     num_classes=self.num_classes,
-                                     model_params=self.model_params,
-                                     optimizer_params=self.optimizer_params,
-                                     scheduler_params=self.scheduler_params,
-                                     loss_params=self.loss_params,
-                                     training_params=self.training_params,
-                                     data=self.data)
+        self.config["model"] = self.initialize_model()
+        self.config["save_directory"] = self.create_unique_folder()
+        self.config["logger"] = TrainingLogger(
+            TrainingLoggerConfig(save_directory=self.config["save_directory"],
+                                     num_classes=self.config["num_classes"],
+                                     model_params=self.config["model_params"],
+                                     optimizer_params=self.config["optimizer_params"],
+                                     scheduler_params=self.config["scheduler_params"],
+                                     loss_params=self.config["loss_params"],
+                                     training_params=self.config["training_params"],
+                                     data=self.config["data"])
+            )
 
-        self.metrics = []  # Initialize metrics attribute
-        self.metrics_mapping = {}  # Initialize metrics_mapping attribute
+        self.config["metrics"] = []  # Initialize metrics attribute
+        self.config["metrics_mapping"] = {}  # Initialize metrics_mapping attribute
 
     def create_metric(self, binary_metric, multiclass_metric):
         """
@@ -231,10 +264,12 @@ class Training:
             Instance of the appropriate metric.
         """
         return (
-            binary_metric(ignore_index=self.ignore_index).to(self.device)
-            if self.num_classes == 1
-            else multiclass_metric(num_classes=self.num_classes,
-                                   ignore_index=self.ignore_index).to(self.device)
+            binary_metric(ignore_index=self.config["ignore_index"]).to(self.config["device"])
+            if self.config["num_classes"] == 1
+            else multiclass_metric(
+                    num_classes=self.config["num_classes"],
+                    ignore_index=self.config["ignore_index"]
+                ).to(self.config["device"])
         )
 
     def initialize_metrics(self):
@@ -247,7 +282,7 @@ class Training:
         Raises:
             ValueError: If a specified metric is not recognized.
         """
-        self.metrics_mapping = {
+        self.config["metrics_mapping"] = {
             "Jaccard": self.create_metric(BinaryJaccardIndex, MulticlassJaccardIndex),
             "F1": self.create_metric(BinaryF1Score, MulticlassF1Score),
             "Accuracy": self.create_metric(BinaryAccuracy, MulticlassAccuracy),
@@ -259,15 +294,16 @@ class Training:
         }
 
         # Parse metrics from string input or use default
-        self.metrics = [metric.strip()
+        m_str = self.config["metrics_str"].split(",")
+        self.config["metrics"] = [metric.strip()
                         for metric
-                        in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+                        in m_str] if self.config["metrics_str"] else ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
-        for metric in self.metrics:
-            if metric in self.metrics_mapping:
-                selected_metrics.append(self.metrics_mapping[metric])
+        for metric in self.config["metrics"]:
+            if metric in self.config["metrics_mapping"]:
+                selected_metrics.append(self.config["metrics_mapping"][metric])
             else:
                 text = f" - Metric '{metric}' not recognized"
                 self.add_to_report(text, '')
@@ -283,8 +319,8 @@ class Training:
         Returns:
             Optimizer configured.
         """
-        optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
-        optimizer_class = self.optimizer_mapping.get(optimizer_name)
+        optimizer_name = self.config["optimizer_params"].get('optimizer', 'Adam')
+        optimizer_class = self.config["optimizer_mapping"].get(optimizer_name)
 
         if not optimizer_class:
             text = f" - Optimizer '{optimizer_name}' is not supported"
@@ -292,10 +328,10 @@ class Training:
             raise ValueError(f"Optimizer '{optimizer_name}' is not supported."
                              " Check your 'optimizer_mapping'.")
 
-        converted_params = {k: self.param_converter.convert_param(v)
-                            for k, v in self.optimizer_params.items() if k != 'optimizer'}
+        converted_params = {k: self.config["param_converter"].convert_param(v)
+                            for k, v in self.config["optimizer_params"].items() if k != 'optimizer'}
 
-        return optimizer_class(self.model.parameters(), **converted_params)
+        return optimizer_class(self.config["model"].parameters(), **converted_params)
 
     def initialize_scheduler(self, optimizer):
         """
@@ -307,8 +343,8 @@ class Training:
         Returns:
             Learning rate scheduler configured.
         """
-        scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
-        scheduler_class = self.scheduler_mapping.get(scheduler_name)
+        scheduler_name = self.config["scheduler_params"].get('scheduler', 'ConstantLR')
+        scheduler_class = self.config["scheduler_mapping"].get(scheduler_name)
 
         if not scheduler_class:
             text = f" - Scheduler '{scheduler_name}' is not supported"
@@ -316,8 +352,8 @@ class Training:
             raise ValueError(f"Scheduler '{scheduler_name}' is not supported."
                              "Check your 'scheduler_mapping'.")
 
-        converted_params = {k: self.param_converter.convert_param(v)
-                            for k, v in self.scheduler_params.items() if k != 'scheduler'}
+        converted_params = {k: self.config["param_converter"].convert_param(v)
+                            for k, v in self.config["scheduler_params"].items() if k != 'scheduler'}
 
         if not converted_params:
             return scheduler_class(optimizer)
@@ -334,8 +370,8 @@ class Training:
         Returns:
             Loss function configured.
         """
-        loss_name = self.loss_params.get('loss', 'CrossEntropyLoss')
-        loss_class = self.loss_mapping.get(loss_name)
+        loss_name = self.config["loss_params"].get('loss', 'CrossEntropyLoss')
+        loss_class = self.config["loss_mapping"].get(loss_name)
 
         if not loss_class:
             text = f" - Loss '{loss_name}' is not supported"
@@ -345,8 +381,8 @@ class Training:
 
         # Convert static parameters from config
         converted_params = {
-            k: self.param_converter.convert_param(v)
-            for k, v in self.loss_params.items()
+            k: self.config["param_converter"].convert_param(v)
+            for k, v in self.config["loss_params"].items()
             # Exclude unwanted params
             if k not in {'loss', 'ignore_background', 'weights'}
         }
@@ -359,8 +395,8 @@ class Training:
             # Remove ignore_index if not needed
             final_params.pop('ignore_index', None)
         else:
-            if self.num_classes > 1:
-                final_params['ignore_index'] = self.ignore_index
+            if self.config["num_classes"] > 1:
+                final_params['ignore_index'] = self.config["ignore_index"]
             else:
                 # Remove ignore_index if not needed
                 final_params.pop('ignore_index', None)
@@ -374,26 +410,26 @@ class Training:
         Returns:
             nn.Module: Instance of the configured model.
         """
-        model_name = self.model_params.get('model_type', 'UnetVanilla')
+        model_name = self.config["model_params"].get('model_type', 'UnetVanilla')
 
-        if model_name not in self.model_mapping:
+        if model_name not in self.config["model_mapping"]:
             text = f" - Model '{model_name}' is not supported"
             self.add_to_report(text, '')
             raise ValueError(
                 f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
-        model_class = self.model_mapping[model_name]
-        model_config_class = self.model_config_mapping[model_name]
+        model_class = self.config["model_mapping"][model_name]
+        model_config_class = self.config["model_config_mapping"][model_name]
 
-        self.model_params['num_classes'] = self.num_classes
+        self.config["model_params"]['num_classes'] = self.config["num_classes"]
 
         required_params = {
-            k: self.param_converter.convert_param(v)
-            for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
+            k: self.config["param_converter"].convert_param(v)
+            for k, v in self.config["model_params"].items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter.convert_param(v)
-            for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
+            k: self.config["param_converter"].convert_param(v)
+            for k, v in self.config["model_params"].items() if k in model_class.OPTIONAL_PARAMS
         }
 
         required_params.pop('model_type', None)
@@ -418,7 +454,7 @@ class Training:
                 model_config_class(
                     **typed_required_params, **typed_optional_params
                 )
-            ).to(self.device)
+            ).to(self.config["device"])
 
     def create_unique_folder(self):
         """
@@ -428,10 +464,10 @@ class Training:
         Returns:
             str: The path to the created directory.
         """
-        filename = f"{self.model_params.get('model_type', 'UnetVanilla')}__" \
-            f"{self.training_time}"
+        filename = f"{self.config["model_params"].get('model_type', 'UnetVanilla')}__" \
+            f"{self.config["training_time"]}"
 
-        save_directory = os.path.join(str(self.run_dir),
+        save_directory = os.path.join(str(self.config["run_dir"]),
                                       str(filename))
 
         if not os.path.exists(save_directory):
@@ -539,15 +575,15 @@ class Training:
         img_data = {}
         mask_data = {}
         num_sample_per_subfolder = {}
-        data_stats = load_data_stats(self.data_dir)
+        data_stats = load_data_stats(self.config["data_dir"])
 
-        for subfolder in self.subfolders:
+        for subfolder in self.config["subfolders"]:
             img_folder = os.path.join(
-                str(self.data_dir),
+                str(self.config["data_dir"]),
                 str(subfolder),
                 "images")
             mask_folder = os.path.join(
-                str(self.data_dir),
+                str(self.config["data_dir"]),
                 str(subfolder),
                 "masks")
             img_files = sorted(glob.glob(os.path.join(img_folder, "*")))
@@ -560,9 +596,9 @@ class Training:
             num_sample_per_subfolder[subfolder] = len(img_files)
 
         train_indices, val_indices, test_indices = generate_random_indices(
-            num_samples=self.num_samples,
-            val_split=self.val_split,
-            subfolders=self.subfolders,
+            num_samples=self.config["num_samples"],
+            val_split=self.config["val_split"],
+            subfolders=self.config["subfolders"],
             num_sample_subfolder=num_sample_per_subfolder,
         )
 
@@ -573,11 +609,11 @@ class Training:
                 indices=train_indices,
                 img_data=img_data,
                 mask_data=mask_data,
-                num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
+                num_classes=self.config["num_classes"],
+                crop_size=(self.config["crop_size"], self.config["crop_size"]),
                 data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background
+                img_res=self.config["img_res"],
+                ignore_background=self.config["ignore_background"]
             )
         )
 
@@ -586,11 +622,11 @@ class Training:
                 indices=train_indices,
                 img_data=img_data,
                 mask_data=mask_data,
-                num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
+                num_classes=self.config["num_classes"],
+                crop_size=(self.config["crop_size"], self.config["crop_size"]),
                 data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background
+                img_res=self.config["img_res"],
+                ignore_background=self.config["ignore_background"]
             )
         )
 
@@ -599,30 +635,28 @@ class Training:
                 indices=train_indices,
                 img_data=img_data,
                 mask_data=mask_data,
-                num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
+                num_classes=self.config["num_classes"],
+                crop_size=(self.config["crop_size"], self.config["crop_size"]),
                 data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background
+                img_res=self.config["img_res"],
+                ignore_background=self.config["ignore_background"]
             )
         )
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
+        train_loader = DataLoader(train_dataset, batch_size=self.config["batch_size"],
                                   shuffle=True, num_workers=2,drop_last=True,
                                   pin_memory=torch.cuda.is_available())
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size,
+        val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"],
                                 shuffle=False, num_workers=2, drop_last=True,
                                 pin_memory=torch.cuda.is_available())
         test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
                                  num_workers=2, drop_last=True,
                                  pin_memory=torch.cuda.is_available())
 
-        self.logger.save_indices_to_file(
+        self.config["logger"].save_indices_to_file(
             [train_indices, val_indices, test_indices])
 
-        self.dataloaders = {}  # Initialize dataloaders attribute
-
-        self.dataloaders = {
+        self.config["dataloaders"] = {
             'train': train_loader,
             'val': val_loader,
             'test': test_loader,
@@ -653,7 +687,7 @@ class Training:
             print(f" ╚{'═' * (box_width)}╝")
 
         scaler = None
-        if self.device == "cuda":
+        if self.config["device"] == "cuda":
             scaler = GradScaler()
             cudnn.benchmark = True
 
@@ -663,7 +697,7 @@ class Training:
         loss_dict = {"train": {}, "val": {}}
 
         # Build a list of display metric names (excluding "ConfusionMatrix")
-        display_metrics = [m for m in self.metrics if m != "ConfusionMatrix"]
+        display_metrics = [m for m in self.config["metrics"] if m != "ConfusionMatrix"]
         metrics_dict = {
             phase: {metric: [] for metric in display_metrics}
             for phase in ["train", "val"]
@@ -671,52 +705,55 @@ class Training:
         best_val_loss = float("inf")
         best_val_metrics = {metric: 0.0 for metric in display_metrics}
 
-        for epoch in range(1, self.epochs + 1):
+        for epoch in range(1, self.config["epochs"] + 1):
 
-            print_epoch_box(epoch, self.epochs)
+            print_epoch_box(epoch, self.config["epochs"])
 
             for phase in ["train", "val"]:
                 is_training = phase == "train"
 
                 if is_training:
-                    self.model.train()
+                    self.config["model"].train()
                 else:
-                    self.model.eval()
+                    self.config["model"].eval()
 
                 running_loss = 0.0
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
-                with tqdm(total=len(self.dataloaders[phase]), ncols=102,
+                with tqdm(total=len(self.config["dataloaders"][phase]), ncols=102,
                           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                           ) as pbar:
 
-                    for inputs, labels, weights in self.dataloaders[phase]:
+                    for inputs, labels, weights in self.config["dataloaders"][phase]:
 
                         inputs, labels, weights = (
-                            inputs.to(self.device),
-                            labels.to(self.device),
-                            weights.to(self.device)
+                            inputs.to(self.config["device"]),
+                            labels.to(self.config["device"]),
+                            weights.to(self.config["device"])
                         )
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
 
                         with torch.set_grad_enabled(is_training):
-                            with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
-                                outputs = self.model(inputs)
-                                if self.loss_params.get('loss') in ['NLLLoss']:
+                            with torch.autocast(
+                                    device_type=self.config["device"],
+                                    dtype=torch.bfloat16
+                                ):
+                                outputs = self.config["model"].forward(inputs)
+                                if self.config["loss_params"].get('loss') in ['NLLLoss']:
                                     outputs = nn_func.log_softmax(
                                         outputs, dim=1)
 
-                                if self.num_classes == 1:
+                                if self.config["num_classes"] == 1:
                                     outputs = outputs.squeeze()
                                     labels = labels.squeeze().float()
                                 else:
                                     labels = labels.squeeze().long()
 
                                 # only apply class weights to multiclass segmentation
-                                if self.num_classes > 1:
-                                    if self.weights:
+                                if self.config["num_classes"] > 1:
+                                    if self.config["weights"]:
                                         loss_fn = self.initialize_loss(
                                             weight=batch_weights)
                                     else:
@@ -747,12 +784,12 @@ class Training:
 
                         with torch.no_grad():
                             preds = (torch.argmax(outputs, dim=1).long()
-                                     if self.num_classes > 1
+                                     if self.config["num_classes"] > 1
                                      else (outputs > 0.5).to(torch.uint8))
                             labels = labels.long()
 
                             # Update display metrics only (skip ConfusionMatrix)
-                            for metric_name, metric_fn in zip(self.metrics, metrics):
+                            for metric_name, metric_fn in zip(self.config["metrics"], metrics):
                                 if metric_name != "ConfusionMatrix":
                                     running_metrics[metric_name] += metric_fn(
                                         preds, labels).item()
@@ -764,8 +801,9 @@ class Training:
                         )
                         pbar.update(1)
 
-                epoch_loss = running_loss / len(self.dataloaders[phase])
-                epoch_metrics = {metric: running_metrics[metric] / len(self.dataloaders[phase])
+                epoch_loss = running_loss / len(self.config["dataloaders"][phase])
+                epoch_metrics = {metric: running_metrics[metric] /
+                                 len(self.config["dataloaders"][phase])
                                  for metric in display_metrics}
                 loss_dict[phase][epoch] = epoch_loss
 
@@ -781,16 +819,17 @@ class Training:
 
                 if phase == "val" and epoch_loss < best_val_loss:
                     best_val_loss = epoch_loss
-                    torch.save(self.model.state_dict(), os.path.join(self.save_directory,
-                                                                     "model_best_loss.pth"))
+                    torch.save(self.config["model"].state_dict(),
+                               os.path.join(self.config["save_directory"],
+                               "model_best_loss.pth"))
 
                 if phase == "val":
                     for metric, value in epoch_metrics.items():
                         if value > best_val_metrics[metric]:
                             best_val_metrics[metric] = value
                             torch.save(
-                                self.model.state_dict(),
-                                os.path.join(self.save_directory,
+                                self.config["model"].state_dict(),
+                                os.path.join(self.config["save_directory"],
                                              f"model_best_{metric}.pth")
                             )
 
@@ -804,7 +843,10 @@ class Training:
         """
         Starts the training process for the model.
         """
-        text = f' Processing with {self.num_samples} images among {self.num_file}'
+        text = (
+                f' Processing with {self.config["num_samples"]} '
+                f'images among {self.config["num_file"]}'
+        )
         print(text)
 
         optimizer = self.initialize_optimizer()
@@ -812,16 +854,16 @@ class Training:
         loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer,
                                                               scheduler=scheduler)
 
-        self.logger.save_best_metrics(loss_dict=loss_dict,
+        self.config["logger"].save_best_metrics(loss_dict=loss_dict,
                                       metrics_dict=metrics_dict)
-        self.logger.plot_learning_curves(loss_dict=loss_dict,
+        self.config["logger"].plot_learning_curves(loss_dict=loss_dict,
                                          metrics_dict=metrics_dict)
-        self.logger.save_hyperparameters()
-        self.logger.save_data_stats(
-            self.dataloaders["train"].dataset.config["data_stats"])
-        if "ConfusionMatrix" in self.metrics:
-            self.logger.save_confusion_matrix(
-                conf_metric=metrics[self.metrics.index("ConfusionMatrix")],
-                model=self.model,
-                val_dataloader=self.dataloaders["val"],
-                device=self.device)
+        self.config["logger"].save_hyperparameters()
+        self.config["logger"].save_data_stats(
+            self.config["dataloaders"]["train"].dataset.config["data_stats"])
+        if "ConfusionMatrix" in self.config["metrics"]:
+            self.config["logger"].save_confusion_matrix(
+                conf_metric=metrics[self.config["metrics"].index("ConfusionMatrix")],
+                model=self.config["model"],
+                val_dataloader=self.config["dataloaders"]["val"],
+                device=self.config["device"])

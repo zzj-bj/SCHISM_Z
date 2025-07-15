@@ -44,23 +44,27 @@ def check_folder(folder, root, report):
 
         if not os.path.isdir(images_path):
             report.add(" - Folder 'images' missing in :", f)
-        else :
-            if not os.path.isdir(masks_path):
-                report.add(" - Folder 'masks' missing in :", f)
-            else:
-                nb_f_image = fo.count_tif_files(images_path)
-                nb_f_masks = fo.count_tif_files(masks_path)
-                if nb_f_image == 0:
-                    report.add(" - No file (*.tif') in folder 'image'  :", f)
+
+        if not os.path.isdir(masks_path):
+            report.add(" - Folder 'masks' missing in :", f)
+
+        if os.path.isdir(images_path) and os.path.isdir(masks_path):
+
+            nb_f_image = fo.count_tif_files(images_path)
+            nb_f_masks = fo.count_tif_files(masks_path)
+            if nb_f_image == 0:
+                report.add(" - No file (*.tif') in folder 'image'  :", f)
+
+            if nb_f_masks == 0:
+                report.add(" - No file (*.tif') in folder 'masks'  :", f)
+
+            if nb_f_image != 0 and nb_f_masks != 0:
+                if nb_f_image != nb_f_masks :
+                    report.add(" - 'images/masks' : Size not equal :", f)
                 else:
-                    if nb_f_masks == 0:
-                        report.add(" - No file (*.tif') in folder 'masks'  :", f)
-                    else:
-                        if nb_f_image != nb_f_masks :
-                            report.add(" - 'images/masks' : Size not equal :", f)
-                        else:
-                            num_file += nb_f_image
-                            valid_subfolders.append(f)
+                    num_file += nb_f_image
+                    valid_subfolders.append(f)
+
     return  valid_subfolders, num_file
 
 def train_model():
