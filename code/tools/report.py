@@ -67,6 +67,7 @@ class ErrorReport:
         """ Write report into a file """
         now = datetime.now()
         total_def = sum(len(liste) for liste in self.dictionary.values())
+        total_topic = len(self.dictionary)
 
         filename = f"{instance_name}_report.txt"
         with open(filename, 'a', encoding="utf-8") as file:
@@ -75,9 +76,11 @@ class ErrorReport:
             if total_def == 0:
                 file.write(f" - {process} finished without error\n")
             else:
-                file.write(f" *** !!! {total_def} problem(s) found(s) !!! :***\n")
+                file.write(f"*** !!! {total_def} problem(s) found(s) in {total_topic}"
+                           " topic(s) !!! ***\n")
                 for key, elements in self.dictionary.items():
-                    file.write(f"{key} : {', '.join(elements)}\n")
+
+                    file.write(f"{key}:\n {'/ '.join(elements)}\n")
             file.write("------------------------------------------*\n")
 
     def status(self, process, file=None, generate_report=True):
@@ -93,3 +96,4 @@ class ErrorReport:
         # Call print_report only if generate_report is True
         if generate_report:
             self.print_report(process, file)
+            
