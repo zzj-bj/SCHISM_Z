@@ -72,6 +72,56 @@ def warning_message(folder_1, folder_2):
         dc.display_color(text, 'yellow', bold=True)
         dc.display_color(' See the report at the end of the process.', 'yellow')
 
+# def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
+#     """
+#     Validate the existence and content of specified subfolders.
+
+#     This function checks if the specified subfolders contain the required folder type
+#     (e.g., 'images' or 'masks'). It verifies if the folder exists and if it contains
+#     any TIFF files. If a folder is missing or empty, a message is added to the provided
+#     report object.
+
+#     Parameters:
+#     ----------
+#     data_dir : str
+#         The base directory where the subfolders are located.
+
+#     subfolders : list of str
+#         A list of subfolder names to validate.
+
+#     valid_subfolders : list of str
+#         A list that will be populated with valid subfolder names
+#         that contain the required files.
+
+#     report : object
+#         An object that has an `add` method for logging messages
+#         about missing folders or empty directories.
+
+#     folder_type : str, optional
+#         The type of folder to check for (default is 'images').
+#         This can be changed to 'masks' or any other type.
+
+
+#     Returns:
+#     --The function modifies the `valid_subfolders` list in place
+#     and adds messages to the `report`.-----
+
+
+#     """
+#     nb_files = 0
+#     for f in subfolders:
+#         folder_path = fo.create_name_path(data_dir, f, folder_type)
+
+#         if not os.path.isdir(folder_path):
+#             report.add(f" - Folder '{folder_type}' missing in : ", f)
+#         else:
+#             nb_files = fo.count_tif_files(folder_path)
+#             if nb_files == 0:
+#                 report.add(f" - No file (*.tif) in folder '{folder_type}' : ", f)
+#             else:
+#                 valid_subfolders.append(f)
+#     return nb_files
+
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
     """
     Validate the existence and content of specified subfolders.
@@ -94,57 +144,8 @@ def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_t
         that contain the required files.
 
     report : object
-        An object that has an `add` method for logging messages
-        about missing folders or empty directories.
-
-    folder_type : str, optional
-        The type of folder to check for (default is 'images').
-        This can be changed to 'masks' or any other type.
-
-
-    Returns:
-    --The function modifies the `valid_subfolders` list in place
-    and adds messages to the `report`.-----
-
-
-    """
-    nb_files = 0
-    for f in subfolders:
-        folder_path = fo.create_name_path(data_dir, f, folder_type)
-
-        if not os.path.isdir(folder_path):
-            report.add(f" - Folder '{folder_type}' missing in : ", f)
-        else:
-            nb_files = fo.count_tif_files(folder_path)
-            if nb_files == 0:
-                report.add(f" - No file (*.tif) in folder '{folder_type}' : ", f)
-            else:
-                valid_subfolders.append(f)
-    return nb_files
-
-def validate_subfolders_0_(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
-    """
-    Validate the existence and content of specified subfolders.
-
-    This function checks if the specified subfolders contain the required folder type
-    (e.g., 'images' or 'masks'). It verifies if the folder exists and if it contains
-    any TIFF files. If a folder is missing or empty, a message is added to the provided
-    report object.
-
-    Parameters:
-    ----------
-    data_dir : str
-        The base directory where the subfolders are located.
-
-    subfolders : list of str
-        A list of subfolder names to validate.
-
-    valid_subfolders : list of str
-        A list that will be populated with valid subfolder names
-        that contain the required files.
-
-    report : object
-        An object that has an `add` method for logging messages about missing folders or empty directories.
+        An object that has an `add` method for logging messages about missing folders
+          or empty directories.
 
     folder_type : str, optional
         The type of folder to check for (default is 'images').

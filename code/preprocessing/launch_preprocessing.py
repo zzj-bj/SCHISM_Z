@@ -44,7 +44,7 @@ def launch_json_generation():
     else:
         for f in subfolders :
             path = fo.create_name_path(data_dir, f, 'images')
-            vf.validate_subfolders_0_(path, f, valid_subfolders, report_json,
+            vf.validate_subfolders(path, f, valid_subfolders, report_json,
                                 folder_type='images')
     vf.warning_message(subfolders, valid_subfolders)
 
@@ -80,7 +80,7 @@ def launch_normalisation():
     else:
         for f in subfolders :
             path = fo.create_name_path(data_dir, f, 'masks')
-            vf.validate_subfolders_0_(path, f, valid_subfolders, report_normal,
+            vf.validate_subfolders(path, f, valid_subfolders, report_normal,
                                 folder_type='masks')
     vf.warning_message(subfolders, valid_subfolders)
 
