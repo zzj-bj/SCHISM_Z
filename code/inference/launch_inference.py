@@ -15,7 +15,6 @@ from tools import folder as fo
 from tools import report as re
 
 from inference import inference as nf
-from commun.hyperparameters import Hyperparameters
 
 
 #===========================================================================
