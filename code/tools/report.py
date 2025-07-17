@@ -79,8 +79,8 @@ class ErrorReport:
                 file.write(f"*** !!! {total_def} problem(s) found(s) in {total_topic}"
                            " topic(s) !!! ***\n")
                 for key, elements in self.dictionary.items():
-
-                    file.write(f"{key}:\n {'/ '.join(elements)}\n")
+                    
+                    file.write(f"{key}:\n {'/ '.join(map(str, elements))}\n")
             file.write("------------------------------------------*\n")
 
     def status(self, process, file=None, generate_report=True):
