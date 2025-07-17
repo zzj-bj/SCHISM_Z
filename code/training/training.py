@@ -12,6 +12,9 @@ import glob
 import json
 from datetime import datetime
 
+import numpy as np
+from tqdm import tqdm
+
 from commun.tiffdatasetloader import TiffDatasetLoader
 from commun.paramconverter import ParamConverter
 from commun.model_registry import model_mapping
@@ -149,7 +152,7 @@ class Training:
         
             try:
 
-                if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
+                if self.config["hyperparameters"] is None or not hasattr(self.config["hyperparameters"], "get_parameters"):
                       text = "The 'hyperparameters' object must have a 'get_parameters' method,"\
                             " and not be None."
                       raise ValueError(text)
@@ -602,11 +605,11 @@ class Training:
         num_sample_per_subfolder = {}
         data_stats = load_data_stats(self.config["data_dir"])
 
-        if not self.subfolders or not isinstance(self.subfolders, list):
+        if not self.config["subfolders"] or not isinstance(self.config["subfolders"], list):
             text = "The 'subfolders' attribute must be a non-empty list before loading data."
             raise ValueError(text)
 
-        for subfolder in self.subfolders:
+        for subfolder in self.config["subfolders"]:
             img_folder = os.path.join(
                 str(self.config["data_dir"]),
                 str(subfolder),
@@ -672,7 +675,7 @@ class Training:
             )
         )
 
-        pin_memory = self.device == 'cuda'
+        pin_memory = self.config["device"] == 'cuda'
         pin_memory = True
 
         train_loader = DataLoader(train_dataset, batch_size=self.config["batch_size"],
