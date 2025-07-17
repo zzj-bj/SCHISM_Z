@@ -19,3 +19,5 @@ data2
 .vscode
 code/settings.json
 runs_full/UnetSegmentor__16-07-25-12-27-50
+code/Training_report.txt
+None_report.txt
