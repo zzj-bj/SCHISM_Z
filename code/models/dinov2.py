@@ -13,10 +13,10 @@ import torch
 from torch import nn
 from transformers import AutoModel, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from classes.linear_head import LinearHead
-from classes.linear_head import LinearHeadConfig
-from classes.cnn_head import CNNHead
-from classes.cnn_head import CNNHeadConfig
+from models.linear_head import LinearHead
+from models.linear_head import LinearHeadConfig
+from models.cnn_head import CNNHead
+from models.cnn_head import CNNHeadConfig
 
 
 @dataclass

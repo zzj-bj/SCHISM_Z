@@ -16,7 +16,6 @@ from tools import report as re
 
 from inference import inference as nf
 
-
 #===========================================================================
 def run_inference():
     """

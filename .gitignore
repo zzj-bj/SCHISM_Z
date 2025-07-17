@@ -12,6 +12,7 @@ code/commun/__pycache__
 code/inference/__pycache__
 code/preprocessing/__pycache__
 code/test_cuda.py
+code/models/__pycache__
 data
 runs
 data2
