@@ -59,7 +59,7 @@ class ErrorReport:
         print("\033[35m", end="")
         print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topic(s) !!! ***")
         for key, elements in self.dictionary.items():
-            print(f"\033[31m{key}\033[35m \n   {' / '.join(elements)}")
+            print(f"\033[31m{key}\033[35m \n   {' / '.join(map(str, elements))}\033[0m")
         # Return to a white display
         print("\033[0m")
 
