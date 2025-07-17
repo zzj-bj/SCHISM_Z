@@ -15,7 +15,7 @@ from tools import folder as fo
 from tools import report as re
 from tools import various_functions as vf
 
-from inference import inference as nf
+from inference import Inference as nf
 
 #===========================================================================
 def run_inference():

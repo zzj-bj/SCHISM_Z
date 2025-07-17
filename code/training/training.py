@@ -146,7 +146,15 @@ class Training:
         # Extract category-wise parameters
         # Helper function to extract parameters from hyperparameters
         def extract_params(category):
-            return dict(self.config["hyperparameters"].get_parameters()[category])
+        
+            try:
+
+                if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
+                      text = "The 'hyperparameters' object must have a 'get_parameters' method,"\
+                            " and not be None."
+                      raise ValueError(text)
+
+                return dict(self.config["hyperparameters"].get_parameters()[category])
 
             except KeyError:
                 # Handle the case where the category does not exist.
