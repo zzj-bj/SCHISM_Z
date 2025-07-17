@@ -1,11 +1,16 @@
     # -*- coding: utf-8 -*-
 # pylint: disable=no-member
 """
-J_son Generation
+This script processes datasets to calculate the mean
+and standard deviation of RGB values for images.
+
+It iterates through specified subfolders, checks for the existence of an 'images' directory,
+calculates the mean and standard deviation of the RGB values for the images in that directory,
+and saves the results in a JSON file.
 
 @author: Pierre.FANCELLI
 """
-
+from dataclasses import dataclass
 import os
 import json
 import numpy as np
@@ -17,25 +22,41 @@ from tools import folder as fo
 
 #---------------------------------------------------------------------------
 
+@dataclass
+class DatasetProcessorConfig:
+    """DatasetProcessorConfig Class for Configuring DatasetProcessor
+
+    This class defines the configuration parameters for the DatasetProcessor.
+    It includes parameters such as parent directory, subfolders, JSON file name,
+    report object, and percentage of data to process.
+    """
+    parent_dir: str
+    subfolders: list
+    json_file: str
+    report: object
+    percentage_to_process: float = 1.0
+
 class DatasetProcessor:
     """
     This module generates a 'json' file from the provided data.
     You can specify the percentage of data to be included.
     """
-    def __init__(self, parent_dir, subfolders, json_file, report, percentage_to_process):
-        self.parent_dir = parent_dir
-        self.subfolders = subfolders
-        self.percentage_to_process = percentage_to_process
-        self.report = report
-        self.json_file = json_file
+    def __init__(self, dataset_processor_config: DatasetProcessorConfig):
+        self.config = {
+            "parent_dir" : dataset_processor_config.parent_dir,
+            "subfolders" : dataset_processor_config.subfolders,
+            "json_file" : dataset_processor_config.json_file,
+            "report" : dataset_processor_config.report,
+            "percentage_to_process" : dataset_processor_config.percentage_to_process,
+        }
         self.results = {}
 
     def add_to_report(self, text, who):
         """
             Add a message to a report
         """
-        if self.report is not None:
-            self.report.add(text, who)
+        if self.config["report"] is not None:
+            self.config["report"].add(text, who)
 
 
     def process_datasets(self):
@@ -43,16 +64,17 @@ class DatasetProcessor:
         Process each dataset in the specified subfolders.
 
         This method iterates through each subfolder, checks if the 'images' directory exists.
-        Calculates the mean & standard deviation of the images in that directory.
+        Calculates the mean and standard deviation of the RGB values 
+        for the images in that directory.
         Results are stored in the `self.results` dictionary,
         and any warnings or errors are reported.
 
         Raises:
             Exception: If an error occurs during the processing of a dataset.
         """
-        for folder_name in self.subfolders :
+        for folder_name in self.config["subfolders"]  :
 
-            dataset_path = os.path.join(self.parent_dir, folder_name, 'images')
+            dataset_path = os.path.join(self.config["parent_dir"], folder_name, 'images')
             rep_name = fo.get_name_at_index(folder_name, -1)
             print(f" - {rep_name}")
 
@@ -63,7 +85,7 @@ class DatasetProcessor:
                 trxt = f" - Error processing {folder_name}:\n {e}"
                 self.add_to_report(" - J_son ", trxt)
 
-        with open(self.json_file, "w", encoding="utf-8") as json_file:
+        with open(self.config["json_file"], "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
 
     def calculate_mean_and_std_rgb(self, folder_path):
@@ -84,7 +106,7 @@ class DatasetProcessor:
             Exception: If an error occurs while processing the images.
         """
         image_files = self._get_image_files(folder_path)
-        num_items_to_process = int(len(image_files) * self.percentage_to_process)
+        num_items_to_process = int(len(image_files) * self.config["percentage_to_process"])
 
         num_items_to_process = min(num_items_to_process, len(image_files))
         np.random.seed(57)
@@ -99,8 +121,10 @@ class DatasetProcessor:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.add_to_report(" - J_son ", f" - Unable to load image at path: {image_path}")
-                print(f" Unable to load image at path: {image_path}")
+                self.config["report"].add(
+                    f"Unable to load image at path: {image_path}",
+                    " - Skipping this image.")
+                print(f"Unable to load image at path: {image_path}")
                 continue
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
