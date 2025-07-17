@@ -12,7 +12,7 @@ from tools import report as rp
 from tools import various_functions as vf
 
 from commun.hyperparameters import Hyperparameters
-from training import training as tr
+from training import Training
 
 
 #===========================================================================
@@ -198,8 +198,8 @@ def train_model():
                                 f"{e}")
         except ValueError as e:
             report_training.add(" - hyperparameters :", f"{e}" )
-        except Exception as e:
-            report_training.add(" - Other defects ", f"{e}")
+        # except Exception as e:
+        #     report_training.add(" - Other defects ", f"{e}")
 
     file_name_1 = fo.create_name_path(path_hyperparameters, '', 'Training')
     report_training.status("Training", file_name_1)
