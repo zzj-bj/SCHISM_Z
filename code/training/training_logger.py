@@ -185,7 +185,7 @@ class TrainingLogger:
         plt.tight_layout()
         plt.savefig(os.path.join(self.config["save_directory"], 'learning_curves.png'), dpi=300)
         plt.close()
-        print(f" Learning curves saved to {self.config["save_directory"]}/learning_curves.png")
+        print(f" Learning curves saved to {self.config['save_directory']}/learning_curves.png")
 
     # pylint: disable=too-many-locals
     def save_confusion_matrix(self, conf_metric, model, val_dataloader, device):
@@ -247,5 +247,4 @@ class TrainingLogger:
                 os.path.join(self.config["save_directory"], "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            print(f" Confusion matrix saved to {
-                self.config["save_directory"]}/confusion_matrix.png")
+            print(f" Confusion matrix saved to {self.config['save_directory']}/confusion_matrix.png")

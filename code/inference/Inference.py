@@ -174,7 +174,7 @@ class Inference:
         # Load pre-trained weights
         checkpoint_path = os.path.join(
             str(self.config["run_dir"]),
-            f"model_best_{self.config["metric"]}.pth"
+            f"model_best_{self.config['metric']}.pth"
         )
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
@@ -214,7 +214,7 @@ class Inference:
             for i in range(len(img_data[subfolder])):
                 indices.append((subfolder, i))
 
-            preds = f"preds_{self.config["metric"]}"
+            preds = f"preds_{self.config['metric']}"
             preds_folder = os.path.join(
                 str(self.config["data_dir"]),
                 str(subfolder),
@@ -289,11 +289,11 @@ class Inference:
                 # Save the reconstructed prediction
                 name_c = os.path.basename(img_path[0])
                 base_name, ext = os.path.splitext(name_c)
-                new_name = f"{base_name}_{self.config["metric"]}{ext}"
+                new_name = f"{base_name}_{self.config['metric']}{ext}"
 
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
-                preds = f"preds_{self.config["metric"]}"
+                preds = f"preds_{self.config['metric']}"
                 pred_save_path = os.path.join(
                     str(self.config["data_dir"]),
                     str(subfolder),

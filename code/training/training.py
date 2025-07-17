@@ -489,8 +489,8 @@ class Training:
         Returns:
             str: The path to the created directory.
         """
-        filename = f"{self.config["model_params"].get('model_type', 'UnetVanilla')}__" \
-            f"{self.config["training_time"]}"
+        filename = f"{self.config['model_params'].get('model_type', 'UnetVanilla')}__" \
+            f"{self.config['training_time']}"
 
         save_directory = os.path.join(str(self.config["run_dir"]),
                                       str(filename))
