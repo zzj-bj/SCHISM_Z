@@ -12,7 +12,7 @@ from tools import report as rp
 from tools import various_functions as vf
 
 from commun.hyperparameters import Hyperparameters
-from training import Training
+from training.training import Training
 
 
 #===========================================================================
