@@ -11,7 +11,6 @@ import os
 from commun.hyperparameters import Hyperparameters
 
 from tools import selection as sl
-from tools import folder as fo
 from tools import report as re
 from tools import various_functions as vf
 
@@ -32,8 +31,8 @@ def run_inference():
     selected_metric =""
     initial_condition = True
 
-    data_dir = fo.get_path("Enter the directory containing data to predict")
-    run_dir = fo.get_path("Enter the directory containing model weights")
+    data_dir = vf.get_path("Enter the directory containing data to predict")
+    run_dir = vf.get_path("Enter the directory containing model weights")
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
     if len(subfolders) == 0 :
@@ -81,8 +80,6 @@ def run_inference():
             vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_inference,
                                 folder_type='images')
 
-
-    vf.warning_message(subfolders, valid_subfolders)
 
     if initial_condition and len(valid_subfolders) != 0 :
         print(f"[!] Starting inference with Metric : {selected_metric}.")

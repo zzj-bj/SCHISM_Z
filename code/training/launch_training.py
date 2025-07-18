@@ -7,7 +7,6 @@ Created on Mon Apr 14 13:54:43 2025
 import os
 import re
 
-from tools import folder as fo
 from tools import report as rp
 from tools import various_functions as vf
 
@@ -16,6 +15,7 @@ from training.training import Training
 
 
 #===========================================================================
+
 def compare_number(repertoire1, repertoire2):
     """
    Compares the numbers extracted from the filenames in two specified directories.
@@ -94,8 +94,8 @@ def check_folder(folder, root, report):
     valid_subfolders =[]
     num_file = 0
     for f in folder:
-        images_path = fo.create_name_path(root, f, 'images')
-        masks_path = fo.create_name_path(root, f, 'masks')
+        images_path = vf.create_name_path(root, f, 'images')
+        masks_path = vf.create_name_path(root, f, 'masks')
 
         if not os.path.isdir(images_path):
             report.add(" - Folder 'images' missing in :", f)
@@ -103,8 +103,8 @@ def check_folder(folder, root, report):
             if not os.path.isdir(masks_path):
                 report.add(" - Folder 'masks' missing in :", f)
             else:
-                nb_f_image = fo.count_tif_files(images_path)
-                nb_f_masks = fo.count_tif_files(masks_path)
+                nb_f_image = vf.count_tif_files(images_path)
+                nb_f_masks = vf.count_tif_files(masks_path)
                 if nb_f_image == 0:
                     report.add(" - No file (*.tif') in folder 'image' :", f)
                 else:
@@ -135,9 +135,9 @@ def train_model():
     initial_condition = True
     report_training = rp.ErrorReport()
 
-    data_dir = fo.get_path("Enter the data directory")
-    run_dir = fo.get_path("Enter the directory to save runs")
-    path_hyperparameters = fo.get_path("Enter the path to the hyperparameters INI file")
+    data_dir = vf.get_path("Enter the data directory")
+    run_dir = vf.get_path("Enter the directory to save runs")
+    path_hyperparameters = vf.get_path("Enter the path to the hyperparameters INI file")
     hyperparameters_path = os.path.join(path_hyperparameters, "hyperparameters.ini")
     if not os.path.exists(hyperparameters_path):
         initial_condition = False
@@ -172,8 +172,6 @@ def train_model():
         valid_subfolders, num_file = check_folder(subfolders, data_dir, report_training)
 
 
-    vf.warning_message(subfolders, valid_subfolders)
-
     if initial_condition and report_training.is_report() == 0 :
     # if initial_condition and len(valid_subfolders) != 0 :
         print("[!] Starting training.")
@@ -201,5 +199,4 @@ def train_model():
         # except Exception as e:
         #     report_training.add(" - Other defects ", f"{e}")
 
-    file_name_1 = fo.create_name_path(path_hyperparameters, '', 'Training')
-    report_training.status("Training", file_name_1)
+    report_training.status("Training")

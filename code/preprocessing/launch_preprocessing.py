@@ -15,14 +15,28 @@ This module allows for the following operations:
 
 import os
 
-from tools import folder as fo
 from tools import report as re
 from tools import various_functions as vf
+from tools import constants as ct
 
 from preprocessing import image_normalizer as no
 from preprocessing import j_son as js
 
 #=============================================================================
+
+def input_percentage(message):
+    """
+    This function returns a real number between 0 and 1
+    that corresponds to a percentage.
+    """
+    while True:
+        try:
+            value = float(input(f"[?] {message} : "))
+            if 1 <= value <= 100:
+                return value / 100
+            print(f"Error: The value must be between 1 and 100. {ct.BELL}")
+        except ValueError:
+            print(f"Error: Please enter a valid number. {ct.BELL}")
 
 def launch_json_generation():
     """
@@ -32,14 +46,14 @@ def launch_json_generation():
 
     report_json = re.ErrorReport()
 
-    data_dir = fo.get_path("Enter the data directory")
+    data_dir = vf.get_path("Enter the data directory")
     select = vf.answer_yes_or_no("Use all the data (100%) ")
     if select :
         percentage_to_process = 1.0
     else :
-        percentage_to_process = vf.input_percentage("Enter a percentage between 1 & 100")
+        percentage_to_process = input_percentage("Enter a percentage between 1 & 100")
 
-    file_name_report = fo.create_name_path(data_dir, '', 'data_stats.json')
+    file_name_report = vf.create_name_path(data_dir, '', 'data_stats.json')
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
@@ -48,10 +62,9 @@ def launch_json_generation():
         report_json.add(" - The data directory is Empty ", '')
     else:
         for f in subfolders :
-            path = fo.create_name_path(data_dir, f, 'images')
+            path = vf.create_name_path(data_dir, f, 'images')
             vf.validate_subfolders(path, f, valid_subfolders, report_json,
                                 folder_type='images')
-    vf.warning_message(subfolders, valid_subfolders)
 
     if report_json.is_report() == 0 :
         print("[!] Starting Json generation")
@@ -78,7 +91,7 @@ def launch_normalisation():
 
     report_normal = re.ErrorReport()
 
-    data_dir = fo.get_path("Enter the data directory")
+    data_dir = vf.get_path("Enter the data directory")
 
     subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
@@ -87,17 +100,17 @@ def launch_normalisation():
         report_normal.add(" - The data directory is Empty ", '')
     else:
         for f in subfolders :
-            path = fo.create_name_path(data_dir, f, 'masks')
+            path = vf.create_name_path(data_dir, f, 'masks')
             vf.validate_subfolders(path, f, valid_subfolders, report_normal,
                                 folder_type='masks')
-    vf.warning_message(subfolders, valid_subfolders)
+
 
     if report_normal.is_report() == 0 :
         print("[!] Starting normalization")
         for f in valid_subfolders:
             print(f" - {f} :")
-            in_path = fo.create_name_path(data_dir, f, 'masks')
-            out_path = fo.create_name_path(data_dir, f, 'normalized')
+            in_path = vf.create_name_path(data_dir, f, 'masks')
+            out_path = vf.create_name_path(data_dir, f, 'normalized')
             os.makedirs(out_path, exist_ok=True)
 
             normalizer = no.ImageNormalizer(in_path, out_path, report_normal)

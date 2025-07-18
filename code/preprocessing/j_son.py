@@ -18,7 +18,6 @@ import cv2
 import torch
 from tqdm import tqdm
 
-from tools import folder as fo
 
 #---------------------------------------------------------------------------
 
@@ -58,7 +57,6 @@ class DatasetProcessor:
         if self.config["report"] is not None:
             self.config["report"].add(text, who)
 
-
     def process_datasets(self):
         """
         Process each dataset in the specified subfolders.
@@ -75,7 +73,7 @@ class DatasetProcessor:
         for folder_name in self.config["subfolders"]  :
 
             dataset_path = os.path.join(self.config["parent_dir"], folder_name, 'images')
-            rep_name = fo.get_name_at_index(folder_name, -1)
+            rep_name = folder_name.split("\\")[-1]
             print(f" - {rep_name}")
 
             try:
