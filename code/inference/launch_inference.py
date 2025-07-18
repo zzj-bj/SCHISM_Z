@@ -14,7 +14,7 @@ from tools import selection as sl
 from tools import report as re
 from tools import various_functions as vf
 
-from inference.inference import Inference as nf
+from inference.inference import Inference
 
 #===========================================================================
 def run_inference():
@@ -77,15 +77,16 @@ def run_inference():
                 report_inference.add(f" File {json_file_path} not found", "")
                 initial_condition = False
 
-            vf.validate_subfolders(data_dir, subfolders, valid_subfolders, report_inference,
-                                folder_type='images')
-
+            for f in subfolders :
+                path = vf.create_name_path(data_dir, f, 'images')
+                vf.validate_subfolders(path, f, valid_subfolders, report_inference,
+                                    folder_type='images')
 
     if initial_condition and len(valid_subfolders) != 0 :
         print(f"[!] Starting inference with Metric : {selected_metric}.")
 
         try:
-            pred_object = nf.Inference(
+            pred_object = Inference(
                 data_dir=data_dir,
                 subfolders=valid_subfolders,
                 run_dir=run_dir,
