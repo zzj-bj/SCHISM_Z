@@ -65,8 +65,8 @@ class ErrorReport:
         Displaying the correct end process message
         """
         if self.is_report():
-            dc.display_color(f"[X] {process} completed with error(s)", "red")
+            dc.DisplayColor(f"[X] {process} completed with error(s)", "red")
             self.display_report()
         else:
-            dc.display_color(f"[√] {process} completed without error\n", "green")
+            dc.DisplayColor(f"[√] {process} completed without error\n", "green")
             
