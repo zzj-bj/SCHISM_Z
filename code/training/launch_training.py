@@ -196,7 +196,7 @@ def train_model():
                                 f"{e}")
         except ValueError as e:
             report_training.add(" - hyperparameters :", f"{e}" )
-        # except Exception as e:
-        #     report_training.add(" - Other defects ", f"{e}")
+        except Exception as e:
+            report_training.add(" - Other defects ", f"{e}")
 
     report_training.status("Training")

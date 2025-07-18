@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Collection of non-specific functions used in the program.
-    - Waiting for a Yes or No Answer
-    - Enter a percentage
-
 @author: Pierre.FANCELLI
 """
 
