@@ -28,6 +28,7 @@ class ErrorReport:
         """
         self.dictionary = {}
         self.report = None
+        self.display = dc.DisplayColor()
 
     def add(self, key, element):
         """
@@ -65,8 +66,8 @@ class ErrorReport:
         Displaying the correct end process message
         """
         if self.is_report():
-            dc.DisplayColor(f"[X] {process} completed with error(s)", "red")
+            self.display.print(f"[X] {process} completed with error(s)", "red")
             self.display_report()
         else:
-            dc.DisplayColor(f"[√] {process} completed without error\n", "green")
+            self.display.print(f"[√] {process} completed without error\n", "green")
             

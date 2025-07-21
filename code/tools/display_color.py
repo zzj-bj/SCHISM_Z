@@ -28,8 +28,16 @@ class DisplayColor:
 
     BOLD =   "\033[1m"
 
-    def __init__(self, text, color="WHITE", bold=False):
-        self.text = text
-        self.color = self.COLORS.get(color.upper(), self.COLORS["WHITE"])
-        self.bold = self.BOLD if bold else ""
-        print(f"{self.color}{self.bold}{self.text}{self.RESET}")
+    def __init__(self):
+        """
+        Initializes the DisplayColor class.
+        """
+        pass
+
+    def print(self, text, color="WHITE", bold=False):
+        """
+        Prints the text in the specified color and boldness.
+        """
+        color_code = self.COLORS.get(color.upper(), self.COLORS["WHITE"])
+        bold_code = self.BOLD if bold else ""
+        print(f"{color_code}{bold_code}{text}{self.RESET}")

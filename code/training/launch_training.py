@@ -7,7 +7,7 @@ Created on Mon Apr 14 13:54:43 2025
 import os
 import re
 
-from tools import report as rp
+from tools import error_report as rp
 from tools import various_functions as vf
 
 from AI.hyperparameters import Hyperparameters

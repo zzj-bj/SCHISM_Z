@@ -133,6 +133,7 @@ class Training:
             "optimizer_mapping": {},
             "loss_mapping": {},
             "scheduler_mapping": {},
+            "display": dc.DisplayColor(),
 
         }
 
@@ -526,8 +527,8 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                dc.DisplayColor(" File 'json' not found ! ", "yellow", bold = True)
-                dc.DisplayColor(" Using default normalization stats." , "yellow")
+                self.config["display"].print(" File 'json' not found ! ", "yellow", bold = True)
+                self.config["display"].print(" Using default normalization stats." , "yellow")
                 text = " File not found. Using file default normalization"
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
@@ -557,7 +558,7 @@ class Training:
 
                 text = (" Error loading data stats : "
                       "Using default normalization stats.")
-                dc.DisplayColor(text,'YELLOW', bold = True)
+                self.config["display"].print(text,'YELLOW', bold = True)
                 text = (f" Error loading data stats from {json_file_path}:\n {e}."
                       " Using default normalization stats.")
                 self.add_to_report(" - J_son", text)

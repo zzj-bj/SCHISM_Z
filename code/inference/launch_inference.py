@@ -10,8 +10,8 @@ validates the input, and then runs the inference process using the specified mod
 import os
 from AI.hyperparameters import Hyperparameters
 
-from tools import selection as sl
-from tools import report as re
+from tools import menu as sl
+from tools import error_report as re
 from tools import various_functions as vf
 
 from inference.inference import Inference

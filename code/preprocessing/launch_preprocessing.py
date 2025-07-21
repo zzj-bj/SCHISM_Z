@@ -15,10 +15,10 @@ This module allows for the following operations:
 
 import os
 
-from tools import report as re
+from tools import error_report as re
 from tools import various_functions as vf
 from tools import constants as ct
-from tools import selection as sl
+from tools import menu as sl
 
 from preprocessing import image_normalizer as no
 from preprocessing import dataset_processor as js
