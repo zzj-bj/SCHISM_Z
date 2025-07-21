@@ -18,9 +18,6 @@ from inference import launch_inference as li
 
 #=======================================================================
 
-
-
-
 def main():
     """Displays the CLI menu and handles user choices."""
     display = dc.DisplayColor()
