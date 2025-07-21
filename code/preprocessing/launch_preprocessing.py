@@ -84,7 +84,7 @@ class LaunchPreprocessing:
         else :
             percentage_to_process = self.input_percentage("Enter a percentage between 1 & 100")
 
-        file_name_report = vf.create_name_path(data_dir, '', 'data_stats.json')
+        file_name_report = os.path.join(data_dir, '', 'data_stats.json')
 
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
@@ -93,7 +93,7 @@ class LaunchPreprocessing:
             report_json.add(" - The data directory is Empty ", '')
         else:
             for f in subfolders :
-                path = vf.create_name_path(data_dir, f, 'images')
+                path = os.path.join(data_dir, f, 'images')
                 vf.validate_subfolders(path, f, valid_subfolders, report_json,
                                     folder_type='images')
 
@@ -131,7 +131,7 @@ class LaunchPreprocessing:
             report_normal.add(" - The data directory is Empty ", '')
         else:
             for f in subfolders :
-                path = vf.create_name_path(data_dir, f, 'masks')
+                path = os.path.join(data_dir, f, 'masks')
                 vf.validate_subfolders(path, f, valid_subfolders, report_normal,
                                     folder_type='masks')
 
@@ -140,8 +140,8 @@ class LaunchPreprocessing:
             print("[!] Starting normalization")
             for f in valid_subfolders:
                 print(f" - {f} :")
-                in_path = vf.create_name_path(data_dir, f, 'masks')
-                out_path = vf.create_name_path(data_dir, f, 'normalized')
+                in_path = os.path.join(data_dir, f, 'masks')
+                out_path = os.path.join(data_dir, f, 'normalized')
                 os.makedirs(out_path, exist_ok=True)
 
                 normalizer = no.ImageNormalizer(in_path, out_path, report_normal)

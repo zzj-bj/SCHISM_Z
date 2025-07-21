@@ -58,7 +58,6 @@ def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_t
     --The function modifies the `valid_subfolders` list in place
     and adds messages to the `report`.-----
 
-
     """
 
     nb_files = 0
@@ -79,27 +78,6 @@ def get_path(prompt):
         if os.path.exists(path):
             return path
         print(f"[X] Invalid path. Try again. {ct.BELL}")
-
-def create_name_path(root, directory, subdirectory):
-    """
-    This function returns the full name of a directory based on a root,
-    a directory, and a subdirectory.".
-
-    Parameters
-    ----------
-    root : str
-        directory where find the files.
-    repertoire : str
-        directory where find the files.
-    subrepertoire : str
-        directory where find the files.
-
-    Returns
-    -------
-    full name.
-
-    """
-    return os.path.join(root, directory, subdirectory)
 
 def count_tif_files(folder):
     """

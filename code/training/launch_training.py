@@ -105,8 +105,8 @@ class LaunchTraining:
         valid_subfolders =[]
         num_file = 0
         for f in folder:
-            images_path = vf.create_name_path(root, f, 'images')
-            masks_path = vf.create_name_path(root, f, 'masks')
+            images_path = os.path.join(root, f, 'images')
+            masks_path = os.path.join(root, f, 'masks')
 
             if not os.path.isdir(images_path):
                 report.add(" - Folder 'images' missing in :", f)

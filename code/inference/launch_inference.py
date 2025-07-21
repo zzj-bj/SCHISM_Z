@@ -90,7 +90,7 @@ class LaunchInference:
                     initial_condition = False
 
                 for f in subfolders :
-                    path = vf.create_name_path(data_dir, f, 'images')
+                    path = os.path.join(data_dir, f, 'images')
                     vf.validate_subfolders(path, f, valid_subfolders, report_inference,
                                         folder_type='images')
 
