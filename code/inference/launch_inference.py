@@ -14,7 +14,7 @@ from tools import menu as sl
 from tools import error_report as re
 from tools import various_functions as vf
 
-from inference.inference import Inference
+from inference.Inference import Inference
 
 #===========================================================================
 class LaunchInference:
