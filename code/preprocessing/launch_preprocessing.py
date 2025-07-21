@@ -18,106 +18,137 @@ import os
 from tools import report as re
 from tools import various_functions as vf
 from tools import constants as ct
+from tools import selection as sl
 
 from preprocessing import image_normalizer as no
 from preprocessing import dataset_processor as js
 
 #=============================================================================
 
-def input_percentage(message):
-    """
-    This function returns a real number between 0 and 1
-    that corresponds to a percentage.
-    """
-    while True:
-        try:
-            value = float(input(f"[?] {message} : "))
-            if 1 <= value <= 100:
-                return value / 100
-            print(f"Error: The value must be between 1 and 100. {ct.BELL}")
-        except ValueError:
-            print(f"Error: Please enter a valid number. {ct.BELL}")
+class LaunchPreprocessing:
 
-def launch_json_generation():
-    """
-    Generates a JSON file containing statistics about the datasets.
-    """
-    print("\n[ Json Generation Mode ]")
+    def __init__(self):
+        """
+        Initializes the LaunchPreprocessing class.
+        """
 
-    report_json = re.ErrorReport()
-
-    data_dir = vf.get_path("Enter the data directory")
-    select = vf.answer_yes_or_no("Use all the data (100%) ")
-    if select :
-        percentage_to_process = 1.0
-    else :
-        percentage_to_process = input_percentage("Enter a percentage between 1 & 100")
-
-    file_name_report = vf.create_name_path(data_dir, '', 'data_stats.json')
-
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-
-    valid_subfolders = []
-    if len(subfolders) == 0 :
-        report_json.add(" - The data directory is Empty ", '')
-    else:
-        for f in subfolders :
-            path = vf.create_name_path(data_dir, f, 'images')
-            vf.validate_subfolders(path, f, valid_subfolders, report_json,
-                                folder_type='images')
-
-    if report_json.is_report() == 0 :
-        print("[!] Starting Json generation")
-        json_generation = js.DatasetProcessor(
-                                js.DatasetProcessorConfig(
-                                    parent_dir = data_dir,
-                                    subfolders=valid_subfolders,
-                                    json_file=file_name_report,
-                                    report=report_json,
-                                    percentage_to_process=percentage_to_process
-                                ))
-        try:
-            json_generation.process_datasets()
-        except (IOError, ValueError) as e:
-            print(e)
-
-    report_json.status("Json Generation Mode")
-
-def launch_normalisation():
-    """
-    Normalization of masks in 8-bit grayscale format
-    """
-    print("\n[ Normalization Mode ]")
-
-    report_normal = re.ErrorReport()
-
-    data_dir = vf.get_path("Enter the data directory")
-
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-
-    valid_subfolders = []
-    if len(subfolders) == 0 :
-        report_normal.add(" - The data directory is Empty ", '')
-    else:
-        for f in subfolders :
-            path = vf.create_name_path(data_dir, f, 'masks')
-            vf.validate_subfolders(path, f, valid_subfolders, report_normal,
-                                folder_type='masks')
-
-
-    if report_normal.is_report() == 0 :
-        print("[!] Starting normalization")
-        for f in valid_subfolders:
-            print(f" - {f} :")
-            in_path = vf.create_name_path(data_dir, f, 'masks')
-            out_path = vf.create_name_path(data_dir, f, 'normalized')
-            os.makedirs(out_path, exist_ok=True)
-
-            normalizer = no.ImageNormalizer(in_path, out_path, report_normal)
-
+    def input_percentage(message):
+        """
+        This function returns a real number between 0 and 1
+        that corresponds to a percentage.
+        """
+        while True:
             try:
-                normalizer.normalize_images()
+                value = float(input(f"[?] {message} : "))
+                if 1 <= value <= 100:
+                    return value / 100
+                print(f"Error: The value must be between 1 and 100. {ct.BELL}")
+            except ValueError:
+                print(f"Error: Please enter a valid number. {ct.BELL}")
+
+    def menu_preprocessing(self):
+        """
+        This module allows for the following operations:
+            - Json generation
+            - Normalization of masks in 8-bit grayscale format.
+        """
+        preprocessing_menu = sl.Menu('Preprocessing', style = 'Unicode')
+        while True:
+            preprocessing_menu.display_menu()
+            choice = preprocessing_menu.selection()
+
+            # **** Json generation ****
+            if choice == 1:
+                self.launch_json_generation()
+
+            # **** Normalization ****
+            elif choice == 2:
+                self.launch_normalisation()
+
+            # **** Return main menu ****
+            elif choice == 3:
+                return
+
+    def launch_json_generation(self):
+        """
+        Generates a JSON file containing statistics about the datasets.
+        """
+        print("\n[ Json Generation Mode ]")
+
+        report_json = re.ErrorReport()
+
+        data_dir = vf.get_path("Enter the data directory")
+        select = vf.answer_yes_or_no("Use all the data (100%) ")
+        if select :
+            percentage_to_process = 1.0
+        else :
+            percentage_to_process = self.input_percentage("Enter a percentage between 1 & 100")
+
+        file_name_report = vf.create_name_path(data_dir, '', 'data_stats.json')
+
+        subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+
+        valid_subfolders = []
+        if len(subfolders) == 0 :
+            report_json.add(" - The data directory is Empty ", '')
+        else:
+            for f in subfolders :
+                path = vf.create_name_path(data_dir, f, 'images')
+                vf.validate_subfolders(path, f, valid_subfolders, report_json,
+                                    folder_type='images')
+
+        if report_json.is_report() == 0 :
+            print("[!] Starting Json generation")
+            json_generation = js.DatasetProcessor(
+                                    js.DatasetProcessorConfig(
+                                        parent_dir = data_dir,
+                                        subfolders=valid_subfolders,
+                                        json_file=file_name_report,
+                                        report=report_json,
+                                        percentage_to_process=percentage_to_process
+                                    ))
+            try:
+                json_generation.process_datasets()
             except (IOError, ValueError) as e:
                 print(e)
 
-    report_normal.status("Normalization")
+        report_json.status("Json Generation Mode")
+
+    def launch_normalisation(self):
+        """
+        Normalization of masks in 8-bit grayscale format
+        """
+        print("\n[ Normalization Mode ]")
+
+        report_normal = re.ErrorReport()
+
+        data_dir = vf.get_path("Enter the data directory")
+
+        subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+
+        valid_subfolders = []
+        if len(subfolders) == 0 :
+            report_normal.add(" - The data directory is Empty ", '')
+        else:
+            for f in subfolders :
+                path = vf.create_name_path(data_dir, f, 'masks')
+                vf.validate_subfolders(path, f, valid_subfolders, report_normal,
+                                    folder_type='masks')
+
+
+        if report_normal.is_report() == 0 :
+            print("[!] Starting normalization")
+            for f in valid_subfolders:
+                print(f" - {f} :")
+                in_path = vf.create_name_path(data_dir, f, 'masks')
+                out_path = vf.create_name_path(data_dir, f, 'normalized')
+                os.makedirs(out_path, exist_ok=True)
+
+                normalizer = no.ImageNormalizer(in_path, out_path, report_normal)
+
+                try:
+                    normalizer.normalize_images()
+                except (IOError, ValueError) as e:
+                    print(e)
+
+        report_normal.status("Normalization")
