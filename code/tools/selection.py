@@ -46,8 +46,6 @@ class Menu :
             'simple': ct.PATTERN['simple'],
             'double' : ct.PATTERN['double'],
             'rounds': ct.PATTERN['rounds'],
-            'ASCII': ct.PATTERN['ASCII'],
-            'Unicode': ct.PATTERN['Unicode']
         }
         self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
 

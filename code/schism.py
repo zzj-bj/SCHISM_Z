@@ -22,7 +22,8 @@ def exit_prog():
     select = vf.answer_yes_or_no("Are you sure")
     if select :
         print(f"[<3] Goodbye! {ct.BELL}")
-        dc.display_color(ct.LOGO_OUT, "gray")
+
+        dc.DisplayColor(ct.LOGO_OUT, "gray", bold=True)
         sys.exit()
 
 def menu_preprocessing():
@@ -50,12 +51,12 @@ def menu_preprocessing():
 
 def main():
     """Displays the CLI menu and handles user choices."""
-    dc.display_color(ct.LOGO_IN, "Yellow")
+    dc.DisplayColor(ct.LOGO_IN, "Yellow")
 
     if torch.cuda.is_available():
-        dc.display_color("CUDA is available! Running on GPU.\n", "green")
+        dc.DisplayColor("CUDA is available! Running on GPU.\n", "green")
     else:
-        dc.display_color("CUDA is NOT available! Running on CPU.\n", "red"    )
+        dc.DisplayColor("CUDA is NOT available! Running on CPU.\n", "red"    )
 
     main_menu = sl.Menu('MAIN')
     while True:
