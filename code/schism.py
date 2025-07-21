@@ -17,6 +17,10 @@ from inference import launch_inference as li
 
 
 #=======================================================================
+
+
+
+
 def main():
     """Displays the CLI menu and handles user choices."""
     display = dc.DisplayColor()
@@ -48,10 +52,6 @@ def main():
         elif choice == 4:
             exit_prog()
 
-if __name__ == "__main__":
-    main()
-
-
 def exit_prog():
     """ End of Program """
     print("\n[!! End of program !!]")
@@ -63,4 +63,5 @@ def exit_prog():
         sys.exit()
 
 
-
+if __name__ == "__main__":
+    main()
