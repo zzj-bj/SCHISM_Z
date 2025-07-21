@@ -81,7 +81,7 @@ class DatasetProcessor:
                 self.results[folder_name] = [std_dev, mean]
             except (IOError, ValueError) as e:
                 trxt = f" - Error processing {folder_name}:\n {e}"
-                self.add_to_report(" - J_son ", trxt)
+                self.add_to_report(" - Json ", trxt)
 
         with open(self.config["json_file"], "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)

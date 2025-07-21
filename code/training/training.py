@@ -15,9 +15,9 @@ from datetime import datetime
 import numpy as np
 from tqdm import tqdm
 
-from models.tiffdatasetloader import TiffDatasetLoader
-from models.paramconverter import ParamConverter
-from models.model_registry import model_mapping
+from AI.tiffdatasetloader import TiffDatasetLoader
+from AI.paramconverter import ParamConverter
+from AI.model_registry import model_mapping
 
 from tools import display_color as dc
 
@@ -50,11 +50,11 @@ from torchmetrics.classification import (
 
 from training.training_logger import TrainingLogger
 
-from models.tiffdatasetloader import TiffDatasetLoader
-from models.tiffdatasetloader import TiffDatasetLoaderConfig
-from models.paramconverter import ParamConverter
-from models.model_registry import model_mapping
-from models.model_registry import model_config_mapping
+from AI.tiffdatasetloader import TiffDatasetLoader
+from AI.tiffdatasetloader import TiffDatasetLoaderConfig
+from AI.paramconverter import ParamConverter
+from AI.model_registry import model_mapping
+from AI.model_registry import model_config_mapping
 
 from training.training_logger import TrainingLogger
 from training.training_logger import TrainingLoggerConfig
@@ -526,10 +526,10 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                dc.DisplayColor(" File 'j_son' not found ! ", "yellow", bold = True)
+                dc.DisplayColor(" File 'json' not found ! ", "yellow", bold = True)
                 dc.DisplayColor(" Using default normalization stats." , "yellow")
                 text = " File not found. Using file default normalization"
-                self.add_to_report(" - J_son", text)
+                self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
             print(" File 'json' found : Using this one.")

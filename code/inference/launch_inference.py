@@ -8,7 +8,7 @@ validates the input, and then runs the inference process using the specified mod
 @author : Pierre.FANCELLI
 """
 import os
-from models.hyperparameters import Hyperparameters
+from AI.hyperparameters import Hyperparameters
 
 from tools import selection as sl
 from tools import report as re

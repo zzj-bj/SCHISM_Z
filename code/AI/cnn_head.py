@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import torch
 from torch import nn
 import torch.nn.functional as F
-from models.activation_mixin import ActivationMixin
+from AI.activation_mixin import ActivationMixin
 
 @dataclass
 class CNNHeadConfig:

@@ -12,7 +12,7 @@ It consists of encoder blocks, decoder blocks, and a bridge layer.
 from dataclasses import dataclass
 from torch import nn
 import torch.nn.functional as nn_func
-from models.activation_mixin import ActivationMixin
+from AI.activation_mixin import ActivationMixin
 
 @dataclass
 class UnetSegmentorConfig:

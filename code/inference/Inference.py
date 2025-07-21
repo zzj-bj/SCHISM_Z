@@ -20,11 +20,11 @@ from torch.utils.data import DataLoader
 
 from patchify import unpatchify
 
-from models.tiffdatasetloader import TiffDatasetLoader
-from models.tiffdatasetloader import TiffDatasetLoaderConfig
-from models.paramconverter import ParamConverter
-from models.model_registry import model_mapping
-from models.model_registry import model_config_mapping
+from AI.tiffdatasetloader import TiffDatasetLoader
+from AI.tiffdatasetloader import TiffDatasetLoaderConfig
+from AI.paramconverter import ParamConverter
+from AI.model_registry import model_mapping
+from AI.model_registry import model_config_mapping
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
