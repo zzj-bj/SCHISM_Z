@@ -8,7 +8,6 @@ code/training/__pycache__/launch_training.cpython-313.pyc
 code/training/__pycache__
 code/tools/__pycache__
 code/classes/__pycache__
-code/commun/__pycache__
 code/inference/__pycache__
 code/preprocessing/__pycache__
 code/test_cuda.py

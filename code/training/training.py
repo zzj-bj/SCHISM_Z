@@ -15,9 +15,9 @@ from datetime import datetime
 import numpy as np
 from tqdm import tqdm
 
-from commun.tiffdatasetloader import TiffDatasetLoader
-from commun.paramconverter import ParamConverter
-from commun.model_registry import model_mapping
+from models.tiffdatasetloader import TiffDatasetLoader
+from models.paramconverter import ParamConverter
+from models.model_registry import model_mapping
 
 from tools import display_color as dc
 
@@ -50,11 +50,11 @@ from torchmetrics.classification import (
 
 from training.training_logger import TrainingLogger
 
-from commun.tiffdatasetloader import TiffDatasetLoader
-from commun.tiffdatasetloader import TiffDatasetLoaderConfig
-from commun.paramconverter import ParamConverter
-from commun.model_registry import model_mapping
-from commun.model_registry import model_config_mapping
+from models.tiffdatasetloader import TiffDatasetLoader
+from models.tiffdatasetloader import TiffDatasetLoaderConfig
+from models.paramconverter import ParamConverter
+from models.model_registry import model_mapping
+from models.model_registry import model_config_mapping
 
 from training.training_logger import TrainingLogger
 from training.training_logger import TrainingLoggerConfig

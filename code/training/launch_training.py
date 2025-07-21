@@ -10,7 +10,7 @@ import re
 from tools import report as rp
 from tools import various_functions as vf
 
-from commun.hyperparameters import Hyperparameters
+from models.hyperparameters import Hyperparameters
 from training.training import Training
 
 
