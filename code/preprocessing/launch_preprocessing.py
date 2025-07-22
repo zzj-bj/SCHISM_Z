@@ -32,7 +32,7 @@ class LaunchPreprocessing:
         Initializes the LaunchPreprocessing class.
         """
 
-    def input_percentage(message):
+    def input_percentage(self,message):
         """
         This function returns a real number between 0 and 1
         that corresponds to a percentage.
