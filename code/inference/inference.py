@@ -273,8 +273,6 @@ class Inference:
         and stitches the patches back together to form the full-size output image.
         """
         dataloader = self.load_dataset()
-        total_images = len(dataloader)
-        print(" total_images : ", total_images)
 
         with tqdm(total=len(dataloader), ncols=100,
           bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
