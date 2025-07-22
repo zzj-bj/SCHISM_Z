@@ -87,13 +87,13 @@ class TiffDatasetLoader(VisionDataset):
         if self.config["indices"] is None or len(self.config["indices"]) == 0:
             raise ValueError(
                 "self.indices is None or empty. Cannot determine image dimensions.")
-        
+
         dataset_id, sample_id = self.config["indices"][0]
 
         if self.config["img_data"] is None:
             raise ValueError(
                 "self.img_data is None. Cannot determine image dimensions.")
-        
+
         img_path = self.config["img_data"][dataset_id][sample_id]
         with Image.open(img_path) as img:
             return img.size[::-1]
@@ -225,14 +225,14 @@ class TiffDatasetLoader(VisionDataset):
             list: Sorted list of unique class values in the dataset.
         """
         unique_values = set()
+
+        if self.config["mask_data"] is None:
+            raise ValueError(
+                    "self.mask_data is None. Cannot retrieve mask path by index.")
+        if self.config["mask_data"] is None:
+            raise ValueError(
+                    "self.mask_data is None. Cannot retrieve mask path by index.")
        
-        if self.config["mask_data"] is None:
-            raise ValueError(
-                    "self.mask_data is None. Cannot retrieve mask path by index.")
-        if self.config["mask_data"] is None:
-            raise ValueError(
-                    "self.mask_data is None. Cannot retrieve mask path by index.")
-        
         for dataset_id, sample_id in self.config["indices"][:10]:
 
             if self.config["mask_data"] is None:

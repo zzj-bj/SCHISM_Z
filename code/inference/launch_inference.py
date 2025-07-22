@@ -27,7 +27,6 @@ class LaunchInference:
         """
         Initializes the LaunchInference class.
         """
-        pass
 
     def run_inference(self):
         """
@@ -59,8 +58,11 @@ class LaunchInference:
             else:
                 hyperparameters = Hyperparameters(hyperparameters_path)
                 params = hyperparameters.get_parameters().get("Training", {})
-                metrics = [metric.strip()
-                            for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
+                metrics = [
+                    metric.strip()
+                    for metric in params.get("metrics", "Jaccard").split(",") 
+                    if metric.strip()
+                ]
 
                 # Check for Metrics
                 if not metrics:
@@ -68,7 +70,9 @@ class LaunchInference:
                     initial_condition = False
                 else :
                     # Filter out 'ConfusionMatrix' if it's part of the metrics
-                    available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
+                    available_metrics = [
+                        metric for metric in metrics if metric != "ConfusionMatrix"
+                    ]
 
                     # Display the Metric available Menu
                     menu_metric = ['Metric'] + available_metrics

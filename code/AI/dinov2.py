@@ -133,7 +133,9 @@ class DinoV2Segmentor(nn.Module):
                 n_features=self.config["n_features"],
                 activation=self.config["activation"]))
 
-        print(f"Number of parameters:{sum(p.numel() for p in self.parameters() if p.requires_grad)}")
+        print(f"Number of parameters:{sum(
+            p.numel() for p in self.parameters() if p.requires_grad
+        )}")
 
     def forward(self, x):
         """

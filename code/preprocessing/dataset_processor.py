@@ -57,7 +57,7 @@ class DatasetProcessor:
         if self.config["report"] is not None:
             self.config["report"].add(text, who)
 
-    def process_datasets(self):
+    def process_datasets(self, add_default=True):
         """
         Process each dataset in the specified subfolders.
 
@@ -82,6 +82,11 @@ class DatasetProcessor:
             except (IOError, ValueError) as e:
                 trxt = f" - Error processing {folder_name}:\n {e}"
                 self.add_to_report(" - Json ", trxt)
+
+        if add_default:
+            # Add default values for 'mean' and 'std_dev' if not present
+            if "default" not in self.results:
+                self.results["default"] = [[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
 
         with open(self.config["json_file"], "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
