@@ -1,4 +1,7 @@
-![gradient_image](https://github.com/user-attachments/assets/5e76c773-82b8-4790-b5b9-5bfff6eed0a1)
+<div align="center">
+  <img width="350" height="350" alt="Neon Futurism_ SCHISM Logo Design" src="https://github.com/user-attachments/assets/b85455bc-6234-48cf-8cc7-97ce432eae71" />
+</div>
+
 
 SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanned Materials_. This framework provides tools for semantic segmentation of CT scanner images of rocks, but it is also applicable to any kind of image as long as semantic segmentation is required. The framework supports both training and inference workflows. As for the little trivia, this project got named after [this](https://www.youtube.com/watch?v=MM62wjLrgmA&ab_channel=TOOLVEVO) :) 
 
