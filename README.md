@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="350" height="350" alt="Neon Futurism_ SCHISM Logo Design" src="https://github.com/user-attachments/assets/b85455bc-6234-48cf-8cc7-97ce432eae71" />
+  <img width="450" height="450" alt="Hi you :)" src="https://github.com/user-attachments/assets/b85455bc-6234-48cf-8cc7-97ce432eae71" />
 </div>
 
 
