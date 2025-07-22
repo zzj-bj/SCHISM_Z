@@ -87,10 +87,10 @@ class Menu :
                 select = int(input("[?] Make your choice: "))
                 if 1 <= select <= self.ligne - 1 :
                     return select
-                text = f"[X] Invalid selection. Try again ! {ct.BELL}"
+                text = f"[X] Oops! That selection isn't valid. Please try again! {ct.BELL}"
                 display.print(text, "red")
 
             # Input is not a number
             except ValueError:
-                text = f"[X] Waiting for number. Try again ! {ct.BELL}"
+                text = f"[X] Waiting for number. Please try again ! {ct.BELL}"
                 display.print(text, "red")

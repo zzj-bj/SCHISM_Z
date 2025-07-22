@@ -24,7 +24,8 @@ def answer_yes_or_no(message):
             return True
         if reponse in ['no',  'n']:
             return False
-        display.print(f"incorrect answer !!! {ct.BELL}", "red")
+        text = f"incorrect answer !!! {ct.BELL}"
+        display.print(text, "red")
 
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):

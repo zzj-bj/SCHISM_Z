@@ -60,7 +60,8 @@ class LaunchInference:
                 hyperparameters = Hyperparameters(hyperparameters_path)
                 params = hyperparameters.get_parameters().get("Training", {})
                 metrics = [metric.strip()
-                            for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
+                            for metric in params.get("metrics", "Jaccard").split(",")
+                              if metric.strip()]
 
                 # Check for Metrics
                 if not metrics:
@@ -68,14 +69,18 @@ class LaunchInference:
                     initial_condition = False
                 else :
                     # Filter out 'ConfusionMatrix' if it's part of the metrics
-                    available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
+                    available_metrics = [metric for metric in metrics
+                                         if metric != "ConfusionMatrix"]
 
-                    # Display the Metric available Menu
-                    menu_metric = ['Metric'] + available_metrics
-                    metric_menu = sl.Menu('Dynamic',menu_metric, style = 'rounds')
-                    metric_menu.display_menu()
-                    choice = metric_menu.selection()
-                    selected_metric = metrics[choice - 1]
+                    if len(available_metrics) == 1:
+                         selected_metric = metrics[0]
+                    else:
+                        # Display the Metric available Menu
+                        menu_metric = ['Metrics'] + available_metrics
+                        metric_menu = sl.Menu('Dynamic',menu_metric) # , style = 'rounds'
+                        metric_menu.display_menu()
+                        choice = metric_menu.selection()
+                        selected_metric = metrics[choice - 1]
 
                     # Check for the existence of the *.pth files
                     files = [f for f in os.listdir(run_dir) if f.endswith(".pth")]
@@ -111,17 +116,14 @@ class LaunchInference:
                     pred_object.predict()
                 except (IOError, ValueError) as e:
                     report_inference.add(e, '')
-                    # print(f" ValueError during prediction:\n {e}")
 
             except FileNotFoundError as e:
                 text = f" FileNotFoundError during model initialization:\n {e}"
                 report_inference.add(text, '')
-                # print(f" FileNotFoundError during model initialization:\n {e}")
+
             except (IOError, ValueError) as e:
                 text = f" An unexpected error occurred:\n {e}"
                 report_inference.add(text, '')
-                # print(f" An unexpected error occurred:\n {e}")
-
 
         text = f"Inference with Metric '{selected_metric}'"
         report_inference.status(text)
