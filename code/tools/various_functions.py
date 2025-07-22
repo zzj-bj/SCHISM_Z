@@ -7,6 +7,7 @@ Collection of non-specific functions used in the program.
 import os
 
 from tools import constants as ct
+from tools import display_color as dc
 
 #==============================================================================
 def answer_yes_or_no(message):
@@ -16,13 +17,15 @@ def answer_yes_or_no(message):
       False for no, non n.
      The input does not take uppercase letters into account."
     """
+    display = dc.DisplayColor()
     while True:
         reponse = input(f"[?] {message} (y/n) ? : ").strip().lower()
-        if reponse in ['yes', 'y', 'oui', 'o']:
+        if reponse in ['yes', 'y']:
             return True
-        if reponse in ['no', 'non', 'n']:
+        if reponse in ['no',  'n']:
             return False
-        print("incorrect answer !!! ")
+        display.print(f"incorrect answer !!! {ct.BELL}", "red")
+
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
     """

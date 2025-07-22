@@ -17,6 +17,7 @@ import os
 
 from tools import error_report as re
 from tools import various_functions as vf
+from tools import display_color as dc
 from tools import constants as ct
 from tools import menu as sl
 
@@ -37,14 +38,18 @@ class LaunchPreprocessing:
         This function returns a real number between 0 and 1
         that corresponds to a percentage.
         """
+        display = dc.DisplayColor()
         while True:
             try:
                 value = float(input(f"[?] {message} : "))
                 if 1 <= value <= 100:
                     return value / 100
-                print(f"Error: The value must be between 1 and 100. {ct.BELL}")
+
+                text =(f"Error: The value must be between 1 and 100. {ct.BELL}")
+                display.print(text, "red")
             except ValueError:
-                print(f"Error: Please enter a valid number. {ct.BELL}")
+                text =  (f"Error: Please enter a valid number. {ct.BELL}")
+                display.print(text, "red")
 
     def menu_preprocessing(self):
         """
