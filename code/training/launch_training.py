@@ -102,39 +102,43 @@ class LaunchTraining:
             Total number of files considered.
 
         """
-        valid_subfolders =[]
+        valid_images = []
+        valid_masks = []
+        images_path = []
+        masks_path = []
         num_file = 0
-        for f in folder:
-            images_path = os.path.join(root, f, 'images')
-            masks_path = os.path.join(root, f, 'masks')
+        nb_f_image = 0
+        nb_f_masks = 0
 
-            if not os.path.isdir(images_path):
-                report.add(" - Folder 'images' missing in :", f)
-            else :
-                if not os.path.isdir(masks_path):
-                    report.add(" - Folder 'masks' missing in :", f)
+        for f in folder:
+            # Control subdirectory 'images'
+            images_path = os.path.join(root, f, 'images') # images
+            nb_f_image =vf.validate_subfolders(images_path, f, valid_images, report,
+                                    folder_type='images')
+
+            # Control subdirectory 'masks'
+            masks_path = os.path.join(root, f, 'masks') # masks
+            nb_f_masks = vf.validate_subfolders(masks_path, f, valid_masks, report,
+                                folder_type='masks')
+
+        valid_subfolders =  list(set(valid_images) & set(valid_masks))
+        for f in valid_subfolders:
+            images_path = os.path.join(root, f, 'images') # images
+            masks_path = os.path.join(root, f, 'masks') # masks
+            nb_f_image = vf.count_tif_files(images_path)
+            nb_f_masks = vf.count_tif_files(masks_path)
+            if nb_f_image != nb_f_masks :
+                text = " - number of images not equal between 'images/masks' :"
+                report.add(text, f)
+            else:
+                ok ,ima_1, mask_1 = self.compare_number(images_path, masks_path)
+                if not ok:
+                    report.add(" - Single images whitout masks :",
+                                f"in {f} : {ima_1} ")
+                    report.add(" - Single masks without images :",
+                                f"in {f} : {mask_1} ")
                 else:
-                    nb_f_image = vf.count_tif_files(images_path)
-                    nb_f_masks = vf.count_tif_files(masks_path)
-                    if nb_f_image == 0:
-                        report.add(" - No file (*.tif') in folder 'image' :", f)
-                    else:
-                        if nb_f_masks == 0:
-                            report.add(" - No file (*.tif') in folder 'masks' :", f)
-                        else:
-                            if nb_f_image != nb_f_masks :
-                                text = " - number of images not equal between 'images/masks' :"
-                                report.add(text, f)
-                            else:
-                                ok ,ima_1, mask_1 = self.compare_number(images_path, masks_path)
-                                if not ok:
-                                    report.add(" - Single images whitout masks :",
-                                                f"in {f} : {ima_1} ")
-                                    report.add(" - Single masks without images :",
-                                                f"in {f} : {mask_1} ")
-                                else:
-                                    num_file += nb_f_image
-                                    valid_subfolders.append(f)
+                    num_file += nb_f_image
 
         return  valid_subfolders, num_file
 
@@ -180,8 +184,8 @@ class LaunchTraining:
         if len(subfolders) == 0 :
             report_training.add(" - The data directory is Empty ", '')
         else:
-            valid_subfolders, num_file = self.check_folder(subfolders, data_dir, report_training)
-
+            valid_subfolders, num_file = self.check_folder(subfolders,
+                                                        data_dir, report_training)
 
         if initial_condition and report_training.is_report() == 0 :
         # if initial_condition and len(valid_subfolders) != 0 :
