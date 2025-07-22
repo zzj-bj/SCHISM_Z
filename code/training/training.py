@@ -533,7 +533,7 @@ class Training:
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
-            print(" File 'json' found : Using this one.")
+            print(" A JSON file has been found. Its data will be used during training.")
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
@@ -885,12 +885,7 @@ class Training:
         """
         Starts the training process for the model.
         """
-        text = (
-                f' Processing with {self.config["num_samples"]} '
-                f'images among {self.config["num_file"]}'
-        )
-        print(text)
-
+        
         optimizer = self.initialize_optimizer()
         scheduler = self.initialize_scheduler(optimizer=optimizer)
         loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer,

@@ -75,5 +75,5 @@ MENUS = {
         "PREPROCESSING",
         "Json Generation",
         "Normalization",
-        "Return Main Menu"]
+        "Back to the main menu"]
 }
