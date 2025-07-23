@@ -73,7 +73,17 @@ MENUS = {
         "Quit"    ],
     'Preprocessing': [
         "PREPROCESSING",
-        "Json Generation",
+        "Json generation",
         "Normalization",
         "Back to the main menu"]
+}
+
+
+# Code colors for display
+DISPLAY_COLORS = {
+    'error': (204, 51, 0),
+    'warning': (204, 204, 0),
+    'input': (153, 204, 51),
+    'ok': (51, 153, 0),
+    'text': (255, 255, 255),
 }

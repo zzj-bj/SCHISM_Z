@@ -69,5 +69,5 @@ class ErrorReport:
             self.display.print(f"[X] {process} completed with error(s)", "red")
             self.display_report()
         else:
-            self.display.print(f"[√] {process} completed without error\n", "green")
+            self.display.print(f"[√] {process} completed \n", "green")
             

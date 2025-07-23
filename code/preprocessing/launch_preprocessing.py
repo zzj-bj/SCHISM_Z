@@ -103,7 +103,8 @@ class LaunchPreprocessing:
                                     folder_type='images')
 
         if report_json.is_report() == 0 :
-            print("[!] Starting Json generation")
+            vf.print_box("Json generation")            
+            # print("[!] Starting Json generation")
             json_generation = js.DatasetProcessor(
                                     js.DatasetProcessorConfig(
                                         parent_dir = data_dir,
@@ -139,14 +140,19 @@ class LaunchPreprocessing:
                 path = os.path.join(data_dir, f, 'masks')
                 vf.validate_subfolders(path, f, valid_subfolders, report_normal,
                                     folder_type='masks')
-
+            # rename masks to raw_masks
+            for f in valid_subfolders:
+                old_masks_directory = os.path.join(data_dir, f, 'masks')
+                new_raw_masks_directory = os.path.join(data_dir, f, 'raw_masks',)
+                os.rename(old_masks_directory, new_raw_masks_directory)
 
         if report_normal.is_report() == 0 :
-            print("[!] Starting normalization")
+            vf.print_box("Normalization")
+            # print("[!] Starting normalization")
             for f in valid_subfolders:
                 print(f" - {f} :")
-                in_path = os.path.join(data_dir, f, 'masks')
-                out_path = os.path.join(data_dir, f, 'normalized')
+                in_path = os.path.join(data_dir, f, 'raw_masks')
+                out_path = os.path.join(data_dir, f, 'masks')
                 os.makedirs(out_path, exist_ok=True)
 
                 normalizer = no.ImageNormalizer(in_path, out_path, report_normal)

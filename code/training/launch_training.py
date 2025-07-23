@@ -145,8 +145,8 @@ class LaunchTraining:
     def train_model(self):
         """Executes the training process in CLI."""
 
-        print("\n[ Training Mode ]")
-
+        vf.print_box("Training")
+        
         initial_condition = True
         report_training = rp.ErrorReport()
 

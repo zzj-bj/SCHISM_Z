@@ -24,7 +24,7 @@ def answer_yes_or_no(message):
             return True
         if reponse in ['no',  'n']:
             return False
-        text = f"incorrect answer !!! {ct.BELL}"
+        text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, "red")
 
 
@@ -100,3 +100,13 @@ def count_tif_files(folder):
     files = [f for f in os.listdir(folder)
              if f.endswith(".tif")]
     return len(files)
+
+def print_box(text):
+
+    # Determine the width of the box based on the string length
+    box_width = len(text) + 2  # Add padding for the box
+
+    # Create the box
+    print(f" ╔{'═' * (box_width)}╗")
+    print(f" ║{text.center(box_width)}║")
+    print(f" ╚{'═' * (box_width)}╝")

@@ -7,6 +7,7 @@ import torch
 
 from tools import menu as sl
 from tools import display_color as dc
+
 from tools import various_functions as vf
 from tools import constants as ct
 
@@ -21,12 +22,12 @@ from inference import launch_inference as li
 def main():
     """Displays the CLI menu and handles user choices."""
     display = dc.DisplayColor()
-    display.print(ct.LOGO_IN, "Yellow")
+    print(ct.LOGO_IN)
 
     if torch.cuda.is_available():
         display.print("CUDA is available! Running on GPU.\n", "green")
     else:
-        display.print("CUDA is NOT available! Running on CPU.\n", "red")
+        display.print("CUDA is NOT available! Running on CPU.\n", "yellow")
 
     main_menu = sl.Menu('MAIN')
     while True:
@@ -55,8 +56,7 @@ def exit_prog():
     select = vf.answer_yes_or_no("Are you sure")
     if select :
         print(f"[<3] Goodbye! {ct.BELL}")
-
-        dc.DisplayColor().print(ct.LOGO_OUT, "gray", bold=True)
+        print(ct.LOGO_OUT)
         sys.exit()
 
 

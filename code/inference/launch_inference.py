@@ -33,12 +33,11 @@ class LaunchInference:
         """
         Launches the inference process for a trained model.
         """
-        print("\n[ Inference Mode ]")
-
+        
+        vf.print_box("Inference Mode")
+        
         hyperparameters = None
-
         report_inference = re.ErrorReport()
-
         valid_subfolders = []
         selected_metric =""
         initial_condition = True
