@@ -146,7 +146,7 @@ class LaunchTraining:
         """Executes the training process in CLI."""
 
         vf.print_box("Training")
-        
+
         initial_condition = True
         report_training = rp.ErrorReport()
 

@@ -527,13 +527,17 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                self.config["display"].print(" File 'json' not found ! ", colors['yellos'], bold = True)
-                self.config["display"].print(" Using default normalization stats." , colors['yellos'])
+
+                print(" File 'json' not found ! ")
+                print(" Using default normalization stats.")
+
+                self.config["display"].print(" File 'json' not found ! ", colors['warning'], bold = True)
+                self.config["display"].print(" Using default normalization stats." , colors['warning'])
                 text = " File not found. Using file default normalization"
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
-
-            print(" A JSON file has been found. Its data will be used during training.")
+                colo
+            print(" A Json file has been found. Its data will be used during training.")
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
@@ -544,7 +548,7 @@ class Training:
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" Invalid format in data_stats.json for key {key}"
-                        self.add_to_report(" - J_son", text)
+                        self.add_to_report(" - Json", text)
                         raise ValueError()
 
                     data_stats_loaded[key] = [
@@ -555,13 +559,14 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
+               
+                text = " Error loading data stats : "
+                self.config["display"].print(text, colors['error'], bold = True)
+                text = " Using default normalization stats."
+                self.config["display"].print(text, colors['warning'], bold = True)
 
-                text = (" Error loading data stats : "
-                      "Using default normalization stats.")
-                self.config["display"].print(text,colors['yellos'], bold = True)
-                text = (f" Error loading data stats from {json_file_path}:\n {e}."
-                      " Using default normalization stats.")
-                self.add_to_report(" - J_son", text)
+                text = (f" Error loading data stats from {json_file_path}:\n {e}.")
+                self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
@@ -767,7 +772,7 @@ class Training:
                 bar_format = f"{text}: {{n_fmt}}/{{total_fmt}} |{{bar}}| {{percentage:6.2f}}%"
 
                 with tqdm(total=len(self.config["dataloaders"][phase]), ncols=102,
-                          bar_format= bar_format ) as pbar:
+                          bar_format=bar_format) as pbar:
 
                     for inputs, labels, weights in self.config["dataloaders"][phase]:
 
