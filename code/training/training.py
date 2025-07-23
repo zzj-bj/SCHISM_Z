@@ -544,7 +544,7 @@ class Training:
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" Invalid format in data_stats.json for key {key}"
-                        self.add_to_report(" - J_son", text)
+                        self.add_to_report(" - json", text)
                         raise ValueError()
 
                     data_stats_loaded[key] = [

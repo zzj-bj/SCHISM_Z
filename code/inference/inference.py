@@ -110,6 +110,8 @@ class Inference:
         self.config["model_mapping"] = model_mapping
         self.config["model_config_mapping"] = model_config_mapping
 
+        # for data in self.config["data_stats"].values():
+        #     print(f" Data stats: {data[0]} - {data[1]}")
 
         self.config["model"] = self.initialize_model()
 
