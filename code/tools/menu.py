@@ -10,6 +10,7 @@ import sys
 
 from tools import constants as ct
 from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 
 #============================================================================
 
@@ -88,9 +89,9 @@ class Menu :
                 if 1 <= select <= self.ligne - 1 :
                     return select
                 text = f"[X] Oops! That selection isn't valid. Please try again! {ct.BELL}"
-                display.print(text, "red")
+                display.print(text, colors['error']) 
 
             # Input is not a number
             except ValueError:
                 text = f"[X] Waiting for number. Please try again ! {ct.BELL}"
-                display.print(text, "red")
+                display.print(text, colors['error'])

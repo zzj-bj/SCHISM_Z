@@ -8,6 +8,7 @@ import os
 
 from tools import constants as ct
 from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 
 #==============================================================================
 def answer_yes_or_no(message):
@@ -24,8 +25,8 @@ def answer_yes_or_no(message):
             return True
         if reponse in ['no',  'n']:
             return False
-        text = f"Please provide a valid answer (y/n) {ct.BELL}"
-        display.print(text, "red")
+        text = f"[X] Please provide a valid answer (y/n) {ct.BELL}"
+        display.print(text, colors['error'])
 
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
@@ -77,11 +78,13 @@ def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_t
 
 def get_path(prompt):
     """Requests a valid path from the user."""
+    display = dc.DisplayColor()
     while True:
         path = input(f"[?] {prompt}: ").strip()
         if os.path.exists(path):
             return path
-        print(f"[X] Invalid path. Try again. {ct.BELL}")
+        text = f"[X] Invalid path: {path}. Please try again. {ct.BELL}"
+        display.print(text, colors['error'])
 
 def count_tif_files(folder):
     """

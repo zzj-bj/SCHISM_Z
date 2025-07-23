@@ -6,6 +6,7 @@ This class allows for tracking errors during the execution of processes
 """
 
 from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 
 #============================================================================
 
@@ -54,20 +55,19 @@ class ErrorReport:
         total_topic = len(self.dictionary)
 
         # Display the message in "MAGENTA" color
-        print("\033[35m", end="")
-        print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topic(s) !!! ***")
+        # print("\033[35m", end="")
+        # print(f"*** !!! {total_def} problem(s) found(s) in {total_topic} topic(s) !!! ***")
         for key, elements in self.dictionary.items():
-            print(f"\033[31m{key}\033[35m \n   {' / '.join(map(str, elements))}\033[0m")
-        # Return to a white display
-        print("\033[0m")
+            self.display.print(f"{key} \n   {' / '.join(map(str, elements))}", colors['error'])
+        print("")
 
     def status(self, process):
         """
         Displaying the correct end process message
         """
         if self.is_report():
-            self.display.print(f"[X] {process} completed with error(s)", "red")
+            self.display.print(f"[X] {process} completed with error(s)", colors['error'])
             self.display_report()
         else:
-            self.display.print(f"[√] {process} completed \n", "green")
+            self.display.print(f"[√] {process} completed \n", colors['ok'])
             

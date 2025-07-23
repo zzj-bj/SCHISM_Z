@@ -10,7 +10,7 @@ from tools import display_color as dc
 
 from tools import various_functions as vf
 from tools import constants as ct
-
+from tools.constants import DISPLAY_COLORS as colors
 
 from preprocessing import launch_preprocessing as lp
 from training import launch_training as lt
@@ -25,9 +25,9 @@ def main():
     print(ct.LOGO_IN)
 
     if torch.cuda.is_available():
-        display.print("CUDA is available! Running on GPU.\n", "green")
+        display.print("CUDA is available! Running on GPU.\n", colors['ok'])
     else:
-        display.print("CUDA is NOT available! Running on CPU.\n", "yellow")
+        display.print("CUDA is not available! Running on CPU.\n", colors['warning'])
 
     main_menu = sl.Menu('MAIN')
     while True:

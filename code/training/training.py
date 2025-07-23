@@ -20,7 +20,7 @@ from AI.paramconverter import ParamConverter
 from AI.model_registry import model_mapping
 
 from tools import display_color as dc
-
+from tools.constants import DISPLAY_COLORS as colors
 
 from torch.cuda.amp import GradScaler
 import torch
@@ -527,8 +527,8 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                self.config["display"].print(" File 'json' not found ! ", "yellow", bold = True)
-                self.config["display"].print(" Using default normalization stats." , "yellow")
+                self.config["display"].print(" File 'json' not found ! ", colors['yellos'], bold = True)
+                self.config["display"].print(" Using default normalization stats." , colors['yellos'])
                 text = " File not found. Using file default normalization"
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
@@ -558,7 +558,7 @@ class Training:
 
                 text = (" Error loading data stats : "
                       "Using default normalization stats.")
-                self.config["display"].print(text,'YELLOW', bold = True)
+                self.config["display"].print(text,colors['yellos'], bold = True)
                 text = (f" Error loading data stats from {json_file_path}:\n {e}."
                       " Using default normalization stats.")
                 self.add_to_report(" - J_son", text)
@@ -763,9 +763,11 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
+                text =f" - Training {phase} "
+                bar_format = f"{text}: {{n_fmt}}/{{total_fmt}} |{{bar}}| {{percentage:6.2f}}%"
+
                 with tqdm(total=len(self.config["dataloaders"][phase]), ncols=102,
-                          bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
-                          ) as pbar:
+                          bar_format= bar_format ) as pbar:
 
                     for inputs, labels, weights in self.config["dataloaders"][phase]:
 
