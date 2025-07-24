@@ -80,8 +80,7 @@ class TrainingLogger:
         data_stats_serializable = {
             key: [value[0].tolist(), value[1].tolist()]
             for key, value in data_stats.items()
-            # if key != "default" or len(data_stats) == 1
-            # if len(data_stats) == 1
+            if key != "default" or len(data_stats) == 1
         }
 
         json_file_path = os.path.join(self.config["save_directory"], 'data_stats.json')

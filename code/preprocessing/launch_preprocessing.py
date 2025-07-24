@@ -69,22 +69,23 @@ class LaunchPreprocessing:
             elif choice == 3:
                 return
 
-    def launch_json_generation(self):
+    def launch_json_generation(self,data_dir=None,file_name_report=None):
         """
         Generates a JSON file containing statistics about the datasets.
         """
         print("\n[ Json Generation Mode ]")
 
         report_json = re.ErrorReport()
-
-        data_dir = vf.get_path("Enter the data directory")
-        select = vf.answer_yes_or_no("Use all the data (100%) ")
+        if data_dir is None:
+            data_dir = vf.get_path("Enter the data directory")
+        select = vf.answer_yes_or_no("Use all the data (100%) ?")
         if select :
             percentage_to_process = 1.0
         else :
             percentage_to_process = self.input_percentage("Enter a percentage between 1 & 100")
 
-        file_name_report = os.path.join(data_dir, '', 'data_stats.json')
+        if file_name_report is None:
+            file_name_report = os.path.join(data_dir, '', 'data_stats.json')
 
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 

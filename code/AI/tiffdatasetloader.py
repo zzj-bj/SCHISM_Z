@@ -443,7 +443,10 @@ class TiffDatasetLoader(VisionDataset):
         if dataset_id in self.config["data_stats"]:
             return self.config["data_stats"][dataset_id]
 
-        return self.config["data_stats"]["default"]
+        if "default" in self.config["data_stats"]:
+            return self.config["data_stats"]["default"]
+        
+        return (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
 
     def __len__(self):
         """

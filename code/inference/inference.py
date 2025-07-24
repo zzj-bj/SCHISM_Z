@@ -26,6 +26,9 @@ from AI.paramconverter import ParamConverter
 from AI.model_registry import model_mapping
 from AI.model_registry import model_config_mapping
 
+from tools import various_functions as vf
+from preprocessing import launch_preprocessing as lp
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #==============================================================================
@@ -74,6 +77,7 @@ class Inference:
             'device': 'cuda' if torch.cuda.is_available() else 'cpu',
             'data_dir': kwargs.get('data_dir', ''),
             'run_dir': kwargs.get('run_dir', ''),
+            'subfolders':kwargs.get('subfolders', []),
             'hyperparameters': kwargs.get('hyperparameters', None),
             'metric': kwargs.get('selected_metric', 'Jaccard'),
             "report":kwargs.get('report'),
@@ -110,8 +114,28 @@ class Inference:
         self.config["model_mapping"] = model_mapping
         self.config["model_config_mapping"] = model_config_mapping
 
-        # for data in self.config["data_stats"].values():
-        #     print(f" Data stats: {data[0]} - {data[1]}")
+        missing_weight={}
+        # Check if all subfolders have weights in data_stats
+        for dir in self.config["subfolders"]:
+            if dir not in self.config["data_stats"]:
+                missing_weight[dir] = True
+            else:
+                missing_weight[dir] = False
+
+        folders_without_weight = [key for key, value in missing_weight.items() if value]
+        print (f"Folders without weight: {folders_without_weight}")
+
+        # If there are folders without weight, prompt for JSON generation
+        if folders_without_weight:
+            select = vf.answer_yes_or_no("Do you want to launch the JSON generation ?")
+            if select :
+                lp.LaunchPreprocessing().launch_json_generation(
+                    self.config["data_dir"],
+                    os.path.join(self.config["run_dir"], '', 'data_stats.json')
+                )
+                self.config["data_stats"] = self.load_data_stats_from_json()
+            else :
+                print("Default data stats will be used.")
 
         self.config["model"] = self.initialize_model()
 

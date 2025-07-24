@@ -57,7 +57,7 @@ class DatasetProcessor:
         if self.config["report"] is not None:
             self.config["report"].add(text, who)
 
-    def process_datasets(self, add_default=True):
+    def process_datasets(self, add_default=False):
         """
         Process each dataset in the specified subfolders.
 
