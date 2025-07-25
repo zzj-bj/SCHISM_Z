@@ -20,7 +20,7 @@ from AI.paramconverter import ParamConverter
 from AI.model_registry import model_mapping
 
 from tools import display_color as dc
-
+from tools.constants import DISPLAY_COLORS as colors
 
 from torch.cuda.amp import GradScaler
 import torch
@@ -527,13 +527,15 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                self.config["display"].print(" File 'json' not found ! ", "yellow", bold = True)
-                self.config["display"].print(" Using default normalization stats." , "yellow")
+                self.config["display"].print(" File 'json' not found ! ",
+                                       colors['warning'], bold = True)
+                self.config["display"].print(" Using default normalization stats." ,
+                                       colors['warning'])
                 text = " File not found. Using file default normalization"
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
-            print(" A JSON file has been found. Its data will be used during training.")
+            print(" A Json file has been found. Its data will be used during training.")
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
@@ -544,7 +546,7 @@ class Training:
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" Invalid format in data_stats.json for key {key}"
-                        self.add_to_report(" - json", text)
+                        self.add_to_report(" - Json", text)
                         raise ValueError()
 
                     data_stats_loaded[key] = [
@@ -555,13 +557,14 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
+               
+                text = " Error loading data stats : "
+                self.config["display"].print(text, colors['error'], bold = True)
+                text = " Using default normalization stats."
+                self.config["display"].print(text, colors['warning'], bold = True)
 
-                text = (" Error loading data stats : "
-                      "Using default normalization stats.")
-                self.config["display"].print(text,'YELLOW', bold = True)
-                text = (f" Error loading data stats from {json_file_path}:\n {e}."
-                      " Using default normalization stats.")
-                self.add_to_report(" - J_son", text)
+                text = (f" Error loading data stats from {json_file_path}:\n {e}.")
+                self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
@@ -677,17 +680,16 @@ class Training:
         )
 
         pin_memory = self.config["device"] == 'cuda'
-        pin_memory = True
 
         train_loader = DataLoader(train_dataset, batch_size=self.config["batch_size"],
-                                  shuffle=True, num_workers=2,drop_last=True,
-                                  pin_memory=torch.cuda.is_available())
-        val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"],
-                                shuffle=False, num_workers=2, drop_last=True,
-                                pin_memory=torch.cuda.is_available())
-        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
-                                 num_workers=2, drop_last=True,
-                                 pin_memory=torch.cuda.is_available())
+                                  shuffle = True, num_workers = 2, drop_last = True,
+                                  pin_memory = pin_memory)
+        val_loader = DataLoader(val_dataset, batch_size = self.config["batch_size"],
+                                shuffle = False, num_workers = 2, drop_last = True,
+                                pin_memory = pin_memory)
+        test_loader = DataLoader(test_dataset, batch_size=10, shuffle = False,
+                                 num_workers = 2, drop_last = True,
+                                 pin_memory = pin_memory)
 
         self.config["logger"].save_indices_to_file(
             [train_indices, val_indices, test_indices])
@@ -728,11 +730,6 @@ class Training:
             scaler = GradScaler()
             cudnn.benchmark = True
 
-        # scaler = None
-        # if self.device == "cuda":
-        #     scaler = GradScaler()  # Pas besoin de spécifier 'cuda' ici
-        #     cudnn.benchmark = True
-
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled
         metrics = self.initialize_metrics()
@@ -763,9 +760,11 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
+                text =f" - Training {phase} "
+                bar_format = f"{text}: {{n_fmt}}/{{total_fmt}} |{{bar}}| {{percentage:6.2f}}%"
+
                 with tqdm(total=len(self.config["dataloaders"][phase]), ncols=102,
-                          bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
-                          ) as pbar:
+                          bar_format=bar_format) as pbar:
 
                     for inputs, labels, weights in self.config["dataloaders"][phase]:
 

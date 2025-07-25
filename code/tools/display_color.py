@@ -11,22 +11,12 @@ The message can be displayed in bold.
 @author: Pierre.FANCELLI
 """
 
-# pylint: disable=too-few-public-methods
 class DisplayColor:
     """
     This class displays messages in the requested color.
     """
-    COLORS = {
-        "RED":     "\033[31m",
-        "GREEN":   "\033[32m",
-        "YELLOW":  "\033[33m",
-        "MAGENTA": "\033[35m",
-        "WHITE":   "\033[37m",
-        "GRAY":    "\033[90m",
-    }
     RESET = "\033[0m"
-
-    BOLD =   "\033[1m"
+    BOLD = "\033[1m"
 
     def __init__(self):
         """
@@ -34,10 +24,11 @@ class DisplayColor:
         """
         pass
 
-    def print(self, text, color="WHITE", bold=False):
+    def print(self, text, rgb=(255, 255, 255), bold=False):
         """
-        Prints the text in the specified color and boldness.
+        Prints the text in the specified RGB color and boldness.
         """
-        color_code = self.COLORS.get(color.upper(), self.COLORS["WHITE"])
+        rgb_code = f"\033[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m"
         bold_code = self.BOLD if bold else ""
-        print(f"{color_code}{bold_code}{text}{self.RESET}")
+        print(f"{rgb_code}{bold_code}{text}{self.RESET}")
+        

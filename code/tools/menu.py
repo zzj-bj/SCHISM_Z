@@ -9,6 +9,8 @@ It is possible to opt for a static menu or a dynamic menu.
 import sys
 
 from tools import constants as ct
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 
 #============================================================================
 
@@ -80,12 +82,16 @@ class Menu :
         """
         Method to manage the user's choice in the menu.
         """
+        display = dc.DisplayColor()
         while True:
             try:
                 select = int(input("[?] Make your choice: "))
                 if 1 <= select <= self.ligne - 1 :
                     return select
-                print(f"[X] Invalid selection. Try again ! {ct.BELL}")
+                text = f"[X] Oops! That selection isn't valid. Please try again! {ct.BELL}"
+                display.print(text, colors['error']) 
+
             # Input is not a number
             except ValueError:
-                print(f"[X] Waiting for number. Try again ! {ct.BELL}")
+                text = f"[X] Waiting for number. Please try again ! {ct.BELL}"
+                display.print(text, colors['error'])

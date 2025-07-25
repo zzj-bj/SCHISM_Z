@@ -301,7 +301,7 @@ class Inference:
         dataloader = self.load_dataset()
 
         with tqdm(total=len(dataloader), ncols=100,
-          bar_format="- Progress: {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
+          bar_format="- inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
           ) as pbar:
 
             for _, (img, _, img_path) in enumerate(dataloader):

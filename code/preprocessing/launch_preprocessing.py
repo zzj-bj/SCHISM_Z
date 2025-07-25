@@ -17,11 +17,14 @@ import os
 
 from tools import error_report as re
 from tools import various_functions as vf
+from tools import display_color as dc
 from tools import constants as ct
-from tools import menu as sl
+from tools.constants import DISPLAY_COLORS as colors
+from tools import menu
 
-from preprocessing import image_normalizer as no
-from preprocessing import dataset_processor as js
+
+from preprocessing import image_normalizer
+from preprocessing import dataset_processor
 
 #=============================================================================
 
@@ -37,14 +40,18 @@ class LaunchPreprocessing:
         This function returns a real number between 0 and 1
         that corresponds to a percentage.
         """
+        display = dc.DisplayColor()
         while True:
             try:
                 value = float(input(f"[?] {message} : "))
                 if 1 <= value <= 100:
                     return value / 100
-                print(f"Error: The value must be between 1 and 100. {ct.BELL}")
+
+                text = f"[X] Error: The value must be between 1 and 100. {ct.BELL}"
+                display.print(text, colors['error'])
             except ValueError:
-                print(f"Error: Please enter a valid number. {ct.BELL}")
+                text = f"[X] Error: Please enter a valid number. {ct.BELL}"
+                display.print(text, colors['error'])
 
     def menu_preprocessing(self):
         """
@@ -52,7 +59,8 @@ class LaunchPreprocessing:
             - Json generation
             - Normalization of masks in 8-bit grayscale format.
         """
-        preprocessing_menu = sl.Menu('Preprocessing', style = 'Unicode')
+
+        preprocessing_menu = menu.Menu('Preprocessing')
         while True:
             preprocessing_menu.display_menu()
             choice = preprocessing_menu.selection()
@@ -73,7 +81,8 @@ class LaunchPreprocessing:
         """
         Generates a JSON file containing statistics about the datasets.
         """
-        print("\n[ Json Generation Mode ]")
+
+        vf.print_box("Json Generation")
 
         report_json = re.ErrorReport()
         if data_dir is None:
@@ -82,7 +91,7 @@ class LaunchPreprocessing:
         if select :
             percentage_to_process = 1.0
         else :
-            percentage_to_process = self.input_percentage("Enter a percentage between 1 & 100")
+            percentage_to_process = self.input_percentage("Please enter a number between 1 and 100")
 
         if file_name_report is None:
             file_name_report = os.path.join(data_dir, '', 'data_stats.json')
@@ -100,8 +109,8 @@ class LaunchPreprocessing:
 
         if report_json.is_report() == 0 :
             print("[!] Starting Json generation")
-            json_generation = js.DatasetProcessor(
-                                    js.DatasetProcessorConfig(
+            json_generation = dataset_processor.DatasetProcessor(
+                                    dataset_processor.DatasetProcessorConfig(
                                         parent_dir = data_dir,
                                         subfolders=valid_subfolders,
                                         json_file=file_name_report,
@@ -113,18 +122,16 @@ class LaunchPreprocessing:
             except (IOError, ValueError) as e:
                 print(e)
 
-        report_json.status("Json Generation Mode")
+        report_json.status("Json Generation")
 
     def launch_normalisation(self):
         """
         Normalization of masks in 8-bit grayscale format
         """
-        print("\n[ Normalization Mode ]")
+        vf.print_box("Data Normalization")
 
         report_normal = re.ErrorReport()
-
         data_dir = vf.get_path("Enter the data directory")
-
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
         valid_subfolders = []
@@ -135,21 +142,26 @@ class LaunchPreprocessing:
                 path = os.path.join(data_dir, f, 'masks')
                 vf.validate_subfolders(path, f, valid_subfolders, report_normal,
                                     folder_type='masks')
-
+            # # rename masks to raw_masks
+            for f in valid_subfolders:
+                old_directory = os.path.join(data_dir, f, 'masks')
+                new_directory = os.path.join(data_dir, f, 'raw_masks')
+                if not os.path.exists(new_directory):
+                    os.rename(old_directory, new_directory)
 
         if report_normal.is_report() == 0 :
-            print("[!] Starting normalization")
+            print("[!] Starting Data normalization")
             for f in valid_subfolders:
                 print(f" - {f} :")
-                in_path = os.path.join(data_dir, f, 'masks')
-                out_path = os.path.join(data_dir, f, 'normalized')
+                in_path = os.path.join(data_dir, f, 'raw_masks')
+                out_path = os.path.join(data_dir, f, 'masks')
                 os.makedirs(out_path, exist_ok=True)
 
-                normalizer = no.ImageNormalizer(in_path, out_path, report_normal)
+                normalizer = image_normalizer.ImageNormalizer(in_path, out_path, report_normal)
 
                 try:
                     normalizer.normalize_images()
                 except (IOError, ValueError) as e:
                     print(e)
 
-        report_normal.status("Normalization")
+        report_normal.status("Data Normalization")
