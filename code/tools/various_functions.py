@@ -33,7 +33,7 @@ def get_path_color(prompt, color_key='input'):
     """
     Requests a valid path from the user.
     Displays the prompt in the specified color.
-    If the specified color key is invalid, the prompt will be displayed in white.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
     """
     display = dc.DisplayColor()
 

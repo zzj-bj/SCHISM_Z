@@ -150,8 +150,8 @@ class LaunchTraining:
         initial_condition = True
         report_training = rp.ErrorReport()
 
-        data_dir = vf.get_path("Enter the data directory")
-        run_dir = vf.get_path("Enter the directory to save runs")
+        data_dir = vf.get_path_color("Enter the data directory")
+        run_dir = vf.get_path_color("Enter the directory to save runs")
         path_hyperparameters = vf.get_path("Enter the path to the hyperparameters INI file")
         hyperparameters_path = os.path.join(path_hyperparameters, "hyperparameters.ini")
         if not os.path.exists(hyperparameters_path):
@@ -211,7 +211,7 @@ class LaunchTraining:
                                     f"{e}")
             except ValueError as e:
                 report_training.add(" - hyperparameters :", f"{e}" )
-            # except Exception as e:
-            #     report_training.add(" - Other defects ", f"{e}")
+            except Exception as e:
+                report_training.add(" - Other defects ", f"{e}")
 
         report_training.status("Training")

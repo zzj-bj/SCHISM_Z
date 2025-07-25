@@ -11,6 +11,8 @@ and saves the results in a JSON file.
 @author: Pierre.FANCELLI
 """
 from dataclasses import dataclass
+from dataclasses import asdict
+
 import os
 import json
 import numpy as np
@@ -18,7 +20,7 @@ import cv2
 import torch
 from tqdm import tqdm
 
-from dataclasses import asdict
+
 #---------------------------------------------------------------------------
 
 @dataclass
@@ -41,7 +43,7 @@ class DatasetProcessor:
     You can specify the percentage of data to be included.
     """
     def __init__(self, dataset_processor_config: DatasetProcessorConfig):
-        self.config = asdict(dataset_processor_config) 
+        self.config = asdict(dataset_processor_config)
         self.results = {}
 
     def add_to_report(self, text, who):
@@ -103,7 +105,10 @@ class DatasetProcessor:
         Raises:
             Exception: If an error occurs while processing the images.
         """
-        image_files = self._get_image_files(folder_path)
+
+        image_files = [f for f in sorted(os.listdir(folder_path))
+                if f.lower().endswith(('.tiff', '.tif'))]
+
         num_items_to_process = int(len(image_files) * self.config["percentage_to_process"])
 
         num_items_to_process = min(num_items_to_process, len(image_files))
@@ -129,7 +134,8 @@ class DatasetProcessor:
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             pixel_sum += torch.sum(torch.tensor(image, dtype=torch.float32), dim=(0, 1))
-            pixel_sum_squared += torch.sum(torch.tensor(image, dtype=torch.float32) ** 2, dim=(0, 1))
+            pixel_sum_squared += torch.sum(torch.tensor(image, dtype=torch.float32) ** 2,
+                                            dim=(0, 1))
             pixel_count += image.shape[0] * image.shape[1]
 
         mean = pixel_sum / pixel_count
@@ -143,21 +149,4 @@ class DatasetProcessor:
         mean = (mean / 255).tolist()
         std_dev = (std_dev / 255).tolist()
 
-        return mean, std_dev 
-
-
-    def _get_image_files(self, folder_path):
-        """
-       Retrieve a sorted list of image files from a specified folder.
-
-       This method filters the contents of the folder to include only image
-       files with specific extensions.
-
-       Args:
-           folder_path (str): The path to the folder to search for image files.
-
-       Returns:
-           list: A sorted list of image file names.
-       """
-        return [f for f in sorted(os.listdir(folder_path))
-                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))]
+        return mean, std_dev

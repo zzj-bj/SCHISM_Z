@@ -9,8 +9,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-import cv2
-import torch
+from PIL import Image
 
 #=============================================================================
 # pylint: disable=too-few-public-methods
@@ -35,7 +34,7 @@ class ImageNormalizer:
 
             try:
                 # Load the image and convert it to grayscale
-                masks = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
+                masks = np.array(Image.open(file).convert('L'))
 
                 # Retrieve the unique classes in the image
                 unique_classes = np.unique(masks)
@@ -44,22 +43,17 @@ class ImageNormalizer:
                 class_mapping = {value: int(np.linspace(0, 255, len(unique_classes))[i]) for i,
                                  value in enumerate(unique_classes)}
 
-                # Convert masks to a PyTorch tensor
-                masks_tensor = torch.tensor(masks,
-                                    device='cuda' if torch.cuda.is_available() else 'cpu')
-
                 # Apply the mapping using vectorization
-                compliant_masks = torch.zeros_like(masks_tensor, dtype=torch.uint8)
+                compliant_masks = np.zeros_like(masks, dtype=np.uint8)
                 for value, scaled_value in class_mapping.items():
-                    compliant_masks[masks_tensor == value] = scaled_value
+                    compliant_masks[masks == value] = scaled_value
 
-                # Convert the tensor back to a NumPy array
-                normalized_image = compliant_masks.cpu().numpy().astype(np.uint8)
+                # Create a new image from the compliant masks
+                normalized_image = Image.fromarray(compliant_masks)
 
-                # Save the normalized image using OpenCV
+                # Save the normalized image
                 name, ext = os.path.splitext(os.path.basename(file))
-                cv2.imwrite(os.path.join(self.output_path, f"{name}{ext}"), normalized_image)
+                normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
 
             except (IOError, ValueError) as e:
                 print(f"\n{e}")
-                
