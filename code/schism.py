@@ -5,9 +5,9 @@ import sys
 
 import torch
 
-from tools import menu as sl
-from tools import display_color as dc
 
+from tools import menu
+from tools import display_color as dc
 from tools import various_functions as vf
 from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
@@ -29,7 +29,7 @@ def main():
     else:
         display.print("CUDA is not available! Running on CPU.\n", colors['warning'])
 
-    main_menu = sl.Menu('MAIN')
+    main_menu = menu.Menu('MAIN')
     while True:
         main_menu.display_menu()
         choice = main_menu.selection()

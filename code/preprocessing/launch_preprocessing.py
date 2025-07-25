@@ -20,11 +20,11 @@ from tools import various_functions as vf
 from tools import display_color as dc
 from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
-from tools import menu as sl
+from tools import menu
 
 
-from preprocessing import image_normalizer as no
-from preprocessing import dataset_processor as js
+from preprocessing import image_normalizer
+from preprocessing import dataset_processor
 
 #=============================================================================
 
@@ -60,7 +60,7 @@ class LaunchPreprocessing:
             - Normalization of masks in 8-bit grayscale format.
         """
 
-        preprocessing_menu = sl.Menu('Preprocessing', style = 'Unicode')
+        preprocessing_menu = menu.Menu('Preprocessing')
         while True:
             preprocessing_menu.display_menu()
             choice = preprocessing_menu.selection()
@@ -108,8 +108,8 @@ class LaunchPreprocessing:
 
         if report_json.is_report() == 0 :
             print("[!] Starting Json generation")
-            json_generation = js.DatasetProcessor(
-                                    js.DatasetProcessorConfig(
+            json_generation = dataset_processor.DatasetProcessor(
+                                    dataset_processor.DatasetProcessorConfig(
                                         parent_dir = data_dir,
                                         subfolders=valid_subfolders,
                                         json_file=file_name_report,
@@ -156,11 +156,11 @@ class LaunchPreprocessing:
                 out_path = os.path.join(data_dir, f, 'masks')
                 os.makedirs(out_path, exist_ok=True)
 
-                normalizer = no.ImageNormalizer(in_path, out_path, report_normal)
+                normalizer = image_normalizer.ImageNormalizer(in_path, out_path, report_normal)
 
                 try:
                     normalizer.normalize_images()
                 except (IOError, ValueError) as e:
                     print(e)
 
-        report_normal.status("Normalization")
+        report_normal.status("Data Normalization")

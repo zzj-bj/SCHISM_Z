@@ -86,4 +86,6 @@ DISPLAY_COLORS = {
     'input': (153, 204, 51), # Light Green
     'ok': (51, 153, 0), # Green
     'text': (255, 255, 255), # White
+    'info': (51, 153, 255), # Light Blue
+    'title': (153, 51, 204), # Purple
 }

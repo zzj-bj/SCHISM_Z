@@ -86,6 +86,7 @@ class DatasetProcessor:
         with open(self.config["json_file"], "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
 
+
     def calculate_mean_and_std_rgb(self, folder_path):
         """
         Calculate the mean and standard deviation of RGB values for images in a specified folder.
@@ -111,10 +112,12 @@ class DatasetProcessor:
         indices_to_process = np.random.choice(len(image_files), num_items_to_process, replace=False)
 
         pixel_sum = torch.zeros(3, dtype=torch.float32)
+        pixel_sum_squared = torch.zeros(3, dtype=torch.float32)
         pixel_count = 0
+
         for idx in tqdm(indices_to_process, ncols=100,
-                   bar_format="   Mean     : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                   ):
+                    bar_format="  Mean & std_dev :  {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                    ):
 
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
@@ -127,30 +130,22 @@ class DatasetProcessor:
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             pixel_sum += torch.sum(torch.tensor(image, dtype=torch.float32), dim=(0, 1))
+            pixel_sum_squared += torch.sum(torch.tensor(image, dtype=torch.float32) ** 2, dim=(0, 1))
             pixel_count += image.shape[0] * image.shape[1]
 
         mean = pixel_sum / pixel_count
+        mean_squared = pixel_sum_squared / pixel_count
 
-        pixel_variance = torch.zeros(3, dtype=torch.float32)
-        for idx in tqdm(indices_to_process, ncols=100,
-                   bar_format="   Variance : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                   ):
-
-            image_path = os.path.join(folder_path, image_files[idx])
-            image = cv2.imread(image_path, cv2.IMREAD_COLOR) # pylint: disable=no-member
-            if image is None:
-                continue
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # pylint: disable=no-member
-            pixel_variance += torch.sum((torch.tensor(image, dtype=torch.float32) - mean) ** 2,
-                                        dim=(0, 1))
-
-        std_dev = torch.sqrt(pixel_variance / pixel_count)
+        # Calculate variance
+        pixel_variance = mean_squared - mean ** 2
+        std_dev = torch.sqrt(pixel_variance)
 
         # Normalize to [0, 1] assuming 8-bit images
         mean = (mean / 255).tolist()
         std_dev = (std_dev / 255).tolist()
 
-        return std_dev, mean
+        return mean, std_dev 
+
 
     def _get_image_files(self, folder_path):
         """

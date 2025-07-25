@@ -527,16 +527,14 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-
-                print(" File 'json' not found ! ")
-                print(" Using default normalization stats.")
-
-                self.config["display"].print(" File 'json' not found ! ", colors['warning'], bold = True)
-                self.config["display"].print(" Using default normalization stats." , colors['warning'])
+                self.config["display"].print(" File 'json' not found ! ",
+                                       colors['warning'], bold = True)
+                self.config["display"].print(" Using default normalization stats." ,
+                                       colors['warning'])
                 text = " File not found. Using file default normalization"
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
-                colo
+
             print(" A Json file has been found. Its data will be used during training.")
 
             try:
@@ -682,17 +680,16 @@ class Training:
         )
 
         pin_memory = self.config["device"] == 'cuda'
-        pin_memory = True
 
         train_loader = DataLoader(train_dataset, batch_size=self.config["batch_size"],
-                                  shuffle=True, num_workers=2,drop_last=True,
-                                  pin_memory=torch.cuda.is_available())
-        val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"],
-                                shuffle=False, num_workers=2, drop_last=True,
-                                pin_memory=torch.cuda.is_available())
-        test_loader = DataLoader(test_dataset, batch_size=10, shuffle=False,
-                                 num_workers=2, drop_last=True,
-                                 pin_memory=torch.cuda.is_available())
+                                  shuffle = True, num_workers = 2, drop_last = True,
+                                  pin_memory = pin_memory)
+        val_loader = DataLoader(val_dataset, batch_size = self.config["batch_size"],
+                                shuffle = False, num_workers = 2, drop_last = True,
+                                pin_memory = pin_memory)
+        test_loader = DataLoader(test_dataset, batch_size=10, shuffle = False,
+                                 num_workers = 2, drop_last = True,
+                                 pin_memory = pin_memory)
 
         self.config["logger"].save_indices_to_file(
             [train_indices, val_indices, test_indices])
@@ -732,11 +729,6 @@ class Training:
         if self.config["device"] == "cuda":
             scaler = GradScaler()
             cudnn.benchmark = True
-
-        # scaler = None
-        # if self.device == "cuda":
-        #     scaler = GradScaler()  # Pas besoin de spécifier 'cuda' ici
-        #     cudnn.benchmark = True
 
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled
