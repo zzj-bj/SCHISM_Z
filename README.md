@@ -26,9 +26,9 @@ SCHISM offers three main functionalities: **Preprocessing**,  **Training** and *
 3. Run the main script:
    ``` python schism.py ```
 4. Navigate through the command-line menu:
-    - Option 1: Preprocessing: Customise your data by computing dataset-specific mean and standard deviation for improved normalisation during training and/or reformat your segmentation masks to match the input format required by SCHISM.
-    - Option 2: Training: Train a new model.
-    - Option 3: Inference: Make predictions using a trained model.
+    - Option 1- Preprocessing: Customise your data by computing dataset-specific mean and standard deviation for improved normalisation during training and/or reformat your segmentation masks to match the input format required by SCHISM.
+    - Option 2- Training: Train a new model.
+    - Option 3- Inference: Make predictions using a trained model.
 
 ---
 ### Preprocessing workflow
@@ -51,7 +51,7 @@ Two available options :
 ### Inference workflow
 To make predictions:
 1. Use trained weights: Ensure the trained model weights are saved from the training phase.
-2. Prepare the dataset for prediction: Organise the data in a compatible format.
+2. Prepare the dataset for prediction: Ensure your data is structured in the format required by SCHISM for inference. See the [Data preparation](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation) section for details.
 3. Run the inference command: Launch the prediction process, then select the training option and specify:
     - The folder containing trained weights.
     - The dataset for prediction.
@@ -59,9 +59,9 @@ To make predictions:
 Predictions on the user's data will be saved in a directory named after the metric used during inference (e.g., `preds_X`, where `X` is the name of the selected evaluation metric).
 
 ---
-## :scroll: INI File Setup
+## :scroll: .ini configuration file
 
-Below is an example of an INI file:
+Below is an example of an `.ini` configuration file. For detailed explanations of the network settings and the full INI specification, see the [INI file documentation](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
 
 ```
 [Model]
@@ -96,7 +96,7 @@ img_res=560
 num_samples=7000
 ```
 
-For information on both the network configurations and the INI file setup, please refer to [this page](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
+
 
 ---
 ## 👾 Data preparation
@@ -138,7 +138,7 @@ data/  <--- Select this folder for normalisation, training, or inference
 - **learning_curves.png**: Displays the loss and metrics values as a function of the epochs.
 - **model_best_{metric(s)}.pth**: Contains the best model weights based on each metric specified in the INI file.
 - **model_best_loss.pth**: Contains the best model weights based on the loss value.
-- **test/train/val_indices.txt**: Records the indices of images and masks used for training, validation, and testing. These indices are formatted as `[dataset subfolder][image or mask number in the folder]`. For example, if you have 5,000 image/mask pairs, but `num_samples` is set to 3,000 and `val_split` is 0.8, then 2,400 indices will be recorded in `train_indices.txt`, 600 in `val_indices.txt`, and the remaining 2,000 in `test_indices.txt`.
+- **test/train/val_indices.txt**: Saves the indices of images and masks used for training, validation, and testing. These indices are formatted as `[dataset subfolder][image or mask number in the folder]`. For example, if you have 5,000 image/mask pairs, but `num_samples` is set to 3,000 and `val_split` is 0.8, then 2,400 indices will be recorded in `train_indices.txt`, 600 in `val_indices.txt`, and the remaining 2,000 in `test_indices.txt`.
 
 ---
 ## :heart_on_fire: Contributions
