@@ -16,35 +16,26 @@ SCHISM stands for _Semantic Classification of High-resolution Imaging for Scanne
 ---
 ## :question: How to use
 
-SCHISM offers three main functionalities: **Preprocesing** ,  **Training** and **Inference**.
-the module 'Preprocesing' has two menus 'Json generation' and 'Normalization' 
+SCHISM offers three main functionalities: **Preprocessing**,  **Training** and **Inference**.
 
 ### General Steps
-1. Organize your data in the required structure (see Data Preparation).
+1. Organise your data in the required structure (see Data Preparation).
 2. Set up an INI configuration file (see INI File Setup).
 3. Run the main script:
    ``` python schism.py ```
 4. Navigate through the command-line menu:
-    - Option 1: Preprocessing 
-    - Option 2: Train a new model.
-    - Option 3: Make predictions using a trained model.
-5. The option '1: Preprocessing' opens a new menu. This new menu allows you to generate a file in 'Json' format or to normalize masks.
+    - Option 1: Preprocessing: Customise your data by computing dataset-specific mean and standard deviation for improved normalisation during training and/or reformat your segmentation masks to match the input format required by SCHISM.
+    - Option 2: Training: train a new model.
+    - Option 3: Inference: make predictions using a trained model.
+
 ---
-### Preprocesing
-In this menu, we have access to two options that allow us to:
-    - Json generation: in development
-    - Normalization: creation of a grayscale image (0-255) in 8-bit format from a mask
+### Preprocessing workflow
+Two available options :
+   - JSON generation: Compute the mean and standard deviation from part or all of your dataset. The results will be saved as a JSON file in your dataset folder.
+   - Normalisation: Process your data to produce SCHISM-compatible segmentation masks. The original `masks` folder will be renamed to `raw_masks`, and the new, normalised masks will be saved in a newly created `masks` folder.
 
-### - Json generation
-    This module is in development    
-
-###  - Normalization
-1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).    
-2. run the mormalization command: Launch the preprocessing process, then lauch the normalization and specify:
-    - The dataset directory (presented below).
-3. During the normalization process, a directory named 'normalized' is created in each subdirectory. This is where the normalized images will be stored.If the directory does not exist, it will be created. Otherwise, the existing directory will be used. When creating the images, any images with the same name will be replaced.
-4. At the end of the normalization process, a new organization for the subdirectories is obtained (see below).
-
+:warning: Input data must follow the format described in the [Data Preparation](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation) section of the documentation.
+    
 ---
 ### Training Workflow
 1. Prepare the dataset: Ensure the dataset is organized according to the required directory structure (presented below).
