@@ -12,7 +12,7 @@ from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 
 # Initialiser colorama
-init(autoreset=True)    
+init(autoreset=True)
 
 #==============================================================================
 def rgb_to_ansi(rgb):
@@ -51,14 +51,13 @@ def get_path_color(prompt, color_key='input'):
     while True:
         # Convert the input color from DISPLAY_COLORS to ANSI
         input_color = rgb_to_ansi(color)
-        # Affiche l'invite en couleur
+        # Displays the prompt in color
         colored_prompt = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
         path = input(colored_prompt).strip()
         if os.path.exists(path):
             return path
         text = f"[X] Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
-
 
 
 def answer_yes_or_no(message):
