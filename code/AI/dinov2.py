@@ -11,13 +11,15 @@ and can be quantized for efficient inference.
 from dataclasses import dataclass
 import torch
 from torch import nn
-from transformers import AutoModel, BitsAndBytesConfig
+from transformers import AutoModel
+from transformers.utils.quantization_config import BitsAndBytesConfig 
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from AI.linear_head import LinearHead
 from AI.linear_head import LinearHeadConfig
 from AI.cnn_head import CNNHead
 from AI.cnn_head import CNNHeadConfig
 
+from dataclasses import asdict
 
 @dataclass
 class DinoV2SegmentorConfig:
@@ -77,24 +79,13 @@ class DinoV2Segmentor(nn.Module):
 				dinov2_segmentor_config: DinoV2SegmentorConfig
 				):
         super().__init__()
-        assert dinov2_segmentor_config.size in self.emb_size, "Invalid size embedding size"
-        self.config = {
-            "inference_mode": dinov2_segmentor_config.inference_mode,
-            "linear_head": dinov2_segmentor_config.linear_head,
-            "channels": dinov2_segmentor_config.channels,
-            "num_classes": dinov2_segmentor_config.num_classes,
-            "k_size": dinov2_segmentor_config.k_size,
-            "activation": dinov2_segmentor_config.activation.lower(),
-            "size": dinov2_segmentor_config.size,
-            "embedding_size": self.emb_size[dinov2_segmentor_config.size],
-            "n_features": dinov2_segmentor_config.n_features,
-            "peft": dinov2_segmentor_config.peft,
-            "quantize": dinov2_segmentor_config.quantize,
-            "r": dinov2_segmentor_config.r,
-            "lora_alpha": dinov2_segmentor_config.lora_alpha,
-            "lora_dropout": dinov2_segmentor_config.lora_dropout,
-        }
 
+        self.config = asdict(dinov2_segmentor_config)
+        self.config["embedding_size"] = self.emb_size[self.config["size"]]
+        assert dinov2_segmentor_config.size in self.emb_size, "Invalid size embedding size"
+        
+        # Set the device
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if self.config["quantize"] :
             self.quantization_config = BitsAndBytesConfig(
@@ -105,9 +96,11 @@ class DinoV2Segmentor(nn.Module):
 			)
             self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.config["size"]}',
                                                       quantization_config=self.quantization_config)
+            self.backbone.to(device)
             self.backbone = prepare_model_for_kbit_training(self.backbone)
         else:
             self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.config["size"]}')
+            self.backbone.to(device)
 
         if self.config["peft"]:
             peft_config = LoraConfig(inference_mode=self.config["inference_mode"],
@@ -133,7 +126,9 @@ class DinoV2Segmentor(nn.Module):
                 n_features=self.config["n_features"],
                 activation=self.config["activation"]))
 
-        print(f"Number of parameters:{sum(p.numel() for p in self.parameters() if p.requires_grad)}")
+        print(
+            f"Number of parameters:{sum(p.numel() for p in self.parameters() if p.requires_grad)}"
+        )
 
     def forward(self, x):
         """
