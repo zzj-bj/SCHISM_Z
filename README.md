@@ -27,8 +27,8 @@ SCHISM offers three main functionalities: **Preprocessing**,  **Training** and *
    ``` python schism.py ```
 4. Navigate through the command-line menu:
     - Option 1: Preprocessing: Customise your data by computing dataset-specific mean and standard deviation for improved normalisation during training and/or reformat your segmentation masks to match the input format required by SCHISM.
-    - Option 2: Training: train a new model.
-    - Option 3: Inference: make predictions using a trained model.
+    - Option 2: Training: Train a new model.
+    - Option 3: Inference: Make predictions using a trained model.
 
 ---
 ### Preprocessing workflow
@@ -36,16 +36,16 @@ Two available options :
    - JSON generation: Compute the mean and standard deviation from part or all of your dataset. The results will be saved as a JSON file in your dataset folder.
    - Normalisation: Process your data to produce SCHISM-compatible segmentation masks. The original `masks` folder will be renamed to `raw_masks`, and the new, normalised masks will be saved in a newly created `masks` folder.
 
-:warning: Input data must follow the format described in the [Data Preparation](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation) section of the documentation.
+:warning: Input data must follow the format described in the [Data preparation](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation) section of the documentation.
     
 ---
 ### Training workflow
 1. Prepare the dataset: Ensure the dataset is organised according to the required directory structure (presented below).
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
-    - The dataset directory: contains one or more datasets. The ordering and sorting of the data are explained later in this readme.
-    - The output folder: the space where, amongst others, a folder containing the model weights will be created after training. The files saved in the folder are later described in this readme.
-    - The path to the INI file.
+    - The dataset directory: Contains one or more datasets. The ordering and sorting of the data are explained [later in this README](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation).
+    - The output folder: This is the workspace where all generated results are stored. After training, it will include the model weights, along with other relevant outputs. Each file within output/ is described in detail [later in this README](https://github.com/FloFive/SCHISM/tree/Pierre_dev?tab=readme-ov-file#-training-output-files). 
+    - The path to the INI file ([described here](https://github.com/FloFive/SCHISM/tree/Pierre_dev?tab=readme-ov-file#scroll-ini-file-setup)).
 
 ---
 ### Inference workflow
