@@ -131,7 +131,7 @@ data/  <--- Select this folder for normalisation, training, or inference
 
  Upon completing a training session, several files will be generated in the weight folder:
 
-- **data_stats.json**: The standard deviation and mean values used to normalize the images.
+- **data_stats.json**: The standard deviation and mean values used to normalise the images.
 - **hyperparameters.ini**: A copy of the INI file used for the training session.
 - **learning_curves.png**: Displays the loss and metrics values as a function of the epochs.
 - **model_best_{metric(s)}.pth**: Contains the best model weights based on each metric specified in the INI file.
@@ -141,6 +141,12 @@ data/  <--- Select this folder for normalisation, training, or inference
 ---
 ## :heart_on_fire: Contributions
 Contributions are welcome! Please fork the repository and submit a pull request.
+
+---
+## Found a bug? :disappointed:
+If you spot a bug or have a problem running the code, please open an issue.
+If you have any questions or need further assistance, don't hesitate to contact Florent Brondolo ([florent.brondolo@akkodis.com](mailto:florent.brondolo@akkodis.com))
+or Samuel Beaussant ([samuel.beaussant@akkodis.com](mailto:samuel.beaussant@akkodis.com)).
 
 ---
 ## 📚 Citation / Bibtex
