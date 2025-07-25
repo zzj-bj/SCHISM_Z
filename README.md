@@ -145,7 +145,7 @@ data/  <--- Select this folder for normalisation, training, or inference
 Contributions are welcome! Please fork the repository and submit a pull request.
 
 ---
-## Found a bug? :disappointed:
+## :disappointed: Found a bug? 
 If you spot a bug or have a problem running the code, please open an issue.
 If you have any questions or need further assistance, don't hesitate to contact Florent Brondolo ([florent.brondolo@akkodis.com](mailto:florent.brondolo@akkodis.com))
 or Samuel Beaussant ([samuel.beaussant@akkodis.com](mailto:samuel.beaussant@akkodis.com)).
