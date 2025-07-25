@@ -12,6 +12,7 @@ import torch.nn.functional as nn_func
 import torchvision
 from torchvision.datasets import VisionDataset
 from patchify import patchify
+from tools import constants
 
 @dataclass
 class TiffDatasetLoaderConfig:
@@ -446,7 +447,7 @@ class TiffDatasetLoader(VisionDataset):
         if "default" in self.config["data_stats"]:
             return self.config["data_stats"]["default"]
         
-        return (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+        return constants.DEFAULT_MEAN_STD, constants.DEFAULT_MEAN_STD
 
     def __len__(self):
         """

@@ -15,6 +15,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from AI.activation_mixin import ActivationMixin
+from dataclasses import asdict
 
 @dataclass
 class UnetVanillaConfig:
@@ -50,13 +51,7 @@ class UnetVanilla(nn.Module,ActivationMixin):
                  unet_vanilla_config: UnetVanillaConfig
                  ):
         super().__init__()
-        self.config = {
-            "n_block" : unet_vanilla_config["n_block"],
-            "channels" : unet_vanilla_config["channels"],
-            "num_classes" : unet_vanilla_config["num_classes"],
-            "k_size" : unet_vanilla_config["k_size"],
-            "activation" : unet_vanilla_config["activation"].lower(),
-            }
+        self.config = asdict(unet_vanilla_config)
 
         self.encoder_blocks = nn.ModuleList()
         self.max_pools = nn.ModuleList()

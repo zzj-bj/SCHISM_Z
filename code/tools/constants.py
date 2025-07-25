@@ -89,3 +89,5 @@ DISPLAY_COLORS = {
     'info': (51, 153, 255), # Light Blue
     'title': (153, 51, 204), # Purple
 }
+
+DEFAULT_MEAN_STD = (0.5, 0.5, 0.5)

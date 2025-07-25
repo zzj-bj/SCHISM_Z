@@ -18,7 +18,7 @@ import cv2
 import torch
 from tqdm import tqdm
 
-
+from dataclasses import asdict
 #---------------------------------------------------------------------------
 
 @dataclass
@@ -41,13 +41,7 @@ class DatasetProcessor:
     You can specify the percentage of data to be included.
     """
     def __init__(self, dataset_processor_config: DatasetProcessorConfig):
-        self.config = {
-            "parent_dir" : dataset_processor_config.parent_dir,
-            "subfolders" : dataset_processor_config.subfolders,
-            "json_file" : dataset_processor_config.json_file,
-            "report" : dataset_processor_config.report,
-            "percentage_to_process" : dataset_processor_config.percentage_to_process,
-        }
+        self.config = asdict(dataset_processor_config) 
         self.results = {}
 
     def add_to_report(self, text, who):

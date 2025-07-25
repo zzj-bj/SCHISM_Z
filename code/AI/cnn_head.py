@@ -13,6 +13,8 @@ from torch import nn
 import torch.nn.functional as F
 from AI.activation_mixin import ActivationMixin
 
+from dataclasses import asdict
+
 @dataclass
 class CNNHeadConfig:
     """
@@ -40,16 +42,7 @@ class CNNHead(nn.Module, ActivationMixin):
         cnn_head_config : CNNHeadConfig
     ):
         super().__init__()
-
-        self.config =  {
-            "n_features": cnn_head_config.n_features,
-            "embedding_size": cnn_head_config.embedding_size * cnn_head_config.n_features,
-            "n_block": 4,
-            "channels": cnn_head_config.channels,
-            "k_size": cnn_head_config.k_size,
-            "num_classes": cnn_head_config.num_classes,
-            "activation": cnn_head_config.activation,
-        }
+        self.config =  asdict(cnn_head_config)
 
         self.input_conv = nn.Conv2d(
             in_channels=self.config["embedding_size"],

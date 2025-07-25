@@ -14,6 +14,8 @@ from torch import nn
 import torch.nn.functional as nn_func
 from AI.activation_mixin import ActivationMixin
 
+from dataclasses import asdict
+
 @dataclass
 class UnetSegmentorConfig:
     """
@@ -51,14 +53,7 @@ class UnetSegmentor(nn.Module,ActivationMixin):
                  unet_segmentor_config: UnetSegmentorConfig
                  ):
         super().__init__()
-        self.config = {
-            "n_block" : unet_segmentor_config.n_block,
-            "channels" : unet_segmentor_config.channels,
-            "num_classes" : unet_segmentor_config.num_classes,
-            "p" : unet_segmentor_config.p,
-            "k_size" : unet_segmentor_config.k_size,
-            "activation" : unet_segmentor_config.activation.lower(),
-            }
+        self.config = asdict(unet_segmentor_config) 
 
         self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.config["channels"],
                                 kernel_size=self.config["k_size"], padding=1)

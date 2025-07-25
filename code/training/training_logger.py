@@ -12,6 +12,7 @@ import configparser
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from dataclasses import asdict
 
 @dataclass
 # pylint: disable=too-many-instance-attributes
@@ -37,17 +38,7 @@ class TrainingLogger:
         Args:
             training_logger_config (TrainingLoggerConfig): Configuration for the logger.
         """
-        self.config = {
-            "save_directory": training_logger_config.save_directory,
-            "num_classes": training_logger_config.num_classes,
-            "model_params": training_logger_config.model_params,
-            "optimizer_params": training_logger_config.optimizer_params,
-            "scheduler_params": training_logger_config.scheduler_params,
-            "loss_params": training_logger_config.loss_params,
-            "training_params": training_logger_config.training_params,
-            "data": training_logger_config.data
-        }
-
+        self.config = asdict(training_logger_config)
         os.makedirs(self.config["save_directory"], exist_ok=True)
 
     def save_indices_to_file(self, indices_list):
