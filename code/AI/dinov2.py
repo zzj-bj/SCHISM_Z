@@ -80,13 +80,9 @@ class DinoV2Segmentor(nn.Module):
 				):
         super().__init__()
 
-        # Initialize configuration
         self.config = asdict(dinov2_segmentor_config)
         assert self.config["size"] in self.emb_size.keys(), "Invalid size embedding size"
         self.config["embedding_size"] = self.emb_size[str(self.config["size"])]
-
-        # Set the device
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if self.config["quantize"] :
             self.quantization_config = BitsAndBytesConfig(
@@ -97,11 +93,9 @@ class DinoV2Segmentor(nn.Module):
 			)
             self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.config["size"]}',
                                                       quantization_config=self.quantization_config)
-            self.backbone.to(device)
             self.backbone = prepare_model_for_kbit_training(self.backbone)
         else:
             self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.config["size"]}')
-            self.backbone.to(device)
 
         if self.config["peft"]:
             peft_config = LoraConfig(inference_mode=self.config["inference_mode"],
