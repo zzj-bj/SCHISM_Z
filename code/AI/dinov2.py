@@ -80,11 +80,10 @@ class DinoV2Segmentor(nn.Module):
 				):
         super().__init__()
 
-        # Initialize configuration
         self.config = asdict(dinov2_segmentor_config)
-        assert self.config["size"] in self.emb_size.keys(), "Invalid size embedding size"
-        self.config["embedding_size"] = self.emb_size[str(self.config["size"])]
-
+        self.config["embedding_size"] = self.emb_size[self.config["size"]]
+        assert dinov2_segmentor_config.size in self.emb_size, "Invalid size embedding size"
+        
         # Set the device
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

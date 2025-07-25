@@ -9,7 +9,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-from PIL import Image
+import cv2
 import torch
 
 #=============================================================================
@@ -35,7 +35,7 @@ class ImageNormalizer:
 
             try:
                 # Load the image and convert it to grayscale
-                masks = np.array(Image.open(file).convert('L'))
+                masks = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
 
                 # Retrieve the unique classes in the image
                 unique_classes = np.unique(masks)
@@ -53,12 +53,13 @@ class ImageNormalizer:
                 for value, scaled_value in class_mapping.items():
                     compliant_masks[masks_tensor == value] = scaled_value
 
-                # Create a new image from the compliant masks
-                normalized_image = Image.fromarray(compliant_masks.cpu().numpy().astype(np.uint8))
+                # Convert the tensor back to a NumPy array
+                normalized_image = compliant_masks.cpu().numpy().astype(np.uint8)
 
-                # Save the normalized image
+                # Save the normalized image using OpenCV
                 name, ext = os.path.splitext(os.path.basename(file))
-                normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
+                cv2.imwrite(os.path.join(self.output_path, f"{name}{ext}"), normalized_image)
 
             except (IOError, ValueError) as e:
                 print(f"\n{e}")
+                
