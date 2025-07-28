@@ -1,4 +1,4 @@
-    # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # pylint: disable=no-member
 """
 This script processes datasets to calculate the mean
@@ -17,7 +17,6 @@ import os
 import json
 import numpy as np
 import cv2
-import torch
 from tqdm import tqdm
 
 #---------------------------------------------------------------------------
@@ -104,7 +103,6 @@ class Json:
         Raises:
             Exception: If an error occurs while processing the images.
         """
-
         image_files = [f for f in sorted(os.listdir(folder_path))
                 if f.lower().endswith(('.tiff', '.tif'))]
 
@@ -114,13 +112,13 @@ class Json:
         np.random.seed(57)
         indices_to_process = np.random.choice(len(image_files), num_items_to_process, replace=False)
 
-        pixel_sum = torch.zeros(3, dtype=torch.float32)
-        pixel_sum_squared = torch.zeros(3, dtype=torch.float32)
+        pixel_sum = np.zeros(3, dtype=np.float32)
+        pixel_sum_squared = np.zeros(3, dtype=np.float32)
         pixel_count = 0
 
         for idx in tqdm(indices_to_process, ncols=100,
-                    bar_format="  Mean & std_dev :  {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                    ):
+                        bar_format="   Mean & Variance : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                        ):
 
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
@@ -131,10 +129,9 @@ class Json:
                 print(f"Unable to load image at path: {image_path}")
                 continue
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            pixel_sum += torch.sum(torch.tensor(image, dtype=torch.float32), dim=(0, 1))
-            pixel_sum_squared += torch.sum(torch.tensor(image, dtype=torch.float32) ** 2,
-                                            dim=(0, 1))
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
+            pixel_sum += np.sum(image, axis=(0, 1))
+            pixel_sum_squared += np.sum(image ** 2, axis=(0, 1))
             pixel_count += image.shape[0] * image.shape[1]
 
         mean = pixel_sum / pixel_count
@@ -142,10 +139,10 @@ class Json:
 
         # Calculate variance
         pixel_variance = mean_squared - mean ** 2
-        std_dev = torch.sqrt(pixel_variance)
+        std_dev = np.sqrt(np.maximum(pixel_variance, 0))
 
         # Normalize to [0, 1] assuming 8-bit images
         mean = (mean / 255).tolist()
         std_dev = (std_dev / 255).tolist()
 
-        return mean, std_dev
+        return mean, std_dev    
