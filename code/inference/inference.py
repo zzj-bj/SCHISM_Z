@@ -132,7 +132,8 @@ class Inference:
             if select :
                 lp.LaunchPreprocessing().launch_json_generation(
                     self.config["data_dir"],
-                    os.path.join(self.config["run_dir"], '', 'data_stats.json')
+                    os.path.join(self.config["run_dir"], '', 'data_stats.json'),
+                    True
                 )
                 self.config["data_stats"] = self.load_data_stats_from_json()
             else :

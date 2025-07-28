@@ -77,7 +77,7 @@ class LaunchPreprocessing:
             elif choice == 3:
                 return
 
-    def launch_json_generation(self,data_dir=None,file_name_report=None):
+    def launch_json_generation(self,data_dir=None,file_name_report=None,append=False):
         """
         Generates a JSON file containing statistics about the datasets.
         """
@@ -118,7 +118,7 @@ class LaunchPreprocessing:
                                         percentage_to_process=percentage_to_process
                                     ))
             try:
-                json_generation.process_datasets()
+                json_generation.process_datasets(append=append)
             except (IOError, ValueError) as e:
                 print(e)
 

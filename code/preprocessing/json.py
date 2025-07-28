@@ -52,7 +52,7 @@ class Json:
         if self.config["report"] is not None:
             self.config["report"].add(text, who)
 
-    def process_datasets(self, add_default=False):
+    def process_datasets(self, add_default=False, append = False):
         """
         Process each dataset in the specified subfolders.
 
@@ -61,6 +61,10 @@ class Json:
         for the images in that directory.
         Results are stored in the `self.results` dictionary,
         and any warnings or errors are reported.
+
+        Args:
+            add_default (bool): If True, adds default values for 'mean' and 'std_dev' if not present.
+            append (bool): If True, appends results to an existing JSON file instead of overwriting it.
 
         Raises:
             Exception: If an error occurs during the processing of a dataset.
@@ -82,6 +86,13 @@ class Json:
             # Add default values for 'mean' and 'std_dev' if not present
             if "default" not in self.results:
                 self.results["default"] = [[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
+
+        if append:
+            # Load existing results if appending
+            if os.path.exists(self.config["json_file"]):
+                with open(self.config["json_file"], "r", encoding="utf-8") as json_file:
+                    existing_results = json.load(json_file)
+                self.results.update(existing_results)
 
         with open(self.config["json_file"], "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
