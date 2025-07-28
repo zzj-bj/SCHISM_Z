@@ -150,9 +150,9 @@ class LaunchTraining:
         initial_condition = True
         report_training = rp.ErrorReport()
 
-        data_dir = ut.get_path("Enter the data directory")
-        run_dir = ut.get_path("Enter the directory to save runs")
-        path_hyperparameters = ut.get_path("Enter the path to the hyperparameters INI file")
+        data_dir = ut.get_path_color("Enter the data directory")
+        run_dir = ut.get_path_color("Enter the directory to save runs")
+        path_hyperparameters = ut.get_path_color("Enter the path to the hyperparameters INI file")
         hyperparameters_path = os.path.join(path_hyperparameters, "hyperparameters.ini")
         if not os.path.exists(hyperparameters_path):
             initial_condition = False

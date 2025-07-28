@@ -760,11 +760,14 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
-                text =f" - Training {phase} "
-                bar_format = f"{text}: {{n_fmt}}/{{total_fmt}} |{{bar}}| {{percentage:6.2f}}%"
 
-                with tqdm(total=len(self.config["dataloaders"][phase]), ncols=102,
-                          bar_format=bar_format) as pbar:
+                # Use tqdm to create a progress bar
+                bar_width = 10
+                with tqdm(total=len(self.config["dataloaders"][phase]), unit="batch",
+                           leave=True, ncols= bar_width) as pbar:
+                    pbar.set_description(f"{phase.capitalize()} Epoch {epoch}/{self.config['epochs']}")
+                    pbar.set_postfix(loss=0.0, **{metric: 0.0 for metric in display_metrics})
+
 
                     for inputs, labels, weights in self.config["dataloaders"][phase]:
 

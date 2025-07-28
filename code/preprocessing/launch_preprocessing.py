@@ -86,7 +86,7 @@ class LaunchPreprocessing:
 
         report_json = re.ErrorReport()
         if data_dir is None:
-            data_dir = ut.get_path("Enter the data directory")
+            data_dir = ut.get_path_color("Enter the data directory")
         select = ut.answer_yes_or_no("Use all the data (100%) ?")
         if select :
             percentage_to_process = 1.0
@@ -131,7 +131,7 @@ class LaunchPreprocessing:
         ut.print_box("Data Normalization")
 
         report_normal = re.ErrorReport()
-        data_dir = ut.get_path("Enter the data directory")
+        data_dir = ut.get_path_color("Enter the data directory")
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
         valid_subfolders = []
