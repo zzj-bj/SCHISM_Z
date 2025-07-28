@@ -8,7 +8,7 @@ import os
 import re
 
 from tools import error_report as rp
-from tools import various_functions as vf
+from tools import utils as ut
 
 from AI.hyperparameters import Hyperparameters
 from training.training import Training
@@ -113,20 +113,20 @@ class LaunchTraining:
         for f in folder:
             # Control subdirectory 'images'
             images_path = os.path.join(root, f, 'images') # images
-            nb_f_image =vf.validate_subfolders(images_path, f, valid_images, report,
+            nb_f_image =ut.validate_subfolders(images_path, f, valid_images, report,
                                     folder_type='images')
 
             # Control subdirectory 'masks'
             masks_path = os.path.join(root, f, 'masks') # masks
-            nb_f_masks = vf.validate_subfolders(masks_path, f, valid_masks, report,
+            nb_f_masks = ut.validate_subfolders(masks_path, f, valid_masks, report,
                                 folder_type='masks')
 
         valid_subfolders =  list(set(valid_images) & set(valid_masks))
         for f in valid_subfolders:
             images_path = os.path.join(root, f, 'images') # images
             masks_path = os.path.join(root, f, 'masks') # masks
-            nb_f_image = vf.count_tif_files(images_path)
-            nb_f_masks = vf.count_tif_files(masks_path)
+            nb_f_image = ut.count_tif_files(images_path)
+            nb_f_masks = ut.count_tif_files(masks_path)
             if nb_f_image != nb_f_masks :
                 text = " - number of images not equal between 'images/masks' :"
                 report.add(text, f)
@@ -145,14 +145,14 @@ class LaunchTraining:
     def train_model(self):
         """Executes the training process in CLI."""
 
-        vf.print_box("Training")
+        ut.print_box("Training")
 
         initial_condition = True
         report_training = rp.ErrorReport()
 
-        data_dir = vf.get_path("Enter the data directory")
-        run_dir = vf.get_path("Enter the directory to save runs")
-        path_hyperparameters = vf.get_path("Enter the path to the hyperparameters INI file")
+        data_dir = ut.get_path("Enter the data directory")
+        run_dir = ut.get_path("Enter the directory to save runs")
+        path_hyperparameters = ut.get_path("Enter the path to the hyperparameters INI file")
         hyperparameters_path = os.path.join(path_hyperparameters, "hyperparameters.ini")
         if not os.path.exists(hyperparameters_path):
             initial_condition = False

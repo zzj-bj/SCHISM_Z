@@ -11,6 +11,8 @@ and saves the results in a JSON file.
 @author: Pierre.FANCELLI
 """
 from dataclasses import dataclass
+from dataclasses import asdict
+
 import os
 import json
 import numpy as np
@@ -18,14 +20,13 @@ import cv2
 import torch
 from tqdm import tqdm
 
-from dataclasses import asdict
 #---------------------------------------------------------------------------
 
 @dataclass
-class DatasetProcessorConfig:
-    """DatasetProcessorConfig Class for Configuring DatasetProcessor
+class JsonConfig:
+    """JsonConfig Class for Configuring Json Generation
 
-    This class defines the configuration parameters for the DatasetProcessor.
+    This class defines the configuration parameters for the Json.
     It includes parameters such as parent directory, subfolders, JSON file name,
     report object, and percentage of data to process.
     """
@@ -35,13 +36,13 @@ class DatasetProcessorConfig:
     report: object
     percentage_to_process: float = 1.0
 
-class DatasetProcessor:
+class Json:
     """
     This module generates a 'json' file from the provided data.
     You can specify the percentage of data to be included.
     """
-    def __init__(self, dataset_processor_config: DatasetProcessorConfig):
-        self.config = asdict(dataset_processor_config) 
+    def __init__(self, json_config: JsonConfig):
+        self.config = asdict(json_config) 
         self.results = {}
 
     def add_to_report(self, text, who):

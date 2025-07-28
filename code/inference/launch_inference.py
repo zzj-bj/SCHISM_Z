@@ -10,9 +10,9 @@ validates the input, and then runs the inference process using the specified mod
 import os
 from AI.hyperparameters import Hyperparameters
 
-from tools import menu as sl
+from tools import menu
 from tools import error_report as re
-from tools import various_functions as vf
+from tools import utils as ut
 
 from inference.inference import Inference
 
@@ -33,7 +33,7 @@ class LaunchInference:
         Launches the inference process for a trained model.
         """
 
-        vf.print_box("Inference")
+        ut.print_box("Inference")
 
         hyperparameters = None
         report_inference = re.ErrorReport()
@@ -41,8 +41,8 @@ class LaunchInference:
         selected_metric =""
         initial_condition = True
 
-        data_dir = vf.get_path("Enter the directory containing data to predict")
-        run_dir = vf.get_path("Enter the directory containing model weights")
+        data_dir = ut.get_path("Enter the directory containing data to predict")
+        run_dir = ut.get_path("Enter the directory containing model weights")
 
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
         if len(subfolders) == 0 :
@@ -75,7 +75,7 @@ class LaunchInference:
                     else:
                         # Display the Metric available Menu
                         menu_metric = ['Metrics'] + available_metrics
-                        metric_menu = sl.Menu('Dynamic',menu_metric) # , style = 'rounds'
+                        metric_menu = menu.Menu('Dynamic',menu_metric) # , style = 'rounds'
                         metric_menu.display_menu()
                         choice = metric_menu.selection()
                         selected_metric = metrics[choice - 1]
@@ -94,7 +94,7 @@ class LaunchInference:
 
                 for f in subfolders :
                     path = os.path.join(data_dir, f, 'images')
-                    vf.validate_subfolders(path, f, valid_subfolders, report_inference,
+                    ut.validate_subfolders(path, f, valid_subfolders, report_inference,
                                         folder_type='images')
 
         if initial_condition and len(valid_subfolders) != 0 :

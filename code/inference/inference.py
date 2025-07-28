@@ -26,7 +26,7 @@ from AI.paramconverter import ParamConverter
 from AI.model_registry import model_mapping
 from AI.model_registry import model_config_mapping
 
-from tools import various_functions as vf
+from tools import utils as ut
 from preprocessing import launch_preprocessing as lp
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -123,11 +123,12 @@ class Inference:
                 missing_weight[dir] = False
 
         folders_without_weight = [key for key, value in missing_weight.items() if value]
-        print (f"Folders without weight: {folders_without_weight}")
+        if folders_without_weight:
+            print (f"Folders without weight: {folders_without_weight}")
 
         # If there are folders without weight, prompt for JSON generation
         if folders_without_weight:
-            select = vf.answer_yes_or_no("Do you want to launch the JSON generation ?")
+            select = ut.answer_yes_or_no("Do you want to launch the JSON generation ?")
             if select :
                 lp.LaunchPreprocessing().launch_json_generation(
                     self.config["data_dir"],

@@ -8,7 +8,7 @@ import torch
 
 from tools import menu
 from tools import display_color as dc
-from tools import various_functions as vf
+from tools import utils as vf
 from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 

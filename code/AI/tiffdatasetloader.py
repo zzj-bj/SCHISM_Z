@@ -4,6 +4,8 @@ TiffDatasetLoader: A PyTorch Dataset for loading TIFF images and their correspon
 This class handles loading, preprocessing, and patch extraction from TIFF images and masks.
 """
 from dataclasses import dataclass
+from dataclasses import asdict
+
 from typing import Dict, List, Optional, Tuple
 import numpy as np
 from PIL import Image
@@ -61,18 +63,8 @@ class TiffDatasetLoader(VisionDataset):
                 all necessary parameters for the dataset loader.
         """
         super().__init__(transforms=None)
-        self.config = {
-            "data_stats" : tiff_dataset_loader_config.data_stats,
-            "img_data" : tiff_dataset_loader_config.img_data,
-            "mask_data" : tiff_dataset_loader_config.mask_data,
-            "indices" : tiff_dataset_loader_config.indices,
-            "num_classes" : tiff_dataset_loader_config.num_classes,
-            "crop_size" : tiff_dataset_loader_config.crop_size,
-            "img_res" : tiff_dataset_loader_config.img_res,
-            "inference_mode" : tiff_dataset_loader_config.inference_mode,
-            "p" : tiff_dataset_loader_config.p,
-            "ignore_background" : tiff_dataset_loader_config.ignore_background
-        }
+        self.config = asdict(tiff_dataset_loader_config)
+        
         self.image_dims = self.get_image_dimensions()
         if not self.config["inference_mode"]:
             self.class_values = self._compute_class_values()

@@ -8,12 +8,13 @@ activation functions, and the number of output classes.
 @author: Florent.BRONDOLO
 """
 from dataclasses import dataclass
+from dataclasses import asdict
+
 import torch
 from torch import nn
 import torch.nn.functional as F
 from AI.activation_mixin import ActivationMixin
 
-from dataclasses import asdict
 
 @dataclass
 class CNNHeadConfig:
