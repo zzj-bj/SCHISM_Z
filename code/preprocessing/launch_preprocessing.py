@@ -16,7 +16,7 @@ This module allows for the following operations:
 import os
 
 from tools import error_report as re
-from tools import various_functions as vf
+from tools import utils as ut
 from tools import display_color as dc
 from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
@@ -24,7 +24,7 @@ from tools import menu
 
 
 from preprocessing import image_normalizer
-from preprocessing import dataset_processor
+from preprocessing import json
 
 #=============================================================================
 
@@ -82,12 +82,12 @@ class LaunchPreprocessing:
         Generates a JSON file containing statistics about the datasets.
         """
 
-        vf.print_box("Json Generation")
+        ut.print_box("Json Generation")
 
         report_json = re.ErrorReport()
         if data_dir is None:
-            data_dir = vf.get_path_color("Enter the data directory")
-        select = vf.answer_yes_or_no("Use all the data (100%) ?")
+            data_dir = ut.get_path("Enter the data directory")
+        select = ut.answer_yes_or_no("Use all the data (100%) ?")
         if select :
             percentage_to_process = 1.0
         else :
@@ -104,13 +104,13 @@ class LaunchPreprocessing:
         else:
             for f in subfolders :
                 path = os.path.join(data_dir, f, 'images')
-                vf.validate_subfolders(path, f, valid_subfolders, report_json,
+                ut.validate_subfolders(path, f, valid_subfolders, report_json,
                                     folder_type='images')
 
         if report_json.is_report() == 0 :
             print("[!] Starting Json generation")
-            json_generation = dataset_processor.DatasetProcessor(
-                                    dataset_processor.DatasetProcessorConfig(
+            json_generation = json.Json(
+                                    json.JsonConfig(
                                         parent_dir = data_dir,
                                         subfolders=valid_subfolders,
                                         json_file=file_name_report,
@@ -128,10 +128,10 @@ class LaunchPreprocessing:
         """
         Normalization of masks in 8-bit grayscale format
         """
-        vf.print_box("Data Normalization")
+        ut.print_box("Data Normalization")
 
         report_normal = re.ErrorReport()
-        data_dir = vf.get_path_color("Enter the data directory")
+        data_dir = ut.get_path("Enter the data directory")
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
 
         valid_subfolders = []
@@ -140,7 +140,7 @@ class LaunchPreprocessing:
         else:
             for f in subfolders :
                 path = os.path.join(data_dir, f, 'masks')
-                vf.validate_subfolders(path, f, valid_subfolders, report_normal,
+                ut.validate_subfolders(path, f, valid_subfolders, report_normal,
                                     folder_type='masks')
             # # rename masks to raw_masks
             for f in valid_subfolders:

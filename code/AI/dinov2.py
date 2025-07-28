@@ -9,6 +9,8 @@ and can be quantized for efficient inference.
 @author: Florent.BRONDOLO
 """
 from dataclasses import dataclass
+from dataclasses import asdict
+
 import torch
 from torch import nn
 from transformers import AutoModel
@@ -18,8 +20,6 @@ from AI.linear_head import LinearHead
 from AI.linear_head import LinearHeadConfig
 from AI.cnn_head import CNNHead
 from AI.cnn_head import CNNHeadConfig
-
-from dataclasses import asdict
 
 @dataclass
 class DinoV2SegmentorConfig:
@@ -81,8 +81,11 @@ class DinoV2Segmentor(nn.Module):
         super().__init__()
 
         self.config = asdict(dinov2_segmentor_config)
-        assert self.config["size"] in self.emb_size.keys(), "Invalid size embedding size"
-        self.config["embedding_size"] = self.emb_size[str(self.config["size"])]
+        self.config["embedding_size"] = self.emb_size[self.config["size"]]
+        assert dinov2_segmentor_config.size in self.emb_size, "Invalid size embedding size"
+        
+        # Set the device
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if self.config["quantize"] :
             self.quantization_config = BitsAndBytesConfig(
