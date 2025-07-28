@@ -41,8 +41,8 @@ class LaunchInference:
         selected_metric =""
         initial_condition = True
 
-        data_dir = vf.get_path_color("Enter the directory containing data to predict")
-        run_dir = vf.get_path_color("Enter the directory containing model weights")
+        data_dir = ut.get_path_color("Enter the directory containing data to predict")
+        run_dir = ut.get_path_color("Enter the directory containing model weights")
 
         subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
         if len(subfolders) == 0 :
