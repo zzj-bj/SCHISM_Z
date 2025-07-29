@@ -38,8 +38,16 @@ class TrainingLogger:
         Args:
             training_logger_config (TrainingLoggerConfig): Configuration for the logger.
         """
-        self.config = asdict(training_logger_config)
-        os.makedirs(self.config["save_directory"], exist_ok=True)
+        self.save_directory = training_logger_config.save_directory
+        self.num_classes = training_logger_config.num_classes
+        self.model_params = training_logger_config.model_params
+        self.optimizer_params = training_logger_config.optimizer_params
+        self.scheduler_params = training_logger_config.scheduler_params
+        self.loss_params = training_logger_config.loss_params
+        self.training_params = training_logger_config.training_params
+        self.data = training_logger_config.data
+
+        os.makedirs(self.save_directory, exist_ok=True)
 
     def save_indices_to_file(self, indices_list):
         """
@@ -55,7 +63,7 @@ class TrainingLogger:
             "test": indices_list[2],
         }
         for idx_type, idx_list in indices_map.items():
-            file_path = os.path.join(self.config["save_directory"], f'{idx_type}_indices.txt')
+            file_path = os.path.join(self.save_directory, f'{idx_type}_indices.txt')
             with open(file_path, 'w', encoding="utf-8") as f:
                 for subfolder_name, sample_idx in idx_list:
                     f.write(f"{subfolder_name}, {sample_idx}\n")
@@ -74,7 +82,7 @@ class TrainingLogger:
             if key != "default" or len(data_stats) == 1
         }
 
-        json_file_path = os.path.join(self.config["save_directory"], 'data_stats.json')
+        json_file_path = os.path.join(self.save_directory, 'data_stats.json')
         with open(json_file_path, 'w', encoding="utf-8") as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
@@ -87,30 +95,30 @@ class TrainingLogger:
         config = configparser.ConfigParser()
 
         config.add_section('Model')
-        for key, value in self.config["model_params"].items():
+        for key, value in self.model_params.items():
             config.set('Model', key, str(value))
 
         config.add_section('Optimizer')
-        for key, value in self.config["optimizer_params"].items():
+        for key, value in self.optimizer_params.items():
             config.set('Optimizer', key, str(value))
 
         config.add_section('Scheduler')
-        for key, value in self.config["scheduler_params"].items():
+        for key, value in self.scheduler_params.items():
             config.set('Scheduler', key, str(value))
 
         config.add_section('Loss')
-        for key, value in self.config["loss_params"].items():
+        for key, value in self.loss_params.items():
             config.set('Loss', key, str(value))
 
         config.add_section('Training')
-        for key, value in self.config["training_params"].items():
+        for key, value in self.data.items():
             config.set('Training', key, str(value))
 
         config.add_section('Data')
-        for key, value in self.config["data"].items():
+        for key, value in self.data.items():
             config.set('Data', key, str(value))
 
-        ini_file_path = os.path.join(self.config["save_directory"], 'hyperparameters.ini')
+        ini_file_path = os.path.join(self.save_directory, 'hyperparameters.ini')
         with open(ini_file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)
 
@@ -124,7 +132,7 @@ class TrainingLogger:
             loss_dict (dict): Dictionary of loss values.
             metrics_dict (dict): Dictionary of metric values.
         """
-        file_path = os.path.join(self.config["save_directory"], "val_metrics_history.txt")
+        file_path = os.path.join(self.save_directory, "val_metrics_history.txt")
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("Validation Metrics History\n")
@@ -174,9 +182,9 @@ class TrainingLogger:
         ax1.legend()
 
         plt.tight_layout()
-        plt.savefig(os.path.join(self.config["save_directory"], 'learning_curves.png'), dpi=300)
+        plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
         plt.close()
-        print(f" Learning curves saved to {self.config['save_directory']}/learning_curves.png")
+        print(f" Learning curves saved to {self.save_directory}/learning_curves.png")
 
     # pylint: disable=too-many-locals
     def save_confusion_matrix(self, conf_metric, model, val_dataloader, device):
@@ -198,7 +206,7 @@ class TrainingLogger:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
 
-                if self.config["num_classes"] > 1:
+                if self.num_classes > 1:
                     preds = torch.argmax(outputs, dim=1)
                 else:
                     preds = (outputs > 0.5).to(torch.uint8)
@@ -210,7 +218,7 @@ class TrainingLogger:
             preds_tensor = torch.cat(final_preds).to(device).long()
             labels_tensor = torch.cat(final_labels).to(device).long()
 
-            if self.config["num_classes"] == 1:
+            if self.num_classes == 1:
                 preds_tensor = preds_tensor.squeeze(1)
                 labels_tensor = labels_tensor.squeeze(1)
 
@@ -221,8 +229,8 @@ class TrainingLogger:
             plt.imshow(cm_percent, interpolation='nearest', cmap='Blues')
             plt.colorbar()
 
-            tick_marks = [0, 1] if self.config["num_classes"] == 1 else list(
-                range(self.config["num_classes"]))
+            tick_marks = [0, 1] if self.num_classes == 1 else list(
+                range(self.num_classes))
             plt.xticks(tick_marks)
             plt.yticks(tick_marks)
             plt.xlabel("Predicted Label")
@@ -235,7 +243,7 @@ class TrainingLogger:
                              color="white" if cm_percent[i, j] > thresh else "black")
 
             plt.savefig(
-                os.path.join(self.config["save_directory"], "confusion_matrix.png"),
+                os.path.join(self.save_directory, "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            print(f" Confusion matrix saved to {self.config['save_directory']}/confusion_matrix.png")
+            print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png")
