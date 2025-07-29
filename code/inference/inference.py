@@ -52,13 +52,6 @@ class Inference:
         """
         return 'Inference'
 
-    def add_to_report(self, text, who):
-        """
-            Add a message to a report
-        """
-        if self.config["report"] is not None:
-            self.config["report"].add(text, who)
-
     def __init__(self, **kwargs):
         """
         Initializes the Inference class with the necessary parameters and model setup.
@@ -95,7 +88,6 @@ class Inference:
 
         if self.config["param_converter"] is None:
             text = "The 'hyperparameters' argument must be provided and not None."
-            self.add_to_report(' - Inference', text)
             raise ValueError(text)
 
         # Extract category-wise parameters
@@ -155,7 +147,6 @@ class Inference:
         model_name = self.config["model_params"].get('model_type', 'UnetVanilla')
         if model_name not in self.config["model_mapping"]:
             text =f" - Model '{model_name}' is not supported"
-            self.add_to_report(' - Inference', text)
             raise ValueError(f" Model '{model_name}' is not supported.\n"
                              " Check your 'model_mapping'.")
 
@@ -189,7 +180,6 @@ class Inference:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}':\n {e}"
-            self.add_to_report(' - Inference', text)
             raise ValueError(f" Error converting parameters for model '{model_name}':"
                              "\n {e}") from e
 
@@ -206,7 +196,6 @@ class Inference:
         )
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
-            self.add_to_report(' - Inference', text)
             raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
                                     " Ensure the path is correct.")
 
@@ -289,8 +278,6 @@ class Inference:
 
         except Exception as e:
             print(f" Error loading data stats: {e}")
-            text =f" - Error loading data stats: {e}"
-            self.add_to_report(' - Inference', text)
             raise
 
     def predict(self):
