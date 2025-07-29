@@ -49,6 +49,7 @@ class CNNHead(nn.Module, ActivationMixin):
         self.k_size = cnn_head_config.k_size
         self.num_classes = cnn_head_config.num_classes
         self.activation = cnn_head_config.activation
+        self.activation_mixin = ActivationMixin()
 
         self.input_conv = nn.Conv2d(
             in_channels=self.embedding_size,
@@ -138,5 +139,5 @@ class CNNHead(nn.Module, ActivationMixin):
             x = x + self.decoder_convs[i](x)
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=0.2)
-                x = self._get_activation(self.activation)(x)
+                x = self.activation_mixin._get_activation(self.activation)(x)
         return self.seg_conv(x)

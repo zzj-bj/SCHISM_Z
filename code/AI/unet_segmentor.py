@@ -57,6 +57,7 @@ class UnetSegmentor(nn.Module,ActivationMixin):
         self.p = unet_segmentor_config.p
         self.k_size = unet_segmentor_config.k_size
         self.activation = unet_segmentor_config.activation.lower()
+        self.activation_mixin = ActivationMixin()
 
         self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels,
                                 kernel_size=self.k_size, padding=1)
