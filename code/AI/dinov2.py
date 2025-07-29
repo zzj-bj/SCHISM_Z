@@ -85,6 +85,7 @@ class DinoV2Segmentor(nn.Module):
         self.linear_head = dinov2_segmentor_config.linear_head
         self.k_size = dinov2_segmentor_config.k_size
         self.activation = dinov2_segmentor_config.activation
+        self.size = dinov2_segmentor_config.size
         assert self.size in self.emb_size.keys(), "Invalid size embedding size"
         self.embedding_size = self.emb_size[str(dinov2_segmentor_config.size)]
         self.n_features = dinov2_segmentor_config.n_features
