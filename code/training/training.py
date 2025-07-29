@@ -152,7 +152,6 @@ class Training:
         # Control Num image to process
         if self.num_file is None or self.num_samples is None:
             text = "'num_file' and 'num_samples' must not be None."
-            self.add_to_report(text, '')
             raise ValueError(text)
 
         if self.num_file <= self.num_samples:
@@ -160,12 +159,10 @@ class Training:
                 f' - num_samples ({self.num_samples}) > '
                 f'maximum number of images to process ({self.num_file})'
                 )
-            self.add_to_report(' - Hyperparameters', text)
-            raise ValueError
+            raise ValueError (text)
         if self.num_samples < 16:
             text = f'num_samples ({self.num_samples}) must be >= 16 '
-            self.add_to_report(text, '')
-            raise ValueError
+            raise ValueError (text)
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')
@@ -275,8 +272,7 @@ class Training:
                 selected_metrics.append(self.metrics_mapping[metric])
             else:
                 text =f" - Metric '{metric}' not recognized"
-                self.add_to_report(' - Hyperparameters', text)
-                raise ValueError()
+                raise ValueError(text)
 
         return selected_metrics
 
@@ -292,8 +288,7 @@ class Training:
 
         if not optimizer_class:
             text =f" - Optimizer '{optimizer_name}' is not supported"
-            self.add_to_report(' - Hyperparameters', text)
-            raise ValueError()
+            raise ValueError(text)
 
 
         converted_params = {k: self.param_converter.convert_param(v)
@@ -316,8 +311,7 @@ class Training:
 
         if not scheduler_class:
             text =f" - Scheduler '{scheduler_name}' is not supported"
-            self.add_to_report(' - Hyperparameters', text)
-            raise ValueError()
+            raise ValueError(text)
 
         converted_params = {k: self.param_converter.convert_param(v)
                             for k, v in self.scheduler_params.items() if k != 'scheduler'}
@@ -342,7 +336,6 @@ class Training:
 
         if not loss_class:
             text = f" - Loss '{loss_name}' is not supported"
-            self.add_to_report(text, '')
             raise ValueError(
                 f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
 
@@ -381,7 +374,6 @@ class Training:
 
         if model_name not in self.model_mapping:
             text = f" - Model '{model_name}' is not supported"
-            self.add_to_report(text, '')
             raise ValueError(
                 f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
 
@@ -414,8 +406,7 @@ class Training:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
-            self.add_to_report(' - Hyperparameter',text)
-            raise ValueError()
+            raise ValueError(e)
 
         return model_class(
                 model_config_class(
@@ -487,8 +478,7 @@ class Training:
                     if not (isinstance(value, list) and len(value) == 2 and
                             all(isinstance(v, list) and len(v) == 3 for v in value)):
                         text =f" Invalid format in data_stats.json for key {key}"
-                        self.add_to_report(" - Json", text)
-                        raise ValueError()
+                        raise ValueError(text)
 
                     data_stats_loaded[key] = [
                         np.array(value[0]),
@@ -504,7 +494,9 @@ class Training:
                 text = " Using default normalization stats."
                 self.display.print(text, colors['warning'], bold = True)
 
-                text = (f" Error loading data stats from {json_file_path}:\n {e}.")
+                text = "Training conducted with default normalization stats."
+                self.add_to_report(" - Training", text)
+                text = f" Error loading data stats from {json_file_path}:\n {e}."
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 

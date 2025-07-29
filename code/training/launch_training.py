@@ -191,27 +191,17 @@ class LaunchTraining:
         # if initial_condition and len(valid_subfolders) != 0 :
             print("[!] Starting training.")
 
-            try:
-                train_object = Training(
-                    data_dir = data_dir,
-                    subfolders = valid_subfolders,
-                    run_dir = run_dir,
-                    hyperparameters = hyperparameters,
-                    report = report_training,
-                    num_file = num_file
-                    )
+        # try:
+        train_object = Training(
+            data_dir = data_dir,
+            subfolders = valid_subfolders,
+            run_dir = run_dir,
+            hyperparameters = hyperparameters,
+            report = report_training,
+            num_file = num_file
+            )
 
-                train_object.load_segmentation_data()
-                train_object.train()
-
-
-            except KeyError as e:
-                report_training.add(" - Training",
-                                    "Caught KeyError in DataLoader worker process :\n"
-                                    f"{e}")
-            except ValueError as e:
-                report_training.add(" - hyperparameters :", f"{e}" )
-            except Exception as e:
-                report_training.add(" - Other defects ", f"{e}")
+        train_object.load_segmentation_data()
+        train_object.train()
 
         report_training.status("Training")

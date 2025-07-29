@@ -100,28 +100,16 @@ class LaunchInference:
         if initial_condition and len(valid_subfolders) != 0 :
             print(f"[!] Starting inference with Metric : {selected_metric}.")
 
-            try:
-                pred_object = Inference(
-                    data_dir=data_dir,
-                    subfolders=valid_subfolders,
-                    run_dir=run_dir,
-                    selected_metric=selected_metric,
-                    hyperparameters=hyperparameters,
-                    report = report_inference,
-                )
+            pred_object = Inference(
+                data_dir=data_dir,
+                subfolders=valid_subfolders,
+                run_dir=run_dir,
+                selected_metric=selected_metric,
+                hyperparameters=hyperparameters,
+                report = report_inference,
+            )
 
-                try:
-                    pred_object.predict()
-                except (IOError, ValueError) as e:
-                    report_inference.add(e, '')
-
-            except FileNotFoundError as e:
-                text = f" FileNotFoundError during model initialization:\n {e}"
-                report_inference.add(text, '')
-
-            except (IOError, ValueError) as e:
-                text = f" An unexpected error occurred:\n {e}"
-                report_inference.add(text, '')
+            pred_object.predict()
 
         text = f"Inference with Metric '{selected_metric}'"
         report_inference.status(text)
