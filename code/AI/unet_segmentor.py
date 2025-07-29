@@ -14,8 +14,6 @@ from torch import nn
 import torch.nn.functional as nn_func
 from AI.activation_mixin import ActivationMixin
 
-from dataclasses import asdict
-
 @dataclass
 class UnetSegmentorConfig:
     """
@@ -53,40 +51,47 @@ class UnetSegmentor(nn.Module,ActivationMixin):
                  unet_segmentor_config: UnetSegmentorConfig
                  ):
         super().__init__()
-        self.config = asdict(unet_segmentor_config) 
+        self.n_block = unet_segmentor_config.n_block
+        self.channels = unet_segmentor_config.channels
+        self.num_classes = unet_segmentor_config.num_classes
+        self.p = unet_segmentor_config.p
+        self.k_size = unet_segmentor_config.k_size
+        self.activation = unet_segmentor_config.activation.lower()
 
-        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.config["channels"],
-                                kernel_size=self.config["k_size"], padding=1)
+        self.input_conv = nn.Conv2d(in_channels=3, out_channels=self.channels,
+                                kernel_size=self.k_size, padding=1)
 
         self.encoder_convs = nn.ModuleList([
                                 self._create_encoder_conv_block(
-                                    channels= self.config["channels"] * 2 ** i)
-                                    for i in range(0, self.config["n_block"] - 1)])
+                                    channels= self.channels * 2 ** i)
+                                    for i in range(0, self.n_block - 1)])
 
         self.mid_conv = self._create_encoder_conv_block(
-            channels=self.config["channels"]*2**(self.config["n_block"] - 1))
+            channels=self.channels*2**(self.n_block - 1))
 
         self.decoder_deconvs = nn.ModuleList([
             nn.ConvTranspose2d(
-                in_channels = self.config["channels"] * 2 ** (i + 1),
-                out_channels = self.config["channels"] * 2 ** i,
+                in_channels = self.channels * 2 ** (i + 1),
+                out_channels = self.channels * 2 ** i,
                 kernel_size=3,
                 stride=2,
                 padding=1,
                 output_padding=1
             )
-            for i in reversed(range(self.config["n_block"]))
+            for i in reversed(range(self.n_block))
         ])
         self.decoder_convs = nn.ModuleList([
-            self._create_decoder_conv_block(channels=self.config["channels"] * 2 ** i)
-            for i in reversed(range(self.config["n_block"]))
+            self._create_decoder_conv_block(channels=self.channels * 2 ** i)
+            for i in reversed(range(self.n_block))
         ])
         self.seg_conv = nn.Conv2d(
-            in_channels=self.config["channels"],
-            out_channels=self.config["num_classes"],
+            in_channels=self.channels,
+            out_channels=self.num_classes,
             kernel_size=3,
             padding=1
         )
+
+        self.activation_mixin = ActivationMixin()
 
     def _create_encoder_conv_block(self, channels):
         """
@@ -99,12 +104,12 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             batch normalization, and the specified activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(channels, channels * 2, kernel_size=self.config["k_size"], padding=1),
+            nn.Conv2d(channels, channels * 2, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels * 2),
-            self._get_activation(self.config["activation"]),
-            nn.Conv2d(channels * 2, channels * 2, kernel_size=self.config["k_size"], padding=1),
+            self.activation_mixin._get_activation(self.activation),
+            nn.Conv2d(channels * 2, channels * 2, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels * 2),
-            self._get_activation(self.config["activation"]),
+            self.activation_mixin._get_activation(self.activation),
         )
 
     def _create_decoder_conv_block(self, channels):
@@ -118,12 +123,12 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             batch normalization, and the specified activation function.
         """
         return nn.Sequential(
-            nn.Conv2d(channels, channels, kernel_size=self.config["k_size"], padding=1),
+            nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels),
-            self._get_activation(self.config["activation"]),
-            nn.Conv2d(channels, channels, kernel_size=self.config["k_size"], padding=1),
+            self.activation_mixin._get_activation(self.activation),
+            nn.Conv2d(channels, channels, kernel_size=self.k_size, padding=1),
             nn.BatchNorm2d(channels),
-            self._get_activation(self.config["activation"]),
+            self.activation_mixin._get_activation(self.activation),
         )
 
     def forward(self, x):
@@ -140,18 +145,18 @@ class UnetSegmentor(nn.Module,ActivationMixin):
         x = self.input_conv(x)
         feature_list.append(x)
         x = nn_func.max_pool2d(x, kernel_size=2)
-        x = nn_func.dropout(x, p=self.config["p"])
-        for i in range(self.config["n_block"] - 1):
+        x = nn_func.dropout(x, p=self.p)
+        for i in range(self.n_block - 1):
             x = self.encoder_convs[i](x)
             feature_list.append(x)
             x = nn_func.max_pool2d(x, kernel_size=2)
-            x = nn_func.dropout(x, p=self.config["p"])
+            x = nn_func.dropout(x, p=self.p)
 
         x = self.mid_conv(x)
 
-        for i in range(self.config["n_block"]):
+        for i in range(self.n_block):
             x = self.decoder_deconvs[i](x)
-            x = nn_func.dropout(x, p=self.config["p"])
+            x = nn_func.dropout(x, p=self.p)
             x = self.decoder_convs[i](x + feature_list[::-1][i])
 
         return self.seg_conv(x)

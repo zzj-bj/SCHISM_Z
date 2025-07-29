@@ -728,9 +728,9 @@ class Training:
 
 
                 # Use tqdm to create a progress bar
-                bar_width = 10
-                with tqdm(total=len(self.dataloaders[phase]), ncols=102,
-                                 leave=True, ncols= bar_width) as pbar:
+                with tqdm(total=len(self.dataloaders[phase]), unit="batch",
+                          bar_format="- {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}% ",
+                          ncols=100,leave=True ) as pbar:
                     pbar.set_description(f"{phase.capitalize()} Epoch {epoch}/{self.epochs}")
                     pbar.set_postfix(loss=0.0, **{metric: 0.0 for metric in display_metrics})
 
@@ -865,7 +865,7 @@ class Training:
                                          metrics_dict=metrics_dict)
         self.logger.save_hyperparameters()
         self.logger.save_data_stats(
-            self.dataloaders["train"].dataset.config["data_stats"])
+            self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:
             self.logger.save_confusion_matrix(
                 conf_metric=metrics[self.metrics.index("ConfusionMatrix")],

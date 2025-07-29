@@ -56,8 +56,8 @@ class Inference:
         """
             Add a message to a report
         """
-        if self.config["report"] is not None:
-            self.config["report"].add(text, who)
+        if self.report is not None:
+            self.report.add(text, who)
 
     def __init__(self, **kwargs):
         """
@@ -72,52 +72,33 @@ class Inference:
                 - selected_metric (str): Metric used for model evaluation.
         """
 
-        self.config = {
-            'param_converter': ParamConverter(),
-            'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-            'data_dir': kwargs.get('data_dir', ''),
-            'run_dir': kwargs.get('run_dir', ''),
-            'subfolders':kwargs.get('subfolders', []),
-            'hyperparameters': kwargs.get('hyperparameters', None),
-            'metric': kwargs.get('selected_metric', 'Jaccard'),
-            "report":kwargs.get('report'),
-            "model_params": {},
-            "data_params": {},
-            "train_params": {},
-            "data_stats": {},
-            "img_res": 560,
-            "crop_size": 224,
-            "num_classes": 1,
-            "model_mapping": model_mapping,
-            "model_config_mapping": model_config_mapping,
-            "model": None,
-        }
-
-        if self.config["param_converter"] is None:
-            text = "The 'hyperparameters' argument must be provided and not None."
-            self.add_to_report(' - Inference', text)
-            raise ValueError(text)
+        self.param_converter = ParamConverter()
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.data_dir = kwargs.get('data_dir')
+        self.run_dir = kwargs.get('run_dir')
+        self.hyperparameters = kwargs.get('hyperparameters')
+        self.metric = kwargs.get('selected_metric')
+        self.report = kwargs.get('report')
+        self.subfolders = kwargs.get('subfolders')
 
         # Extract category-wise parameters
-        self.config["model_params"] = self.config["hyperparameters"].get_parameters()['Model']
-        self.config["data_params"] = self.config["hyperparameters"].get_parameters()['Data']
-        self.config["train_params"] = self.config["hyperparameters"].get_parameters()['Training']
+        self.model_params = self.hyperparameters.get_parameters()['Model']
+        self.data_params = self.hyperparameters.get_parameters()['Data']
+        self.train_params = self.hyperparameters.get_parameters()['Training']
 
         # Initialize dataset parameters
-        self.config["img_res"] = int(self.config["data_params"].get('img_res', 560))
-        self.config["crop_size"] = int(self.config["data_params"].get('crop_size', 224))
-        self.config["num_classes"] = int(self.config["model_params"].get('num_classes', 1))
-        self.config["num_classes"] = (
-            1 if self.config["num_classes"] <= 2 else self.config["num_classes"]
-        )
-        self.config["data_stats"] = self.load_data_stats_from_json()
-        self.config["model_mapping"] = model_mapping
-        self.config["model_config_mapping"] = model_config_mapping
+        self.img_res = int(self.data_params.get('img_res', 560))
+        self.crop_size = int(self.data_params.get('crop_size', 224))
+        self.num_classes = int(self.model_params.get('num_classes', 1))
+        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
+        self.data_stats = self.load_data_stats_from_json()
+        self.model_mapping = model_mapping
+        self.model_config_mapping = model_config_mapping
 
         missing_weight={}
         # Check if all subfolders have weights in data_stats
-        for dir in self.config["subfolders"]:
-            if dir not in self.config["data_stats"]:
+        for dir in self.subfolders:
+            if dir not in self.data_stats:
                 missing_weight[dir] = True
             else:
                 missing_weight[dir] = False
@@ -131,15 +112,15 @@ class Inference:
             select = ut.answer_yes_or_no("Do you want to launch the JSON generation ?")
             if select :
                 lp.LaunchPreprocessing().launch_json_generation(
-                    self.config["data_dir"],
-                    os.path.join(self.config["run_dir"], '', 'data_stats.json'),
+                    self.data_dir,
+                    os.path.join(self.run_dir, '', 'data_stats.json'),
                     True
                 )
-                self.config["data_stats"] = self.load_data_stats_from_json()
+                self.data_stats = self.load_data_stats_from_json()
             else :
                 print("Default data stats will be used.")
 
-        self.config["model"] = self.initialize_model()
+        self.model = self.initialize_model()
 
     def initialize_model(self) -> nn.Module:
         """
@@ -152,25 +133,24 @@ class Inference:
             ValueError: If the specified model type is not supported
             or if there is an error converting parameters.
         """
-        model_name = self.config["model_params"].get('model_type', 'UnetVanilla')
-        if model_name not in self.config["model_mapping"]:
+        model_name = self.model_params.get('model_type', 'UnetVanilla')
+        if model_name not in self.model_mapping:
             text =f" - Model '{model_name}' is not supported"
-            self.add_to_report(' - Inference', text)
-            raise ValueError(f" Model '{model_name}' is not supported.\n"
-                             " Check your 'model_mapping'.")
+            self.report .add(text,'')
+            raise ValueError(f" Model '{model_name}' is not supported.\n Check your 'model_mapping'.")
 
-        model_class = self.config["model_mapping"][model_name]
-        model_config_class = self.config["model_config_mapping"][model_name]
+        model_class = self.model_mapping[model_name]
+        model_config_class = self.model_config_mapping[model_name]
 
-        self.config["model_params"]['num_classes'] = self.config["num_classes"]
+        self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.config["param_converter"].convert_param(v)
-            for k, v in self.config["model_params"].items() if k in model_class.REQUIRED_PARAMS
+            k: self.param_converter.convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.config["param_converter"].convert_param(v)
-            for k, v in self.config["model_params"].items() if k in model_class.OPTIONAL_PARAMS
+            k: self.param_converter.convert_param(v)
+            for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
         # Ensure `model_type` is not included in the parameters
@@ -197,12 +177,12 @@ class Inference:
         model = model_class(
             model_config_class(
                 **typed_required_params, **optional_params
-            )).to(self.config["device"])
+            )).to(self.device)
 
         # Load pre-trained weights
         checkpoint_path = os.path.join(
-            str(self.config["run_dir"]),
-            f"model_best_{self.config['metric']}.pth"
+            str(self.run_dir),
+            f"model_best_{self.metric}.pth"
         )
         if not os.path.exists(checkpoint_path):
             text =f" - Checkpoint not found at '{checkpoint_path}'"
@@ -210,7 +190,7 @@ class Inference:
             raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
                                     " Ensure the path is correct.")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.config["device"])
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
         model.load_state_dict(checkpoint)
         model.eval()  # Set the model to evaluation mode
 
@@ -227,9 +207,9 @@ class Inference:
         img_data = {}
         indices = []
 
-        for subfolder in os.listdir(self.config["data_dir"]):
+        for subfolder in os.listdir(self.data_dir):
             img_folder = os.path.join(
-                str(self.config["data_dir"]),
+                str(self.data_dir),
                 str(subfolder),
                 "images")
 
@@ -242,9 +222,9 @@ class Inference:
             for i in range(len(img_data[subfolder])):
                 indices.append((subfolder, i))
 
-            preds = f"preds_{self.config['metric']}"
+            preds = f"preds_{self.metric}"
             preds_folder = os.path.join(
-                str(self.config["data_dir"]),
+                str(self.data_dir),
                 str(subfolder),
                 str(preds))
             os.makedirs(preds_folder, exist_ok=True)
@@ -253,10 +233,10 @@ class Inference:
             TiffDatasetLoaderConfig(
                 img_data=img_data,
                 indices=indices,
-                data_stats=self.config["data_stats"],
-                num_classes=self.config["num_classes"],
-                img_res=self.config["img_res"],
-                crop_size=(self.config["crop_size"], self.config["crop_size"]),
+                data_stats=self.data_stats,
+                num_classes=self.num_classes,
+                img_res=self.img_res,
+                crop_size=(self.crop_size, self.crop_size),
                 inference_mode=True,
             )
         )
@@ -272,20 +252,20 @@ class Inference:
         Raises:
             Exception: If there is an error loading the JSON file.
         """
-        json_file_path = os.path.join(str(self.config["run_dir"]), 'data_stats.json')
+        json_file_path = os.path.join(str(self.run_dir), 'data_stats.json')
         try:
             # Read the JSON file
             with open(json_file_path, 'r', encoding='utf-8') as file:
                 raw_data_stats = json.load(file)
 
             # Convert the JSON content to the desired format
-            self.config["data_stats"] = {
+            self.data_stats = {
                 key: [np.array(values[0]), np.array(values[1])]
                 for key, values in raw_data_stats.items()
             }
 
             print(" Data stats loaded successfully.")
-            return self.config["data_stats"]  # Return for verification if needed
+            return self.data_stats  # Return for verification if needed
 
         except Exception as e:
             print(f" Error loading data stats: {e}")
@@ -315,13 +295,13 @@ class Inference:
                 # Save the reconstructed prediction
                 name_c = os.path.basename(img_path[0])
                 base_name, ext = os.path.splitext(name_c)
-                new_name = f"{base_name}_{self.config['metric']}{ext}"
+                new_name = f"{base_name}_{self.metric}{ext}"
 
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
-                preds = f"preds_{self.config['metric']}"
+                preds = f"preds_{self.metric}"
                 pred_save_path = os.path.join(
-                    str(self.config["data_dir"]),
+                    str(self.data_dir),
                     str(subfolder),
                     str(preds),
                     str(f"{new_name}"))
@@ -345,13 +325,13 @@ class Inference:
         # Calculate the grid size (number of patches per dimension)
         num_patches = len(patches)
         grid_size = int(num_patches ** 0.5)  # Assuming square grid of patches (e.g., 5x5)
-        dimenssions = grid_size * self.config["crop_size"]
+        dimenssions = grid_size * self.crop_size
 
         # Initialize an empty tensor to store the final predictions (no overlap handling needed)
         full_pred = torch.zeros((
-            self.config["num_classes"],
+            self.num_classes,
             dimenssions, dimenssions),
-            device=self.config["device"]
+            device=self.device
         )
 
         patch_index = 0
@@ -363,9 +343,9 @@ class Inference:
                 with torch.no_grad():
                     # Perform inference on the patch
                     # (model expects 4D input: [batch_size, channels, height, width])
-                    patch_pred = self.config["model"].forward(patch.to(self.config["device"]))
+                    patch_pred = self.model.forward(patch.to(self.device))
 
-                    if self.config["num_classes"] > 1:
+                    if self.num_classes > 1:
                         # Multiclass: Apply softmax to get probabilities
                         # and then get the class with the highest probability for each pixel
                         patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)
@@ -378,8 +358,8 @@ class Inference:
 
                 patch_pred = self._scale_mask_to_class_values(patch_pred)
                 patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0),
-                                                            size=(self.config["crop_size"],
-                                                                  self.config["crop_size"]),
+                                                            size=(self.crop_size,
+                                                                  self.crop_size),
                                                             mode='nearest-exact').squeeze(0)
 
                 predicted_patches.append(patch_pred_resized.cpu())
@@ -389,8 +369,8 @@ class Inference:
         predicted_patches_reshaped = np.reshape(predicted_patches,
                                        (grid_size,
                                         grid_size,
-                                        self.config["crop_size"],
-                                        self.config["crop_size"])
+                                        self.crop_size,
+                                        self.crop_size)
                                     )
         reconstructed_image = unpatchify(predicted_patches_reshaped, (dimenssions, dimenssions))
         full_pred = torch.tensor(reconstructed_image).float()
@@ -407,9 +387,9 @@ class Inference:
         Returns:
             torch.Tensor: A tensor containing the scaled mask with class values.
         """
-        if self.config["num_classes"] > 1:
+        if self.num_classes > 1:
             class_values = torch.linspace(0, 255,
-                                        self.config["num_classes"],
+                                        self.num_classes,
                                         device=mask_tensor.device).round()
             scaled_mask = class_values[mask_tensor.long()]  # Map class indices to class values
             return scaled_mask

@@ -12,7 +12,6 @@ import configparser
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from dataclasses import asdict
 
 @dataclass
 # pylint: disable=too-many-instance-attributes
@@ -111,7 +110,7 @@ class TrainingLogger:
             config.set('Loss', key, str(value))
 
         config.add_section('Training')
-        for key, value in self.data.items():
+        for key, value in self.training_params.items():
             config.set('Training', key, str(value))
 
         config.add_section('Data')

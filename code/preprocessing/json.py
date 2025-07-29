@@ -11,7 +11,6 @@ and saves the results in a JSON file.
 @author: Pierre.FANCELLI
 """
 from dataclasses import dataclass
-from dataclasses import asdict
 
 import os
 import json
@@ -41,15 +40,19 @@ class Json:
     You can specify the percentage of data to be included.
     """
     def __init__(self, json_config: JsonConfig):
-        self.config = asdict(json_config) 
+        self.parent_dir = json_config.parent_dir
+        self.subfolders = json_config.subfolders
+        self.json_file = json_config.json_file
+        self.report = json_config.report
+        self.percentage_to_process = json_config.percentage_to_process 
         self.results = {}
 
     def add_to_report(self, text, who):
         """
             Add a message to a report
         """
-        if self.config["report"] is not None:
-            self.config["report"].add(text, who)
+        if self.report is not None:
+            self.report.add(text, who)
 
     def process_datasets(self, add_default=False, append = False):
         """
@@ -68,9 +71,9 @@ class Json:
         Raises:
             Exception: If an error occurs during the processing of a dataset.
         """
-        for folder_name in self.config["subfolders"]  :
+        for folder_name in self.subfolders  :
 
-            dataset_path = os.path.join(self.config["parent_dir"], folder_name, 'images')
+            dataset_path = os.path.join(self.parent_dir, folder_name, 'images')
             rep_name = folder_name.split("\\")[-1]
             print(f" - {rep_name}")
 
@@ -88,12 +91,12 @@ class Json:
 
         if append:
             # Load existing results if appending
-            if os.path.exists(self.config["json_file"]):
-                with open(self.config["json_file"], "r", encoding="utf-8") as json_file:
+            if os.path.exists(self.json_file):
+                with open(self.json_file, "r", encoding="utf-8") as json_file:
                     existing_results = json.load(json_file)
                 self.results.update(existing_results)
 
-        with open(self.config["json_file"], "w", encoding="utf-8") as json_file:
+        with open(self.json_file, "w", encoding="utf-8") as json_file:
             json.dump(self.results, json_file, indent=4)
 
 
@@ -117,7 +120,7 @@ class Json:
         image_files = [f for f in sorted(os.listdir(folder_path))
                 if f.lower().endswith(('.tiff', '.tif'))]
 
-        num_items_to_process = int(len(image_files) * self.config["percentage_to_process"])
+        num_items_to_process = int(len(image_files) * self.percentage_to_process)
 
         num_items_to_process = min(num_items_to_process, len(image_files))
         np.random.seed(57)
@@ -134,7 +137,7 @@ class Json:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.config["report"].add(
+                self.report.add(
                     f"Unable to load image at path: {image_path}",
                     " - Skipping this image.")
                 print(f"Unable to load image at path: {image_path}")

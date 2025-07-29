@@ -4,7 +4,6 @@ TiffDatasetLoader: A PyTorch Dataset for loading TIFF images and their correspon
 This class handles loading, preprocessing, and patch extraction from TIFF images and masks.
 """
 from dataclasses import dataclass
-from dataclasses import asdict
 
 from typing import Dict, List, Optional, Tuple
 import numpy as np
@@ -63,10 +62,19 @@ class TiffDatasetLoader(VisionDataset):
                 all necessary parameters for the dataset loader.
         """
         super().__init__(transforms=None)
-        self.config = asdict(tiff_dataset_loader_config)
-        
+        self.data_stats = tiff_dataset_loader_config.data_stats
+        self.img_data = tiff_dataset_loader_config.img_data
+        self.mask_data = tiff_dataset_loader_config.mask_data
+        self.indices = tiff_dataset_loader_config.indices
+        self.num_classes = tiff_dataset_loader_config.num_classes
+        self.crop_size = tiff_dataset_loader_config.crop_size
+        self.img_res = tiff_dataset_loader_config.img_res
+        self.inference_mode = tiff_dataset_loader_config.inference_mode
+        self.p = tiff_dataset_loader_config.p
+        self.ignore_background = tiff_dataset_loader_config.ignore_background
+
         self.image_dims = self.get_image_dimensions()
-        if not self.config["inference_mode"]:
+        if not self.inference_mode:
             self.class_values = self._compute_class_values()
 
     def get_image_dimensions(self):
@@ -77,17 +85,17 @@ class TiffDatasetLoader(VisionDataset):
         Returns:
             tuple: A tuple containing the height and width of the image.
         """
-        if self.config["indices"] is None or len(self.config["indices"]) == 0:
+        if self.indices is None or len(self.indices) == 0:
             raise ValueError(
                 "self.indices is None or empty. Cannot determine image dimensions.")
 
-        dataset_id, sample_id = self.config["indices"][0]
+        dataset_id, sample_id = self.indices[0]
 
-        if self.config["img_data"] is None:
+        if self.img_data is None:
             raise ValueError(
                 "self.img_data is None. Cannot determine image dimensions.")
 
-        img_path = self.config["img_data"][dataset_id][sample_id]
+        img_path = self.img_data[dataset_id][sample_id]
         with Image.open(img_path) as img:
             return img.size[::-1]
 
@@ -103,7 +111,7 @@ class TiffDatasetLoader(VisionDataset):
             ValueError: If the required crop size is larger than the input image size.
         """
         h, w = self.image_dims
-        th, tw = self.config["crop_size"]
+        th, tw = self.crop_size
 
         if h < th or w < tw:
             raise ValueError(f"Required crop size {(th, tw)}"
@@ -146,13 +154,13 @@ class TiffDatasetLoader(VisionDataset):
                 return crop_img, crop_mask
 
         # If max_attempts reached, perform center crop
-        center_i = (self.image_dims[0] - self.config["crop_size"][0]) // 2
-        center_j = (self.image_dims[1] - self.config["crop_size"][1]) // 2
+        center_i = (self.image_dims[0] - self.crop_size[0]) // 2
+        center_j = (self.image_dims[1] - self.crop_size[1]) // 2
 
-        crop_img = img[center_i:center_i+self.config["crop_size"][0],
-                       center_j:center_j+self.config["crop_size"][1], :].copy()
-        crop_mask = mask[center_i:center_i+self.config["crop_size"][0],
-                         center_j:center_j+self.config["crop_size"][1]].copy()
+        crop_img = img[center_i:center_i+self.crop_size[0],
+                       center_j:center_j+self.crop_size[1], :].copy()
+        crop_mask = mask[center_i:center_i+self.crop_size[0],
+                         center_j:center_j+self.crop_size[1]].copy()
 
         return crop_img, crop_mask
 
@@ -186,7 +194,7 @@ class TiffDatasetLoader(VisionDataset):
     >>> patches = extract_patches(img_np)
     """
         height, width = self.image_dims
-        patch_h, patch_w = self.config["crop_size"]
+        patch_h, patch_w = self.crop_size
 
         # Transpose to [H, W, C] for padding
         img_np = np.transpose(img_np, (1, 2, 0))
@@ -219,27 +227,27 @@ class TiffDatasetLoader(VisionDataset):
         """
         unique_values = set()
 
-        if self.config["mask_data"] is None:
+        if self.mask_data is None:
             raise ValueError(
                     "self.mask_data is None. Cannot retrieve mask path by index.")
-        if self.config["mask_data"] is None:
+        if self.mask_data is None:
             raise ValueError(
                     "self.mask_data is None. Cannot retrieve mask path by index.")
        
-        for dataset_id, sample_id in self.config["indices"][:10]:
+        for dataset_id, sample_id in self.indices[:10]:
 
-            if self.config["mask_data"] is None:
+            if self.mask_data is None:
                 raise ValueError(
                     "self.mask_data is None. Cannot retrieve mask path by index.")
-            if self.config["mask_data"] is None:
+            if self.mask_data is None:
                 raise ValueError(
                     "self.mask_data is None. Cannot retrieve mask path by index.")
 
-            mask_path = self.config["mask_data"][dataset_id][sample_id]
+            mask_path = self.mask_data[dataset_id][sample_id]
             mask = np.array(Image.open(mask_path).convert("L"))
 
             # Normalize the mask to [0, 1] only if binary classification (self.num_classes == 1)
-            if self.config["num_classes"] == 1:
+            if self.num_classes == 1:
                 unique_vals = np.unique(mask)
                 # Scale to [0, 1]
                 mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())
@@ -251,9 +259,9 @@ class TiffDatasetLoader(VisionDataset):
         sorted_values = sorted(unique_values)
 
         # Handle binary classification (ensure only 0 and 1)
-        if self.config["num_classes"] == 1:
+        if self.num_classes == 1:
             sorted_values = [0, 1]  # Binary classification, classes should be 0 and 1
-        elif self.config["ignore_background"] and len(sorted_values) > 1:
+        elif self.ignore_background and len(sorted_values) > 1:
             sorted_values.pop(0)  # Remove the background class (usually class 0)
 
         return sorted_values
@@ -278,7 +286,7 @@ class TiffDatasetLoader(VisionDataset):
         RuntimeError: If NaN values are detected in the weights calculation.
         """
         mask = mask.astype(np.int64)
-        counts = np.bincount(mask.ravel(), minlength=self.config["num_classes"])[self.class_values]
+        counts = np.bincount(mask.ravel(), minlength=self.num_classes)[self.class_values]
 
         class_ratio = counts / (np.sum(counts) + 1e-8)  # Avoid divide by zero
         u_weights = 1 / (class_ratio + 1e-8)  # Avoid division by zero
@@ -308,10 +316,10 @@ class TiffDatasetLoader(VisionDataset):
         Raises:
             AssertionError: If the dimensions of the image and mask do not match.
         """
-        dataset_id, sample_id = self.config["indices"][idx]
-        img_path = self.config["img_data"][dataset_id][sample_id]
+        dataset_id, sample_id = self.indices[idx]
+        img_path = self.img_data[dataset_id][sample_id]
 
-        if self.config["inference_mode"]:
+        if self.inference_mode:
             return self._get_inference_item(dataset_id, img_path)
 
         return self._get_training_item(dataset_id, sample_id, img_path)
@@ -340,7 +348,7 @@ class TiffDatasetLoader(VisionDataset):
             patch_tensor = torch.tensor(patch).unsqueeze(0)
             patch_resized = nn_func.interpolate(
                 patch_tensor,
-                size=(self.config["img_res"], self.config["img_res"]),
+                size=(self.img_res, self.img_res),
                 mode="bicubic",
                 align_corners=False
             ).squeeze()
@@ -366,7 +374,7 @@ class TiffDatasetLoader(VisionDataset):
             AssertionError: If the dimensions of the image and mask do not match.
         """
         m, s = self._get_mean_std(dataset_id)
-        mask_path = self.config["mask_data"][dataset_id][sample_id]
+        mask_path = self.mask_data[dataset_id][sample_id]
         img = np.array(Image.open(img_path).convert("RGB"))
         mask = np.array(Image.open(mask_path).convert("L"))
         assert img.shape[:2] == mask.shape, (
@@ -378,28 +386,28 @@ class TiffDatasetLoader(VisionDataset):
         mask_tensor, weights = self._prepare_mask_and_weights(mask)
 
         img_resized = nn_func.interpolate(img_tensor.unsqueeze(0),
-                                        size=(self.config["img_res"], self.config["img_res"]),
+                                        size=(self.img_res, self.img_res),
                                         mode="bicubic",
                                         align_corners=False).squeeze()
         mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0).float(),
-                                        size=(self.config["img_res"], self.config["img_res"]),
+                                        size=(self.img_res, self.img_res),
                                         mode="nearest").squeeze()
 
-        if torch.rand(1).item() < self.config["p"]:
+        if torch.rand(1).item() < self.p:
             img_resized = torchvision.transforms.functional.hflip(img_resized)
             mask_resized = torchvision.transforms.functional.hflip(mask_resized)
-        if torch.rand(1).item() < self.config["p"]:
+        if torch.rand(1).item() < self.p:
             img_resized = torchvision.transforms.functional.vflip(img_resized)
             mask_resized = torchvision.transforms.functional.vflip(mask_resized)
 
         img_normalized = torchvision.transforms.functional.normalize(
             img_resized, mean=m, std=s).float()
 
-        if self.config["num_classes"] > 1:
-            if self.config["ignore_background"]:
-                mask_resized = (mask_resized * self.config["num_classes"]).long() - 1
+        if self.num_classes > 1:
+            if self.ignore_background:
+                mask_resized = (mask_resized * self.num_classes).long() - 1
             else:
-                mask_resized = (mask_resized * (self.config["num_classes"] - 1)).long()
+                mask_resized = (mask_resized * (self.num_classes - 1)).long()
 
         return img_normalized, mask_resized, weights
 
@@ -411,7 +419,7 @@ class TiffDatasetLoader(VisionDataset):
             Returns:
                 tuple: A tuple containing the mask tensor and class weights.
         """
-        if self.config["num_classes"] > 1:
+        if self.num_classes > 1:
             mask_tensor = torch.from_numpy(mask).contiguous() / 255
             weights = self._weights_calc(mask)
         else:
@@ -419,7 +427,7 @@ class TiffDatasetLoader(VisionDataset):
             mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())
             mask = mask.astype(np.int64)
             mask_tensor = torch.from_numpy(mask).contiguous()
-            weights = torch.zeros(self.config["num_classes"])
+            weights = torch.zeros(self.num_classes)
         return mask_tensor, weights
 
     def _get_mean_std(self, dataset_id):
@@ -433,11 +441,11 @@ class TiffDatasetLoader(VisionDataset):
             tuple: A tuple containing the mean and
             standard deviation for normalization.
         """
-        if dataset_id in self.config["data_stats"]:
-            return self.config["data_stats"][dataset_id]
+        if dataset_id in self.data_stats:
+            return self.data_stats[dataset_id]
 
-        if "default" in self.config["data_stats"]:
-            return self.config["data_stats"]["default"]
+        if "default" in self.data_stats:
+            return self.data_stats["default"]
         
         return constants.DEFAULT_MEAN_STD, constants.DEFAULT_MEAN_STD
 
@@ -448,7 +456,7 @@ class TiffDatasetLoader(VisionDataset):
         Returns:
             int: The number of samples in the dataset.
         """
-        if self.config["indices"] is None:
+        if self.indices is None:
             raise ValueError(
                 "self.indices is None. Cannot determine dataset length.")
-        return len(self.config["indices"])
+        return len(self.indices)

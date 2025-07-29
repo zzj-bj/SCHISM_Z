@@ -8,7 +8,6 @@ activation functions, and the number of output classes.
 @author: Florent.BRONDOLO
 """
 from dataclasses import dataclass
-from dataclasses import asdict
 
 import torch
 from torch import nn
@@ -43,12 +42,18 @@ class CNNHead(nn.Module, ActivationMixin):
         cnn_head_config : CNNHeadConfig
     ):
         super().__init__()
-        self.config =  asdict(cnn_head_config)
+        self.n_features = cnn_head_config.n_features
+        self.embedding_size = cnn_head_config.embedding_size * self.n_features
+        self.n_block = 4 # Hardcoded for now
+        self.channels = cnn_head_config.channels
+        self.k_size = cnn_head_config.k_size
+        self.num_classes = cnn_head_config.num_classes
+        self.activation = cnn_head_config.activation
 
         self.input_conv = nn.Conv2d(
-            in_channels=self.config["embedding_size"],
-            out_channels=self.config["channels"],
-            kernel_size=self.config["k_size"],
+            in_channels=self.embedding_size,
+            out_channels=self.channels,
+            kernel_size=self.k_size,
             padding=1,
         )
 
@@ -56,22 +61,22 @@ class CNNHead(nn.Module, ActivationMixin):
         self.upscale_fn = ["interpolate", "interpolate",
                            "pixel_shuffle", "pixel_shuffle"]
 
-        for i in range(self.config["n_block"]):
+        for i in range(self.n_block):
             if self.upscale_fn[i] == "interpolate":
                 self.decoder_convs.append(
                     self._create_decoder_conv_block(
-                        channels=self.config["channels"], kernel_size=self.config["k_size"])
+                        channels=self.channels, kernel_size=self.k_size)
                 )
             else:
-                channels_by_4 = self.config["channels"] // 4
+                channels_by_4 = self.channels // 4
                 self.decoder_convs.append(
                     self._create_decoder_up_conv_block(
-                        channels=channels_by_4, kernel_size=self.config["k_size"])
+                        channels=channels_by_4, kernel_size=self.k_size)
                 )
 
         self.seg_conv = nn.Sequential(
-            nn.Conv2d(self.config["channels"], self.config["num_classes"],
-                      kernel_size=self.config["k_size"], padding=1)
+            nn.Conv2d(self.channels, self.num_classes,
+                      kernel_size=self.k_size, padding=1)
         )
 
     def _create_decoder_conv_block(self, channels, kernel_size):
@@ -116,13 +121,13 @@ class CNNHead(nn.Module, ActivationMixin):
         """
         features = inputs["features"]
         patch_feature_size = inputs["image"].shape[-1] // 14
-        if self.config["n_features"] > 1:
+        if self.n_features > 1:
             features = torch.cat(features, dim=-1)
         features = features[:, 1:].permute(0, 2, 1).reshape(
-            -1, self.config["embedding_size"], patch_feature_size, patch_feature_size
+            -1, self.embedding_size, patch_feature_size, patch_feature_size
         )
         x = self.input_conv(features)
-        for i in range(self.config["n_block"]):
+        for i in range(self.n_block):
             if self.upscale_fn[i] == "interpolate":
                 resize_shape = x.shape[-1] * 2 if i >= 1 else x.shape[-1] * 1.75
                 x = F.interpolate(input=x, size=(int(resize_shape),
@@ -133,5 +138,5 @@ class CNNHead(nn.Module, ActivationMixin):
             x = x + self.decoder_convs[i](x)
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=0.2)
-                x = self._get_activation(self.config["activation"])(x)
+                x = self._get_activation(self.activation)(x)
         return self.seg_conv(x)

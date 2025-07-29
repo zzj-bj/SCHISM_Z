@@ -15,7 +15,6 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from AI.activation_mixin import ActivationMixin
-from dataclasses import asdict
 
 @dataclass
 class UnetVanillaConfig:
@@ -32,7 +31,7 @@ class UnetVanillaConfig:
     k_size: int = 3
     activation: str = 'relu'
 
-class UnetVanilla(nn.Module,ActivationMixin):
+class UnetVanilla(nn.Module):
     """
     UnetVanilla: A simple U-Net implementation in PyTorch.
     """
@@ -51,24 +50,29 @@ class UnetVanilla(nn.Module,ActivationMixin):
                  unet_vanilla_config: UnetVanillaConfig
                  ):
         super().__init__()
-        self.config = asdict(unet_vanilla_config)
+        self.n_block = unet_vanilla_config.n_block
+        self.channels = unet_vanilla_config.channels
+        self.num_classes = unet_vanilla_config.num_classes
+        self.k_size = unet_vanilla_config.k_size
+        self.activation = unet_vanilla_config.activation.lower()
+        self.activation_mixin = ActivationMixin()
 
         self.encoder_blocks = nn.ModuleList()
         self.max_pools = nn.ModuleList()
-        for i in range(self.config["n_block"]):
-            self.encoder_blocks.append(self.encoder_block(self.config["channels"] * (2 ** i)))
+        for i in range(self.n_block):
+            self.encoder_blocks.append(self.encoder_block(self.channels * (2 ** i)))
             self.max_pools.append(nn.MaxPool2d(kernel_size=2, ceil_mode=True))
 
         # Define up sampling path
         self.decoder_blocks = nn.ModuleList()
         self.up_convs = nn.ModuleList()
-        for i in range(self.config["n_block"], -1, -1):
+        for i in range(self.n_block, -1, -1):
             if i > 0:
-                self.decoder_blocks.append(self.decoder_block(self.config["channels"] * (2 ** i)))
+                self.decoder_blocks.append(self.decoder_block(self.channels * (2 ** i)))
                 self.up_convs.append(
                     nn.ConvTranspose2d(
-                        self.config["channels"] * (2 ** i),
-                        self.config["channels"] * (2 ** i) // 2,
+                        self.channels * (2 ** i),
+                        self.channels * (2 ** i) // 2,
                         kernel_size=3,
                         stride=2,
                         padding=1,
@@ -77,15 +81,15 @@ class UnetVanilla(nn.Module,ActivationMixin):
 
         # Define output layer
         self.output_conv = nn.Conv2d(
-            self.config["channels"],
-            self.config["num_classes"],
+            self.channels,
+            self.num_classes,
             kernel_size=1)
 
         self.bridge = self.simple_conv(
-            self.config["channels"] * (2 ** self.config["n_block"])// 2,
-            self.config["channels"] * (2 ** self.config["n_block"]))
+            self.channels * (2 ** self.n_block)// 2,
+            self.channels * (2 ** self.n_block))
 
-        self.start = self.simple_conv(3, self.config["channels"])
+        self.start = self.simple_conv(3, self.channels)
 
     def simple_conv(self, in_channels, out_channels):
         """
@@ -102,10 +106,10 @@ class UnetVanilla(nn.Module,ActivationMixin):
             nn.Conv2d(
                 in_channels,
                 out_channels,
-                kernel_size=self.config["k_size"],
-                padding=self.config["k_size"] // 2),
-                self._get_activation(self.config["activation"]
-                )
+                kernel_size=self.k_size,
+                padding=self.k_size // 2),
+                self.activation_mixin._get_activation(self.activation
+            )
         )
 
     def encoder_block(self, in_channels):
@@ -122,12 +126,12 @@ class UnetVanilla(nn.Module,ActivationMixin):
             nn.Conv2d(
                 in_channels,
                 in_channels * 2,
-                kernel_size=self.config["k_size"],
-                padding=self.config["k_size"] // 2
+                kernel_size=self.k_size,
+                padding=self.k_size // 2
                 ),
             nn.BatchNorm2d(
                 in_channels * 2),
-                self._get_activation(self.config["activation"]
+                self.activation_mixin._get_activation(self.activation
                 )
         )
 
@@ -145,12 +149,12 @@ class UnetVanilla(nn.Module,ActivationMixin):
             nn.Conv2d(
                 in_channels,
                 in_channels // 2,
-                kernel_size=self.config["k_size"],
-                padding=self.config["k_size"] // 2
+                kernel_size=self.k_size,
+                padding=self.k_size // 2
                 ),
             nn.BatchNorm2d(
                 in_channels // 2),
-                self._get_activation(self.config["activation"]
+                self.activation_mixin._get_activation(self.activation
                 )
         )
 
@@ -170,15 +174,15 @@ class UnetVanilla(nn.Module,ActivationMixin):
         x = self.start(x)
         encodings.append(x)
 
-        for i in range(self.config["n_block"]):
+        for i in range(self.n_block):
             x = self.max_pools[i](x)
-            if i < self.config["n_block"] - 1:
+            if i < self.n_block - 1:
                 x = self.encoder_blocks[i](x)
                 encodings.append(x)
 
         x = self.bridge(x)
 
-        for i in range(self.config["n_block"]):
+        for i in range(self.n_block):
             x = self.up_convs[i](x)
             enc = F.interpolate(encodings[-(i + 1)],
                                 size=(x.shape[2],

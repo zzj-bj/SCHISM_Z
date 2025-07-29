@@ -9,7 +9,6 @@ and can be quantized for efficient inference.
 @author: Florent.BRONDOLO
 """
 from dataclasses import dataclass
-from dataclasses import asdict
 
 import torch
 from torch import nn
@@ -80,49 +79,57 @@ class DinoV2Segmentor(nn.Module):
 				):
         super().__init__()
 
-        self.config = asdict(dinov2_segmentor_config)
-        self.config["embedding_size"] = self.emb_size[self.config["size"]]
-        assert dinov2_segmentor_config.size in self.emb_size, "Invalid size embedding size"
-        
-        # Set the device
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.inference_mode=dinov2_segmentor_config.inference_mode
+        self.channels = dinov2_segmentor_config.channels
+        self.num_classes = dinov2_segmentor_config.num_classes
+        self.linear_head = dinov2_segmentor_config.linear_head
+        self.k_size = dinov2_segmentor_config.k_size
+        self.activation = dinov2_segmentor_config.activation
+        assert dinov2_segmentor_config.size in self.emb_size.keys(), "Invalid size embedding size"
+        self.embedding_size = self.emb_size[str(dinov2_segmentor_config.size)]
+        self.n_features = dinov2_segmentor_config.n_features
+        self.peft = dinov2_segmentor_config.peft
+        self.quantize = dinov2_segmentor_config.quantize
+        self.r = dinov2_segmentor_config.r
+        self.lora_alpha = dinov2_segmentor_config.lora_alpha
+        self.lora_dropout = dinov2_segmentor_config.lora_dropout
 
-        if self.config["quantize"] :
+        if self.quantize :
             self.quantization_config = BitsAndBytesConfig(
 				load_in_4bit=True,
 				bnb_4bit_quant_type="nf4",
 				bnb_4bit_use_double_quant=True,
 				bnb_4bit_compute_dtype=torch.bfloat16,
 			)
-            self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.config["size"]}',
+            self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.size}',
                                                       quantization_config=self.quantization_config)
             self.backbone = prepare_model_for_kbit_training(self.backbone)
         else:
-            self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.config["size"]}')
+            self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.size}')
 
-        if self.config["peft"]:
-            peft_config = LoraConfig(inference_mode=self.config["inference_mode"],
-                                     r=self.config["r"],
-                                     lora_alpha=self.config["lora_alpha"],
-                                     lora_dropout=self.config["lora_dropout"],
+        if self.peft:
+            peft_config = LoraConfig(inference_mode=self.inference_mode,
+                                     r=self.r,
+                                     lora_alpha=self.lora_alpha,
+                                     lora_dropout=self.lora_dropout,
                                      target_modules="all-linear",use_rslora=True)
 
             self.backbone = get_peft_model(self.backbone, peft_config)
             self.backbone.print_trainable_parameters()
 
-        if self.config["linear_head"]:
+        if self.linear_head:
             self.seg_head = LinearHead(LinearHeadConfig(
-                embedding_size=self.config["embedding_size"],
-                num_classes=self.config["num_classes"],
-                n_features=self.config["n_features"]))
+                embedding_size=self.embedding_size,
+                num_classes=self.num_classes,
+                n_features=self.n_features))
         else:
             self.seg_head = CNNHead(CNNHeadConfig(
-                embedding_size=self.config["embedding_size"],
-                channels=self.config["channels"],
-                num_classes=self.config["num_classes"],
-                k_size=self.config["k_size"],
-                n_features=self.config["n_features"],
-                activation=self.config["activation"]))
+                embedding_size=self.embedding_size,
+                channels=self.channels,
+                num_classes=self.num_classes,
+                k_size=self.k_size,
+                n_features=self.n_features,
+                activation=self.activation))
 
         print(
             f"Number of parameters:{sum(p.numel() for p in self.parameters() if p.requires_grad)}"
@@ -141,14 +148,14 @@ class DinoV2Segmentor(nn.Module):
 			torch.Tensor: Output tensor of shape (batch_size, num_classes, height, width).
 		"""
         # frozen weights of dino
-        with torch.set_grad_enabled(self.config["peft"] and self.training):
-            if self.config["n_features"] == 1:
+        with torch.set_grad_enabled(self.peft and self.training):
+            if self.n_features == 1:
                 features = self.backbone(pixel_values=x).last_hidden_state
             else:
                 features = tuple(
                     list(self.backbone(pixel_values=x,
                          output_hidden_states=True)
-                         ['hidden_states'])[-self.config["n_features"]:]
+                         ['hidden_states'])[-self.n_features:]
                 )
         inputs = {"features" : features, "image" : x}
         return self.seg_head(inputs)

@@ -13,7 +13,18 @@ class ActivationMixin:
     This class provides methods to add activation functions to a PyTorch module.
     It supports common activation functions like ReLU, LeakyReLU, Sigmoid, and Tanh.
     """
+    def __init__(self):
+        super().__init__()
+        self.activation = None
+
     def _get_activation(self, activation):
+        """        
+        Get the activation function based on the provided name.
+        Args:
+            activation (str): The name of the activation function.
+            Returns:
+                nn.Module: The activation function module.
+        """
         if activation == 'relu':
             return nn.ReLU()
         if activation == 'leakyrelu':
