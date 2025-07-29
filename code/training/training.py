@@ -116,38 +116,13 @@ class Training:
         self.dataloaders = {}  # Initialize dataloaders attribute
         self.display = dc.DisplayColor()
 
-        # Extract category-wise parameters
-        # Helper function to extract parameters from hyperparameters
-        def extract_params(category):
-        
-            try:
-
-                if self.hyperparameters is None or not hasattr(self.hyperparameters, "get_parameters"):
-                      text = "The 'hyperparameters' object must have a 'get_parameters' method,"\
-                            " and not be None."
-                      raise ValueError(text)
-
-                return dict(self.hyperparameters.get_parameters()[category])
-
-            except KeyError:
-                # Handle the case where the category does not exist.
-                text = f"Error: The category '{category}' does not exist in the hyperparameters."
-                self.add_to_report(' - Hyperparameters', text)
-                return None
-
-            except Exception as e:
-                # Handle other potential exceptions.
-                text = f"An error occurred: {e}"
-                self.add_to_report(' - Hyperparameters', text)
-                return None
-
         # Extracting parameters for different categories
-        self.model_params = extract_params('Model')
-        self.optimizer_params = extract_params('Optimizer')
-        self.scheduler_params = extract_params('Scheduler')
-        self.loss_params = extract_params('Loss')
-        self.training_params = extract_params('Training')
-        self.data = extract_params('Data')
+        self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
+        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
+        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
+        self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
+        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
+        self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
 
         # Determine the number of classes
         self.num_classes = int(self.model_params.get('num_classes', 1))
