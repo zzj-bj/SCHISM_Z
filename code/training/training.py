@@ -728,9 +728,7 @@ class Training:
 
 
                 # Use tqdm to create a progress bar
-                with tqdm(total=len(self.dataloaders[phase]), unit="batch",
-                          bar_format="- {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}% ",
-                          ncols=100,leave=True ) as pbar:
+                with tqdm(total=len(self.dataloaders[phase]), unit="batch", leave=True) as pbar:
                     pbar.set_description(f"{phase.capitalize()} Epoch {epoch}/{self.epochs}")
                     pbar.set_postfix(loss=0.0, **{metric: 0.0 for metric in display_metrics})
 
