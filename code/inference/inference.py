@@ -27,6 +27,8 @@ from AI.model_registry import model_mapping
 from AI.model_registry import model_config_mapping
 
 from tools import utils as ut
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 from preprocessing import launch_preprocessing as lp
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -73,6 +75,7 @@ class Inference:
         self.metric = kwargs.get('selected_metric')
         self.report = kwargs.get('report')
         self.subfolders = kwargs.get('subfolders')
+        self.display = dc.DisplayColor()
 
         # Extract category-wise parameters
         self.model_params = self.hyperparameters.get_parameters()['Model']
@@ -114,6 +117,7 @@ class Inference:
                 print("Default data stats will be used.")
 
         self.model = self.initialize_model()
+        
 
     def initialize_model(self) -> nn.Module:
         """
@@ -255,7 +259,8 @@ class Inference:
                 for key, values in raw_data_stats.items()
             }
 
-            print(" Data stats loaded successfully.")
+            text = "[!] Data stats loaded successfully."
+            self.display.print(text, colors['warning'])
             return self.data_stats  # Return for verification if needed
 
         except Exception as e:

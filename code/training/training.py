@@ -460,15 +460,16 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                self.display.print(" File 'json' not found ! ",
-                                       colors['warning'], bold = True)
-                self.display.print(" Using default normalization stats." ,
+                self.display.print("[!] File 'json' not found ! ",
+                                       colors['warning'])
+                self.display.print("[!] Using default normalization stats." ,
                                        colors['warning'])
                 text = " File not found. Using file default normalization"
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
-            print(" A Json file has been found. Its data will be used during training.")
+            text = "[!] A Json file has been found. Its data will be used during training."
+            self.display.print(text, colors['warning'])
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
@@ -490,10 +491,10 @@ class Training:
 
             except (json.JSONDecodeError, ValueError) as e:
 
-                text = " Error loading data stats from JSON file."
-                self.display.print(text, colors['error'], bold = True)
-                text = " Using default normalization stats."
-                self.display.print(text, colors['warning'], bold = True)
+                text = "[!] Error loading data stats from JSON file."
+                self.display.print(text, colors['error'])
+                text = "[!] Using default normalization stats."
+                self.display.print(text, colors['warning'])
 
                 text = "Training conducted with default normalization stats."
                 self.add_to_report(" - Training", text, False)
@@ -574,7 +575,6 @@ class Training:
 
         indices = [train_indices, val_indices, test_indices]
 
-
         train_dataset = TiffDatasetLoader(
             TiffDatasetLoaderConfig(
                 indices=train_indices,
@@ -613,7 +613,7 @@ class Training:
                 ignore_background=self.ignore_background
             )
         )
-        
+
         pin_memory = self.device== 'cuda'
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
@@ -625,7 +625,7 @@ class Training:
         test_loader = DataLoader(test_dataset, batch_size=10, shuffle = False,
                                  num_workers = 2, drop_last = True,
                                  pin_memory = pin_memory)
-        
+
         self.logger.save_indices_to_file(
             [train_indices, val_indices, test_indices])
 
