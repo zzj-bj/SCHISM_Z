@@ -574,6 +574,7 @@ class Training:
 
         indices = [train_indices, val_indices, test_indices]
 
+
         train_dataset = TiffDatasetLoader(
             TiffDatasetLoaderConfig(
                 indices=train_indices,
@@ -589,7 +590,7 @@ class Training:
 
         val_dataset = TiffDatasetLoader(
             TiffDatasetLoaderConfig(
-                indices=train_indices,
+                indices=val_indices,
                 img_data=img_data,
                 mask_data=mask_data,
                 num_classes=self.num_classes,
@@ -602,7 +603,7 @@ class Training:
 
         test_dataset = TiffDatasetLoader(
             TiffDatasetLoaderConfig(
-                indices=train_indices,
+                indices=test_indices,
                 img_data=img_data,
                 mask_data=mask_data,
                 num_classes=self.num_classes,
@@ -612,7 +613,7 @@ class Training:
                 ignore_background=self.ignore_background
             )
         )
-
+        
         pin_memory = self.device== 'cuda'
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
@@ -624,7 +625,7 @@ class Training:
         test_loader = DataLoader(test_dataset, batch_size=10, shuffle = False,
                                  num_workers = 2, drop_last = True,
                                  pin_memory = pin_memory)
-
+        
         self.logger.save_indices_to_file(
             [train_indices, val_indices, test_indices])
 
