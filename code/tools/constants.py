@@ -33,7 +33,7 @@ LOGO_OUT = """
 ║  ███████║╚██████╗██║  ██║██║███████║██║ ╚═╝ ██║  ║
 ║  ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝     ╚═╝  ║
 ╠══════════════════════════════════════════════════╣
-║       -That's all folks!-  See You soon-         ║
+║       -That's all folks!-  See you soon-         ║
 ╚══════════════════════════════════════════════════╝
 """
 
@@ -62,8 +62,8 @@ PATTERN ={
 
 
 # Constants for displaying menus
-# MAIN MENU_   : Represents the main menu options
-# PREPROCESSING : Represents the preprocessing menu options
+# MAIN MENU_  : Represents the main menu options
+# PREPROCESSING: Represents the preprocessing menu options
 MENUS = {
     'MAIN': [
         "MAIN MENU",
@@ -74,7 +74,7 @@ MENUS = {
     'Preprocessing': [
         "PREPROCESSING",
         "Json generation",
-        "Normalization",
+        "Normalisation",
         "Back to the main menu"]
 }
 
