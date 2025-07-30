@@ -14,7 +14,7 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
   - `k_size`: Kernel size for convolutional layers.
   - `linear_head`: Option to switch between a linear or CNN-based segmentation head.
   - `n_features`: Number of transformer layers used for feature aggregation.
-  - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference.
+  - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference. Depending on your GPU, this option might have to be disabled in order for the training to run nicely.
   - `peft`: Incorporates LoRA for efficient fine-tuning of the backbone model.
   - `size`: Backbone model size (`small`, `base`, or `large`).
   - `num_classes`: Number of output segmentation classes.
@@ -24,8 +24,8 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
   - `lora_dropout`: Dropout probability for LoRA fine-tuning.
 
 - **Foundation Model Backbone**:
-  - Utilizes DINOv2, a transformer-based foundation model pre-trained on large datasets.
-  - Offers superior feature extraction and generalization capabilities.
+  - Utilises DINOv2, a transformer-based foundation model pre-trained on large datasets.
+  - Offers superior feature extraction and generalisation capabilities.
 
 - **Flexible Segmentation Heads**:
   - **Linear Head**: Lightweight option for simpler segmentation tasks.
@@ -33,7 +33,7 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
 
 - **Efficient Training**:
   - Parameter-Efficient Fine-Tuning (PEFT) via LoRA for training specific layers.
-  - Quantization to optimize memory and computational requirements.
+  - Quantization to optimise memory and computational requirements.
 
 ---
 ## How It Works
@@ -46,7 +46,7 @@ The DINOv2 foundation model extracts hierarchical features from input images. De
 A simple and lightweight head designed for basic segmentation tasks. It processes transformer features and directly generates the segmentation map.
 
 **Key Features**:
-- Batch normalization followed by a 1x1 convolution.
+- Batch normalisation followed by a 1x1 convolution.
 - Efficient upsampling with bilinear interpolation to match input image dimensions.
 
 #### CNN Head
@@ -56,7 +56,7 @@ A more advanced head for high-quality segmentation, leveraging convolutional blo
 - Multi-block architecture with configurable `channels`.
 - Upsampling via bicubic interpolation and pixel shuffling.
 - Supports multiple activation functions (e.g., `relu`, `leakyrelu`).
-- Dropout for regularization and robust segmentation outputs.
+- Dropout for regularisation and robust segmentation outputs.
 
 ### Output
 The segmentation head generates a final segmentation map with `num_classes` channels, providing per-pixel class probabilities.
