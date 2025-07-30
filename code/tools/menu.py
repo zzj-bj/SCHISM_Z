@@ -93,5 +93,5 @@ class Menu :
 
             # Input is not a number
             except ValueError:
-                text = f"[X] It looks like you didn't enter a valid number. Please try again! ! {ct.BELL}"
+                text = f"[X] It looks like you didn't enter a valid number. Please try again! {ct.BELL}"
                 display.print(text, colors['error'])

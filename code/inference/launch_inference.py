@@ -111,5 +111,5 @@ class LaunchInference:
 
             pred_object.predict()
 
-        text = f"Inference with Metric '{selected_metric}'"
+        text = f"Inference using '{selected_metric}' metric"
         report_inference.status(text)

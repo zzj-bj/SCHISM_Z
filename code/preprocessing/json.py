@@ -44,7 +44,7 @@ class Json:
         self.subfolders = json_config.subfolders
         self.json_file = json_config.json_file
         self.report = json_config.report
-        self.percentage_to_process = json_config.percentage_to_process 
+        self.percentage_to_process = json_config.percentage_to_process
         self.results = {}
 
     def add_to_report(self, text, who):
@@ -65,8 +65,10 @@ class Json:
         and any warnings or errors are reported.
 
         Args:
-            add_default (bool): If True, adds default values for 'mean' and 'std_dev' if not present.
-            append (bool): If True, appends results to an existing JSON file instead of overwriting it.
+            add_default (bool): If True, adds default values for 'mean' and 'std_dev'
+              if not present.
+            append (bool): If True, appends results to an existing JSON file instead
+              of overwriting it.
 
         Raises:
             Exception: If an error occurs during the processing of a dataset.
@@ -131,7 +133,7 @@ class Json:
         pixel_count = 0
 
         for idx in tqdm(indices_to_process, ncols=100,
-                        bar_format="   Mean & Variance : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+                        bar_format="   Mean & Std Dev : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
                         ):
 
             image_path = os.path.join(folder_path, image_files[idx])
@@ -159,4 +161,4 @@ class Json:
         mean = (mean / 255).tolist()
         std_dev = (std_dev / 255).tolist()
 
-        return mean, std_dev    
+        return mean, std_dev

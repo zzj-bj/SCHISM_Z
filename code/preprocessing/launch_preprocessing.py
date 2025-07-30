@@ -82,7 +82,7 @@ class LaunchPreprocessing:
         Generates a JSON file containing statistics about the datasets.
         """
 
-        ut.print_box("Json Generation")
+        ut.print_box("Json generation")
 
         report_json = re.ErrorReport()
         if data_dir is None:
@@ -117,12 +117,9 @@ class LaunchPreprocessing:
                                         report=report_json,
                                         percentage_to_process=percentage_to_process
                                     ))
-            try:
-                json_generation.process_datasets(append=append)
-            except (IOError, ValueError) as e:
-                print(e)
+            json_generation.process_datasets(append=append)
 
-        report_json.status("Json Generation")
+        report_json.status("Json generation")
 
     def launch_normalisation(self):
         """
@@ -158,10 +155,6 @@ class LaunchPreprocessing:
                 os.makedirs(out_path, exist_ok=True)
 
                 normalizer = image_normalizer.ImageNormalizer(in_path, out_path, report_normal)
-
-                try:
-                    normalizer.normalize_images()
-                except (IOError, ValueError) as e:
-                    print(e)
-
+                normalizer.normalize_images()
+                
         report_normal.status("Data Normalization")

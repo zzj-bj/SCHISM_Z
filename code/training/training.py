@@ -22,7 +22,8 @@ from AI.model_registry import model_mapping
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 
-from torch.cuda.amp import GradScaler
+# from torch.cuda.amp import GradScaler
+from torch.amp.grad_scaler import GradScaler
 import torch
 from torch import nn
 from torch.backends import cudnn
@@ -79,12 +80,12 @@ class Training:
         """
         return 'Training'
 
-    def add_to_report(self, text, who):
+    def add_to_report(self, text, who, is_critical = True):
         """
             Add a message to a report
         """
         if self.report is not None:
-            self.report.add(text, who)
+            self.report.add(text, who,  is_critical=is_critical) 
 
     def __init__(self, **kwargs):
         """
@@ -488,14 +489,14 @@ class Training:
                 return data_stats_loaded
 
             except (json.JSONDecodeError, ValueError) as e:
-               
-                text = " Error loading data stats : "
+
+                text = " Error loading data stats from JSON file."
                 self.display.print(text, colors['error'], bold = True)
                 text = " Using default normalization stats."
                 self.display.print(text, colors['warning'], bold = True)
 
                 text = "Training conducted with default normalization stats."
-                self.add_to_report(" - Training", text)
+                self.add_to_report(" - Training", text, False)
                 text = f" Error loading data stats from {json_file_path}:\n {e}."
                 self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
@@ -696,7 +697,7 @@ class Training:
 
                 # Use tqdm to create a progress bar
                 with tqdm(total=len(self.dataloaders[phase]), unit="batch", leave=True) as pbar:
-                    pbar.set_description(f"{phase.capitalize()} Epoch {epoch}/{self.epochs}")
+                    pbar.set_description(f"{phase.capitalize()}")
                     pbar.set_postfix(loss=0.0, **{metric: 0.0 for metric in display_metrics})
 
 

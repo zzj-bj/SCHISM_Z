@@ -259,8 +259,9 @@ class Inference:
             return self.data_stats  # Return for verification if needed
 
         except Exception as e:
-            print(f" Error loading data stats: {e}")
-            raise
+            text = f" Error loading data stats: {e}"
+            print(text )
+            raise 
 
     def predict(self):
         """
@@ -272,7 +273,7 @@ class Inference:
         dataloader = self.load_dataset()
 
         with tqdm(total=len(dataloader), ncols=100,
-          bar_format="- inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
+          bar_format=" Inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
           ) as pbar:
 
             for _, (img, _, img_path) in enumerate(dataloader):
