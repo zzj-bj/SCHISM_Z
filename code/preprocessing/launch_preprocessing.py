@@ -35,23 +35,6 @@ class LaunchPreprocessing:
         Initializes the LaunchPreprocessing class.
         """
 
-    def input_percentage(self,message):
-        """
-        This function returns a real number between 0 and 1
-        that corresponds to a percentage.
-        """
-        display = dc.DisplayColor()
-        while True:
-            try:
-                value = float(input(f"[?] {message} : "))
-                if 1 <= value <= 100:
-                    return value / 100
-
-                text = f"[X] Error: The value must be between 1 and 100. {ct.BELL}"
-                display.print(text, colors['error'])
-            except ValueError:
-                text = f"[X] Error: Please enter a valid number. {ct.BELL}"
-                display.print(text, colors['error'])
 
     def menu_preprocessing(self):
         """
@@ -91,7 +74,8 @@ class LaunchPreprocessing:
         if select :
             percentage_to_process = 1.0
         else :
-            percentage_to_process = self.input_percentage("Please enter a number between 1 and 100")
+            percentage_to_process = ut.input_percentage("Please enter a number between 1 and 100")
+
 
         if file_name_report is None:
             file_name_report = os.path.join(data_dir, '', 'data_stats.json')

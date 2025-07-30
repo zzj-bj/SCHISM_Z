@@ -71,7 +71,7 @@ class LaunchInference:
                                          if metric != "ConfusionMatrix"]
 
                     if len(available_metrics) == 1:
-                         selected_metric = metrics[0]
+                        selected_metric = metrics[0]
                     else:
                         # Display the Metric available Menu
                         menu_metric = ['Metrics'] + available_metrics

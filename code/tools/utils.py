@@ -19,6 +19,26 @@ def rgb_to_ansi(rgb):
     """Convert RGB color to ANSI escape code."""
     return f"\033[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m"
 
+def chck_color(color_key):
+    """
+    Check if the color key exists in the DISPLAY_COLORS dictionary.
+    If it does, return the corresponding RGB value.
+    If not, return a default color (Light Green).
+    """
+    try:
+        color = colors[color_key]
+    except KeyError:
+        color = (153, 204, 51)  # Default to Light Green
+
+    # Check if the color is a valid RGB tuple.
+    if not (isinstance(color, tuple) and len(color) == 3 and
+             all(isinstance(c, int) and 0 <= c <= 255 for c in color)):
+        color = (153, 204, 51)
+
+    return color
+
+
+
 def get_path(prompt):
     """Requests a valid path from the user."""
     display = dc.DisplayColor()
@@ -37,17 +57,7 @@ def get_path_color(prompt, color_key='input'):
     """
     display = dc.DisplayColor()
 
-    # Attempt to retrieve the color from the key.
-    try:
-        color = colors[color_key]
-    except KeyError:
-        color = (153, 204, 51)
-
-    # Check if the color is a valid RGB tuple.
-    if not (isinstance(color, tuple) and len(color) == 3 and
-             all(isinstance(c, int) and 0 <= c <= 255 for c in color)):
-        color = (153, 204, 51)
-
+    color = chck_color(color_key)
     while True:
         # Convert the input color from DISPLAY_COLORS to ANSI
         input_color = rgb_to_ansi(color)
@@ -60,22 +70,61 @@ def get_path_color(prompt, color_key='input'):
         display.print(text, colors['error'])
 
 
-def answer_yes_or_no(message):
+def answer_yes_or_no(message, color_key='input'):
     """
     This function retum.
       True for yes, y, oui, o.
       False for no, non n.
      The input does not take uppercase letters into account."
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+
     """
     display = dc.DisplayColor()
+
+    color = chck_color(color_key)
     while True:
-        reponse = input(f"[?] {message} (y/n) ? : ").strip().lower()
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+        # Displays the prompt in color
+        colored_prompt = f"{input_color}[?] {message} (y/n) ? : {Style.RESET_ALL}"
+
+        reponse = input(colored_prompt).strip()
         if reponse in ['yes', 'y']:
             return True
         if reponse in ['no',  'n']:
             return False
         text = f"[X] Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
+
+def input_percentage(message, color_key='input'):
+    """
+    This function returns a real number between 0 and 1
+    that corresponds to a percentage.
+    """
+    display = dc.DisplayColor()
+
+    color = chck_color(color_key)
+
+    while True:
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+        # Displays the prompt in color
+        colored_prompt = f"{input_color}[?] {message} : {Style.RESET_ALL}"
+
+        try:
+            # enter = input(colored_prompt).strip()
+            value = float(input(colored_prompt).strip())
+            if 1 <= value <= 100:
+                return value / 100
+
+            text = f"[X] Error: The value must be between 1 and 100. {ct.BELL}"
+            display.print(text, colors['error'])
+        except ValueError:
+            text = f"[X] Error: Please enter a valid number. {ct.BELL}"
+            display.print(text, colors['error'])
+
+
 
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
