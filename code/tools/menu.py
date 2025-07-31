@@ -8,9 +8,15 @@ It is possible to opt for a static menu or a dynamic menu.
 """
 import sys
 
+from colorama import init, Style
+
+from tools import utils as ut
 from tools import constants as ct
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+
+# Initialiser colorama
+init(autoreset=True)
 
 #============================================================================
 
@@ -82,16 +88,30 @@ class Menu :
         """
         Method to manage the user's choice in the menu.
         """
+
         display = dc.DisplayColor()
+
+        color = colors['input']
+
         while True:
             try:
-                select = int(input("[?] Make your choice: "))
+                #  # Convert the input color from DISPLAY_COLORS to ANSI
+                input_color = ut.rgb_to_ansi(color)
+                # # Displays the prompt in color
+                prompt = "[?] Make your choice: "
+                colored_select = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
+
+                select = int(input(colored_select).strip())
+
                 if 1 <= select <= self.ligne - 1 :
                     return select
                 text = f"[X] Oops! That selection isn't valid. Please try again! {ct.BELL}"
-                display.print(text, colors['error']) 
+                display.print(text, colors['error'])
 
             # Input is not a number
             except ValueError:
-                text = f"[X] It looks like you didn't enter a valid number. Please try again! {ct.BELL}"
+                text = (
+                        f"[X] It looks like you didn't enter a valid number. "
+                        f"Please try again! {ct.BELL}"
+                    )
                 display.print(text, colors['error'])
