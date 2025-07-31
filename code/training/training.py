@@ -689,11 +689,26 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
+                # bar at line 0, metrics at line 1
 
-                # Use tqdm to create a progress bar
-                with tqdm(total=len(self.dataloaders[phase]), unit="batch", leave=True) as pbar:
-                    pbar.set_description(f"{phase.capitalize()}")
-                    pbar.set_postfix(loss=0.0, **{metric: 0.0 for metric in display_metrics})
+                with tqdm(
+                    total=len(self.dataloaders[phase]),
+                    desc=f"{phase.capitalize()}",
+                    unit="batch",
+                    position=0,
+                    leave=False,
+                    ncols=70,              
+                    dynamic_ncols=False, 
+                ) as pbar, tqdm(
+                    total=0,
+                    desc="",
+                    position=1,
+                    bar_format="{desc}",
+                    leave=False,
+                    ncols=70,
+                    dynamic_ncols=False
+                ) as mbar:
+
 
 
                     for inputs, labels, weights in self.dataloaders[phase]:
@@ -760,18 +775,25 @@ class Training:
                             labels = labels.long()
 
                             # Update display metrics only (skip ConfusionMatrix)
-                            for metric_name, metric_fn in zip(self.metrics, metrics):
-                                if metric_name != "ConfusionMatrix":
-                                    running_metrics[metric_name] += metric_fn(
-                                        preds, labels).item()
+                            for name, fn in zip(self.metrics, metrics):
+                                if name != "ConfusionMatrix":
+                                    running_metrics[name] += fn(preds, labels).item()
 
-                        pbar.set_postfix(
-                            loss=running_loss / (pbar.n + 1),
-                            **{metric: running_metrics[metric] / (pbar.n + 1)
-                               for metric in display_metrics}
-                        )
                         pbar.update(1)
 
+                        # build exactly the string you want, with pipes and colons
+                        avg_loss = running_loss / pbar.n
+                        metrics_str = (
+                            f"{phase.capitalize()} Loss: {avg_loss:.4f} | "
+                            + " | ".join(
+                                f"{m}: {running_metrics[m]/pbar.n:.4f}"
+                                for m in display_metrics
+                            )
+                            + " |"
+                        )
+                        # overwrite the empty desc of the second bar
+                        mbar.set_description(metrics_str)
+                        
                 epoch_loss = running_loss / len(self.dataloaders[phase])
                 epoch_metrics = {metric: running_metrics[metric] /
                                  len(self.dataloaders[phase])
