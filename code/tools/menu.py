@@ -30,6 +30,8 @@ class Menu :
     The default style is 'double'.
     """
 
+    display = dc.DisplayColor()
+
     def __init__(self, selected_menu,  dynamic_menu = None, style = ''):
 
         self.selected_menu = selected_menu
@@ -40,6 +42,8 @@ class Menu :
         self.unknown_menu = False
         if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
+                text = f" '{self.board[0]}' : !!! The menu is absent !!!"
+                display.print(text, colors['error'])
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
@@ -64,7 +68,7 @@ class Menu :
         """        
         Method to display the menu based on the selected style and content.
         """
-        
+     
         display = dc.DisplayColor()
         if self.unknown_menu :
 
@@ -110,13 +114,13 @@ class Menu :
 
                 if 1 <= select <= self.ligne - 1 :
                     return select
-                text = f"[X] Oops! That selection isn't valid. Please try again! {ct.BELL}"
+                text = f"Oops! That selection isn't valid. Please try again! {ct.BELL}"
                 display.print(text, colors['error'])
 
             # Input is not a number
             except ValueError:
                 text = (
-                        f"[X] It looks like you didn't enter a valid number. "
+                        f"It looks like you didn't enter a valid number. "
                         f"Please try again! {ct.BELL}"
                     )
                 display.print(text, colors['error'])

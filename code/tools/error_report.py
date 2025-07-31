@@ -73,7 +73,7 @@ class ErrorReport:
         Displaying the correct end process message
         """
         if self.is_report():
-            self.display.print(f"[X] {process} failed", colors['error'])
+            self.display.print(f"{process} failed", colors['error'])
             self.display_report()
         else:
-            self.display.print(f"[√] {process} completed \n", colors['ok'])
+            self.display.print(f"{process} completed \n", colors['ok'])

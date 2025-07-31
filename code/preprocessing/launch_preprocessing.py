@@ -18,7 +18,6 @@ import os
 from tools import error_report as re
 from tools import utils as ut
 from tools import display_color as dc
-from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 from tools import menu
 
@@ -33,8 +32,8 @@ class LaunchPreprocessing:
     def __init__(self):
         """
         Initializes the LaunchPreprocessing class.
-        """
-
+            """
+        self.display = dc.DisplayColor()
 
     def menu_preprocessing(self):
         """
@@ -70,7 +69,7 @@ class LaunchPreprocessing:
         report_json = re.ErrorReport()
         if data_dir is None:
             data_dir = ut.get_path_color("Enter the data directory")
-        select = ut.answer_yes_or_no("Use all the data (100%) ?")
+        select = ut.answer_yes_or_no("Use all the data (100%)")
         if select :
             percentage_to_process = 1.0
         else :
@@ -92,7 +91,10 @@ class LaunchPreprocessing:
                                     folder_type='images')
 
         if report_json.is_report() == 0 :
-            print("[!] Starting Json generation")
+
+            self.display.print("Starting Json generation",
+                                       colors['warning'])
+
             json_generation = json.Json(
                                     json.JsonConfig(
                                         parent_dir = data_dir,
@@ -131,7 +133,9 @@ class LaunchPreprocessing:
                     os.rename(old_directory, new_directory)
 
         if report_normal.is_report() == 0 :
-            print("[!] Starting Data normalization")
+
+            self.display.print("Starting Data normalization", colors['warning'])
+
             for f in valid_subfolders:
                 print(f" - {f} :")
                 in_path = os.path.join(data_dir, f, 'raw_masks')

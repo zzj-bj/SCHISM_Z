@@ -460,14 +460,14 @@ class Training:
             json_file_path = os.path.join(data_dir, 'data_stats.json')
 
             if not os.path.exists(json_file_path):
-                self.display.print("[!] File 'json' not found ! ",
+                self.display.print("File 'json' not found ! ",
                                        colors['warning'])
-                self.display.print("[!] Using default normalization stats." ,
+                self.display.print("Using default normalization stats." ,
                                        colors['warning'])
                 return {"default": neutral_stats}
 
-            text = "[!] A Json file has been found. Its data will be used during training."
-            self.display.print(text, colors['warning'])
+            text = "A Json file has been found. Its data will be used during training."
+            self.display.print(text, colors['warning']) 
 
             try:
                 with open(json_file_path, 'r', encoding="utf-8") as file:
@@ -489,9 +489,9 @@ class Training:
 
             except (json.JSONDecodeError, ValueError) as e:
 
-                text = "[!] Error loading data stats from JSON file."
+                text = "Error loading data stats from JSON file."
                 self.display.print(text, colors['warning'])
-                text = "[!] Using default normalization stats."
+                text = "Using default normalization stats."
                 self.display.print(text, colors['warning'])
 
                 return {"default": neutral_stats}

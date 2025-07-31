@@ -9,6 +9,9 @@ import re
 
 from tools import error_report as rp
 from tools import utils as ut
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
+
 
 from AI.hyperparameters import Hyperparameters
 from training.training import Training
@@ -26,6 +29,8 @@ class LaunchTraining:
         """
         Initializes the LaunchTraining class.
         """
+
+        self.display = dc.DisplayColor()
 
     def compare_number(self, repertoire1, repertoire2):
         """
@@ -145,6 +150,7 @@ class LaunchTraining:
     def train_model(self):
         """Executes the training process in CLI."""
 
+
         ut.print_box("Training")
 
         initial_condition = True
@@ -188,20 +194,19 @@ class LaunchTraining:
                                                         data_dir, report_training)
 
         if initial_condition and report_training.is_report() == 0 :
-        # if initial_condition and len(valid_subfolders) != 0 :
-            print("[!] Starting training.")
+            self.display.print("Starting training.", colors['warning'])
 
-        # try:
-        train_object = Training(
-            data_dir = data_dir,
-            subfolders = valid_subfolders,
-            run_dir = run_dir,
-            hyperparameters = hyperparameters,
-            report = report_training,
-            num_file = num_file
-            )
+            # try:
+            train_object = Training(
+                data_dir = data_dir,
+                subfolders = valid_subfolders,
+                run_dir = run_dir,
+                hyperparameters = hyperparameters,
+                report = report_training,
+                num_file = num_file
+                )
 
-        train_object.load_segmentation_data()
-        train_object.train()
+            train_object.load_segmentation_data()
+            train_object.train()
 
         report_training.status("Training")

@@ -11,6 +11,10 @@ The message can be displayed in bold.
 @author: Pierre.FANCELLI
 """
 
+from tools.constants import DISPLAY_COLORS as colors
+
+
+
 class DisplayColor:
     """
     This class displays messages in the requested color.
@@ -22,13 +26,21 @@ class DisplayColor:
         """
         Initializes the DisplayColor class.
         """
-        pass
+
 
     def print(self, text, rgb=(255, 255, 255), bold=False):
         """
         Prints the text in the specified RGB color and boldness.
         """
+        start = ""
+        if rgb == colors['error']:
+            start = "[X] "
+        if rgb == colors['warning']:
+            start = "[!] "
+        if rgb == colors['ok']:
+            start = "[√] "
+
         rgb_code = f"\033[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m"
         bold_code = self.BOLD if bold else ""
-        print(f"{rgb_code}{bold_code}{text}{self.RESET}")
+        print(f"{rgb_code}{bold_code}{start}{text}{self.RESET}")
         

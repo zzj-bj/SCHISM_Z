@@ -46,7 +46,7 @@ def get_path(prompt):
         path = input(f"[?] {prompt}: ").strip()
         if os.path.exists(path):
             return path
-        text = f"[X] Invalid path: {path}. Please try again. {ct.BELL}"
+        text = f"Invalid path: {path}. Please try again. {ct.BELL}"
         display.print(text, colors['error'])
 
 def get_path_color(prompt, color_key='input'):
@@ -66,7 +66,7 @@ def get_path_color(prompt, color_key='input'):
         path = input(colored_prompt).strip()
         if os.path.exists(path):
             return path
-        text = f"[X] Invalid path: {path}. Please try again."
+        text = f"Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
 
 
@@ -94,7 +94,7 @@ def answer_yes_or_no(message, color_key='input'):
             return True
         if reponse in ['no',  'n']:
             return False
-        text = f"[X] Please provide a valid answer (y/n) {ct.BELL}"
+        text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
 
 def input_percentage(message, color_key='input'):
@@ -118,10 +118,10 @@ def input_percentage(message, color_key='input'):
             if 1 <= value <= 100:
                 return value / 100
 
-            text = f"[X] Error: The value must be between 1 and 100. {ct.BELL}"
+            text = f"The value must be between 1 and 100. {ct.BELL}"
             display.print(text, colors['error'])
         except ValueError:
-            text = f"[X] Error: Please enter a valid number. {ct.BELL}"
+            text = f"Please enter a valid number. {ct.BELL}"
             display.print(text, colors['error'])
 
 

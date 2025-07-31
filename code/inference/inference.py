@@ -101,11 +101,13 @@ class Inference:
 
         folders_without_weight = [key for key, value in missing_weight.items() if value]
         if folders_without_weight:
-            print (f"Folders without weight: {folders_without_weight}")
+
+            text = f"Folders without weight: {folders_without_weight}"
+            self.display.print(text, colors['warning'])
 
         # If there are folders without weight, prompt for JSON generation
         if folders_without_weight:
-            select = ut.answer_yes_or_no("Do you want to launch the JSON generation ?")
+            select = ut.answer_yes_or_no("Do you want to launch the JSON generation")
             if select :
                 lp.LaunchPreprocessing().launch_json_generation(
                     self.data_dir,
@@ -113,8 +115,14 @@ class Inference:
                     True
                 )
                 self.data_stats = self.load_data_stats_from_json()
+
+                text = "Back to inference with the new data stats."
+                self.display.print(text, colors['warning'])
+
             else :
-                print("Default data stats will be used.")
+                text = "Default data stats will be used."
+                self.display.print(text, colors['warning'])
+
 
         self.model = self.initialize_model()
         
@@ -259,14 +267,14 @@ class Inference:
                 for key, values in raw_data_stats.items()
             }
 
-            text = "[!] Data stats loaded successfully."
+            text = "Data stats loaded successfully."
             self.display.print(text, colors['warning'])
             return self.data_stats  # Return for verification if needed
 
         except Exception as e:
             text = f" Error loading data stats: {e}"
-            print(text )
-            raise 
+            self.display.print(text, colors['warning'])
+            raise
 
     def predict(self):
         """

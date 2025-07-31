@@ -13,6 +13,9 @@ from AI.hyperparameters import Hyperparameters
 from tools import menu
 from tools import error_report as re
 from tools import utils as ut
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
+
 
 from inference.inference import Inference
 
@@ -27,6 +30,8 @@ class LaunchInference:
         """
         Initializes the LaunchInference class.
         """
+        self.display = dc.DisplayColor()
+
 
     def run_inference(self):
         """
@@ -98,7 +103,9 @@ class LaunchInference:
                                         folder_type='images')
 
         if initial_condition and len(valid_subfolders) != 0 :
-            print(f"[!] Starting inference with Metric : {selected_metric}.")
+
+            text = f"Starting inference using {selected_metric} Metric."
+            self.display.print(text, colors['warning'])
 
             pred_object = Inference(
                 data_dir=data_dir,
