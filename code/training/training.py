@@ -464,8 +464,6 @@ class Training:
                                        colors['warning'])
                 self.display.print("[!] Using default normalization stats." ,
                                        colors['warning'])
-                text = " File not found. Using file default normalization"
-                self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
             text = "[!] A Json file has been found. Its data will be used during training."
@@ -492,14 +490,10 @@ class Training:
             except (json.JSONDecodeError, ValueError) as e:
 
                 text = "[!] Error loading data stats from JSON file."
-                self.display.print(text, colors['error'])
+                self.display.print(text, colors['warning'])
                 text = "[!] Using default normalization stats."
                 self.display.print(text, colors['warning'])
 
-                text = "Training conducted with default normalization stats."
-                self.add_to_report(" - Training", text, False)
-                text = f" Error loading data stats from {json_file_path}:\n {e}."
-                self.add_to_report(" - Json", text)
                 return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
