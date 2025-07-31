@@ -64,8 +64,12 @@ class Menu :
         """        
         Method to display the menu based on the selected style and content.
         """
+        
+        display = dc.DisplayColor()
         if self.unknown_menu :
-            print(f" '{self.sel_menu}' : This menu doesn't existe in the dictionary !!!")
+
+            text = f" '{self.selected_menu}' : This menu doesn't existe in the dictionary !!!"
+            display.print(text, colors['error'])
             sys.exit()
         else:
             max_length = max(len(chaine) for chaine in self.board)
@@ -81,7 +85,8 @@ class Menu :
             print(f"{self.frame[7]}{self.frame[10] * box_width}{self.frame[9]}")
 
             if self.ligne < 2 :
-                print(f" '{self.board[0]}' : Menu without Choise !!!")
+                text = f" '{self.board[0]}' : Menu without Choise !!!"
+                display.print(text, colors['error'])
                 sys.exit()
 
     def selection(self):
@@ -98,7 +103,7 @@ class Menu :
                 #  # Convert the input color from DISPLAY_COLORS to ANSI
                 input_color = ut.rgb_to_ansi(color)
                 # # Displays the prompt in color
-                prompt = "[?] Make your choice: "
+                prompt = "Make your choice: "
                 colored_select = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
 
                 select = int(input(colored_select).strip())
