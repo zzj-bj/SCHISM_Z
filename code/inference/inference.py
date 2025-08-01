@@ -28,6 +28,7 @@ from AI.model_registry import model_config_mapping
 
 from tools import utils as ut
 from tools import display_color as dc
+from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 from preprocessing import launch_preprocessing as lp
 
@@ -102,7 +103,7 @@ class Inference:
         folders_without_weight = [key for key, value in missing_weight.items() if value]
         if folders_without_weight:
 
-            text = f"Folders without weight: {folders_without_weight}"
+            text = f"Folders without weight: {folders_without_weight} {ct.BELL}"
             self.display.print(text, colors['warning'])
 
         # If there are folders without weight, prompt for JSON generation

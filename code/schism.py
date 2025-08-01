@@ -52,7 +52,8 @@ def main():
 
 def exit_prog():
     """ End of Program """
-    select = vf.answer_yes_or_no("Would you like to exit the program")
+    text = "Do you really want to leave the program? We'll miss you!"
+    select = vf.answer_yes_or_no(text)
     if select :
         print(f"[<3] Goodbye! {ct.BELL}")
         print(ct.LOGO_OUT)
