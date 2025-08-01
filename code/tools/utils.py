@@ -37,18 +37,6 @@ def chck_color(color_key):
 
     return color
 
-
-
-def get_path(prompt):
-    """Requests a valid path from the user."""
-    display = dc.DisplayColor()
-    while True:
-        path = input(f"[?] {prompt}: ").strip()
-        if os.path.exists(path):
-            return path
-        text = f"Invalid path: {path}. Please try again. {ct.BELL}"
-        display.print(text, colors['error'])
-
 def get_path_color(prompt, color_key='input'):
     """
     Requests a valid path from the user.
@@ -68,7 +56,6 @@ def get_path_color(prompt, color_key='input'):
             return path
         text = f"Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
-
 
 def answer_yes_or_no(message, color_key='input'):
     """
@@ -123,9 +110,6 @@ def input_percentage(message, color_key='input'):
         except ValueError:
             text = f"Please enter a valid number. {ct.BELL}"
             display.print(text, colors['error'])
-
-
-
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
     """
