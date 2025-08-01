@@ -215,5 +215,7 @@ class LaunchTraining:
                 report_training.add(" - hyperparameters :", f"{e}" )
             except KeyError as e:
                 report_training.add(" - hyperparameters :", f"{e}" )
+            except FileNotFoundError as e:
+                report_training.add(" - Training :", f"{e}" )
 
         report_training.status("Training")
