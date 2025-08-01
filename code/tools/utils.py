@@ -5,6 +5,8 @@ Collection of non-specific functions used in the program.
 """
 
 import os
+import json
+import numpy as np
 from colorama import init, Style
 
 from tools import constants as ct
@@ -37,7 +39,67 @@ def chck_color(color_key):
 
     return color
 
+def check_data_stats(dir):
+        """
+        Loads normalization statistics from a JSON file and populates self.data_stats.
 
+        Returns:
+            dict: A dictionary containing the errors found in data_stats
+
+        Raises:
+            Exception: If there is an error loading the JSON file.
+        """
+        error_found = {}
+        json_file_path = os.path.join(str(dir), 'data_stats.json')
+        try:
+            # Read the JSON file
+            with open(json_file_path, 'r', encoding='utf-8') as file:
+                raw_data_stats = json.load(file)
+
+            # Validate content
+            validate_data_stats(raw_data_stats)
+
+            # Convert the JSON content to the desired format
+            data_stats = {
+                key: [np.array(values[0]), np.array(values[1])]
+                for key, values in raw_data_stats.items()
+            }
+
+            return None 
+        
+        except (FileNotFoundError, PermissionError, IsADirectoryError, OSError, UnicodeError,
+        json.JSONDecodeError, AttributeError, TypeError, IndexError, ValueError, NameError) as e:
+            error_found[type(e).__name__] = str(e)
+
+        except Exception as e:
+            error_found["UnknownError"] = f"An unexpected error occurred: {e}"
+
+        return error_found
+
+def validate_data_stats(raw_data_stats):
+    """
+        Validates the entry and the keys of the data_stats.
+    """
+    if not isinstance(raw_data_stats, dict):
+        raise ValueError("Top-level JSON structure must be a dictionary.")
+
+    for key, value in raw_data_stats.items():
+        if not isinstance(key, str):
+            raise TypeError(f"Key '{key}' is not a string.")
+
+        if not isinstance(value, list) or len(value) != 2:
+            raise ValueError(f"Value for key '{key}' must be a list of exactly 2 elements.")
+
+        for i, vec in enumerate(value):
+            if not isinstance(vec, list):
+                raise TypeError(f"Element {i} for key '{key}' is not a list.")
+
+            if len(vec) != 3:
+                raise ValueError(f"Element {i} for key '{key}' must have exactly 3 numeric values.")
+
+            for j, item in enumerate(vec):
+                if not isinstance(item, (int, float)):
+                    raise TypeError(f"Value at index [{i}][{j}] for key '{key}' is not numeric.") 
 
 def get_path(prompt):
     """Requests a valid path from the user."""
