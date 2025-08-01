@@ -55,16 +55,18 @@ class ErrorReport:
         """
         for key, elements in self.dictionary.items():
             # Séparer les éléments en fonction de la valeur booléenne
-            critical_elements = [elem for elem in elements if elem[1]]
-            non_critical_elements = [elem for elem in elements if not elem[1]]
+            critical_elem = [elem for elem in elements if elem[1]]
+            non_critical_elem = [elem for elem in elements if not elem[1]]
 
             # Afficher d'abord les éléments critiques
-            if critical_elements:
-                self.display.print(f"{key} (Critical Errors): \n   {' / '.join(elem[0] for elem in critical_elements)}", colors['error'])
+            if critical_elem:
+                self.display.print(f"{key}\n   {' / '.join(elem[0] for elem in critical_elem)}",
+                                    colors['error'])
 
             # Afficher ensuite les éléments non critiques
-            if non_critical_elements:
-                self.display.print(f"{key} (Warning): \n   {' / '.join(elem[0] for elem in non_critical_elements)}", colors['warning'])
+            if non_critical_elem:
+                self.display.print(f"{key}\n   {' / '.join(elem[0] for elem in non_critical_elem)}",
+                                   colors['warning'])
 
         print("")
 

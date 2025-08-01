@@ -30,9 +30,10 @@ class Menu :
     The default style is 'double'.
     """
 
-    display = dc.DisplayColor()
 
     def __init__(self, selected_menu,  dynamic_menu = None, style = ''):
+
+        display = dc.DisplayColor()
 
         self.selected_menu = selected_menu
         self.dynamic_menu = dynamic_menu
@@ -68,7 +69,7 @@ class Menu :
         """        
         Method to display the menu based on the selected style and content.
         """
-     
+
         display = dc.DisplayColor()
         if self.unknown_menu :
 

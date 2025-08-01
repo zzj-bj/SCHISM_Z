@@ -196,17 +196,24 @@ class LaunchTraining:
         if initial_condition and report_training.is_report() == 0 :
             self.display.print("Starting training.", colors['warning'])
 
-            # try:
-            train_object = Training(
-                data_dir = data_dir,
-                subfolders = valid_subfolders,
-                run_dir = run_dir,
-                hyperparameters = hyperparameters,
-                report = report_training,
-                num_file = num_file
-                )
+            try:
+                train_object = Training(
+                    data_dir = data_dir,
+                    subfolders = valid_subfolders,
+                    run_dir = run_dir,
+                    hyperparameters = hyperparameters,
+                    report = report_training,
+                    num_file = num_file
+                    )
 
-            train_object.load_segmentation_data()
-            train_object.train()
+                train_object.load_segmentation_data()
+                train_object.train()
+
+            except ValueError as e:
+                report_training.add(" - hyperparameters :", f"{e}" )
+            except TypeError as e:
+                report_training.add(" - hyperparameters :", f"{e}" )
+            except KeyError as e:
+                report_training.add(" - hyperparameters :", f"{e}" )
 
         report_training.status("Training")

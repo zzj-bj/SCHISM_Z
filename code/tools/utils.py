@@ -131,7 +131,6 @@ def get_path_color(prompt, color_key='input'):
         text = f"Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
 
-
 def answer_yes_or_no(message, color_key='input'):
     """
     This function retum.
@@ -185,9 +184,6 @@ def input_percentage(message, color_key='input'):
         except ValueError:
             text = f"Please enter a valid number. {ct.BELL}"
             display.print(text, colors['error'])
-
-
-
 
 def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
     """
