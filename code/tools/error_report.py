@@ -60,11 +60,11 @@ class ErrorReport:
 
             # Afficher d'abord les éléments critiques
             if critical_elements:
-                self.display.print(f"{key} (Critical Errors): \n   {' / '.join(elem[0] for elem in critical_elements)}", colors['error'])
+                self.display.print(f"{key}\n   {' / '.join(elem[0] for elem in critical_elements)}", colors['error'])
 
             # Afficher ensuite les éléments non critiques
             if non_critical_elements:
-                self.display.print(f"{key} (Warning): \n   {' / '.join(elem[0] for elem in non_critical_elements)}", colors['warning'])
+                self.display.print(f"{key}\n   {' / '.join(elem[0] for elem in non_critical_elements)}", colors['warning'])
 
         print("")
 

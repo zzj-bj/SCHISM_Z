@@ -119,9 +119,7 @@ DISPLAY_COLORS = {
     'warning': (204, 204, 0, "[!] "), # Orange
     'input': (153, 204, 51, "[?] "), # Light Green
     'ok': (51, 153, 0, "[√] "), # Green
-    'text': (255, 255, 255, "[T] "), # White
-    'info': (51, 153, 255, "[I] "), # Light Blue
-    'title': (153, 51, 204, "[T] "), # Purple
+
 }
 
 

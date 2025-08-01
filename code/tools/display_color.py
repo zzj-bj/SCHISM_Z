@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
-
 """
 This class displays messages in the requested color.
-The allowed colors are 'red', 'green', 'yellow', 'magenta', 
- 'gray' and 'white'.
+The allowed colors are 'red', 'yellow', 'light green' , green
 If the color is not specified, the text is displayed in white.
 
 The message can be displayed in bold.
 
 Behavior:
-If the RGB value matches predefined colors for error, warning, or success,
- it prepends a corresponding symbol to the message:
-- Error: "[X] "
-- Warning: "[!] "
-- Success: "[√] "   
+If the RGB value matches predefined colors for error, warning, or success.
+It prepends a corresponding symbol to the message:
+- error:   "[X] " : Red
+- warning: "[!] " : Orange
+- input:   "[?] " : Light Green
+- ok:      "[√] " : Green
 
 @author: Pierre.FANCELLI
 """
@@ -30,7 +29,6 @@ class DisplayColor:
         """
         Initializes the DisplayColor class.
         """
-
 
     def print(self, text, rgb=(255, 255, 255), bold=False):
         """
