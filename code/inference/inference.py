@@ -103,7 +103,7 @@ class Inference:
         folders_without_weight = [key for key, value in missing_weight.items() if value]
         if folders_without_weight:
 
-            text = f"Folders without weight: {folders_without_weight} {ct.BELL}"
+            text = f"Dataset(s) found without stats : {folders_without_weight} {ct.BELL}"
             self.display.print(text, colors['warning'])
 
         # If there are folders without weight, prompt for JSON generation

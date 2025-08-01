@@ -144,5 +144,5 @@ class LaunchPreprocessing:
 
                 normalizer = image_normalizer.ImageNormalizer(in_path, out_path, report_normal)
                 normalizer.normalize_images()
-                
+
         report_normal.status("Data Normalization")

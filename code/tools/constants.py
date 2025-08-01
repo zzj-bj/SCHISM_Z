@@ -41,7 +41,7 @@ LOGO_IN = """
                         █████████████████    
 """
 
-LOGO_OUT = """                                                               
+LOGO_OUT = """                                                              
                           █████████████                          
                       █████▓▒▒▒▒░▒▒▒▒▓█████                      
                    ███▒▒▒▒████▓▓▓▓▓████▒▒▒▒███                   
@@ -113,15 +113,17 @@ MENUS = {
 }
 
 
-# Code colors for display
+# Code colors & prefixes for display
 DISPLAY_COLORS = {
-    'error': (204, 51, 0),  # Red
-    'warning': (204, 204, 0), # Orange
-    'input': (153, 204, 51), # Light Green
-    'ok': (51, 153, 0), # Green
-    'text': (255, 255, 255), # White
-    'info': (51, 153, 255), # Light Blue
-    'title': (153, 51, 204), # Purple
+    'error': (204, 51, 0, "[X] "),  # Red
+    'warning': (204, 204, 0, "[!] "), # Orange
+    'input': (153, 204, 51, "[?] "), # Light Green
+    'ok': (51, 153, 0, "[√] "), # Green
+    'text': (255, 255, 255, "[T] "), # White
+    'info': (51, 153, 255, "[I] "), # Light Blue
+    'title': (153, 51, 204, "[T] "), # Purple
 }
 
+
+# Default mean and standard deviation for Json generation
 DEFAULT_MEAN_STD = (0.5, 0.5, 0.5)

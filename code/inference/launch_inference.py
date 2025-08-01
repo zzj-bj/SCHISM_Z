@@ -104,7 +104,7 @@ class LaunchInference:
 
         if initial_condition and len(valid_subfolders) != 0 :
 
-            text = f"Starting inference using {selected_metric} Metric."
+            text = f"Starting inference using {selected_metric} metric."
             self.display.print(text, colors['warning'])
 
             pred_object = Inference(

@@ -8,11 +8,15 @@ If the color is not specified, the text is displayed in white.
 
 The message can be displayed in bold.
 
+Behavior:
+If the RGB value matches predefined colors for error, warning, or success,
+ it prepends a corresponding symbol to the message:
+- Error: "[X] "
+- Warning: "[!] "
+- Success: "[√] "   
+
 @author: Pierre.FANCELLI
 """
-
-from tools.constants import DISPLAY_COLORS as colors
-
 
 
 class DisplayColor:
@@ -32,15 +36,8 @@ class DisplayColor:
         """
         Prints the text in the specified RGB color and boldness.
         """
-        start = ""
-        if rgb == colors['error']:
-            start = "[X] "
-        if rgb == colors['warning']:
-            start = "[!] "
-        if rgb == colors['ok']:
-            start = "[√] "
 
         rgb_code = f"\033[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m"
         bold_code = self.BOLD if bold else ""
-        print(f"{rgb_code}{bold_code}{start}{text}{self.RESET}")
+        print(f"{rgb_code}{bold_code}{rgb[3]}{text}{self.RESET}")
         
