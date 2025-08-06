@@ -17,6 +17,9 @@ import json
 import numpy as np
 import cv2
 from tqdm import tqdm
+import tools.constants as ct
+from tools.constants import DISPLAY_COLORS as colors
+from tools import display_color as dc
 
 #---------------------------------------------------------------------------
 
@@ -31,7 +34,6 @@ class JsonConfig:
     parent_dir: str
     subfolders: list
     json_file: str
-    report: object
     percentage_to_process: float = 1.0
 
 class Json:
@@ -43,18 +45,12 @@ class Json:
         self.parent_dir = json_config.parent_dir
         self.subfolders = json_config.subfolders
         self.json_file = json_config.json_file
-        self.report = json_config.report
         self.percentage_to_process = json_config.percentage_to_process
         self.results = {}
+        self.display = dc.DisplayColor()
 
-    def add_to_report(self, text, who):
-        """
-            Add a message to a report
-        """
-        if self.report is not None:
-            self.report.add(text, who)
 
-    def process_datasets(self, add_default=False, append = False):
+    def process_datasets(self, add_default=False, append=False):
         """
         Process each dataset in the specified subfolders.
 
@@ -77,19 +73,18 @@ class Json:
 
             dataset_path = os.path.join(self.parent_dir, folder_name, 'images')
             rep_name = folder_name.split("\\")[-1]
-            print(f" - {rep_name}")
-
+ 
             try:
-                std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path)
+                std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path, rep_name)
                 self.results[folder_name] = [std_dev, mean]
             except (IOError, ValueError) as e:
-                trxt = f" - Error processing {folder_name}:\n {e}"
-                self.add_to_report(" - Json ", trxt)
+                self.display.print(f"Error processing {folder_name}:\n {e}", colors["error"])
+
 
         if add_default:
             # Add default values for 'mean' and 'std_dev' if not present
             if "default" not in self.results:
-                self.results["default"] = [[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
+                self.results["default"] = ct.DEFAULT_MEAN_STD
 
         if append:
             # Load existing results if appending
@@ -102,7 +97,7 @@ class Json:
             json.dump(self.results, json_file, indent=4)
 
 
-    def calculate_mean_and_std_rgb(self, folder_path):
+    def calculate_mean_and_std_rgb(self, folder_path, rep_name):
         """
         Calculate the mean and standard deviation of RGB values for images in a specified folder.
 
@@ -125,24 +120,21 @@ class Json:
         num_items_to_process = int(len(image_files) * self.percentage_to_process)
 
         num_items_to_process = min(num_items_to_process, len(image_files))
-        np.random.seed(57)
+        #np.random.seed(57)
         indices_to_process = np.random.choice(len(image_files), num_items_to_process, replace=False)
 
         pixel_sum = np.zeros(3, dtype=np.float32)
         pixel_sum_squared = np.zeros(3, dtype=np.float32)
         pixel_count = 0
 
-        for idx in tqdm(indices_to_process, ncols=100,
-                        bar_format="   Mean & Std Dev : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
+        for idx in tqdm(indices_to_process, ncols=70,
+                        bar_format= rep_name + " : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
                         ):
 
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.report.add(
-                    f"Unable to load image at path: {image_path}",
-                    " - Skipping this image.")
-                print(f"Unable to load image at path: {image_path}")
+                self.display.print("Unable to load image at path: {image_path}", colors["error"])
                 continue
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)

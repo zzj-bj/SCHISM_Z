@@ -10,6 +10,8 @@ Set of constants used in the program:
 
 @author: Pierre.FANCELLI
 """
+
+import numpy as np
 #------------------------------------------------------------------
 
 # Logo for SCHISM
@@ -97,19 +99,32 @@ PATTERN ={
     }
 
 
-# Constants for displaying menus
-# MAIN MENU_  : Represents the main menu options
-# PREPROCESSING: Represents the preprocessing menu options
+DATA_STATS_SCHEMA = {
+    "type": "object",
+    "patternProperties": {
+        "^.*$": {
+            "type": "array",
+            "minItems": 2, "maxItems": 2,
+            "items": {
+                "type": "array",
+                "minItems": 3, "maxItems": 3,
+                "items": {"type": "number"}
+            }
+        }
+    },
+    "additionalProperties": False
+}
+
 MENUS = {
     'MAIN': [
-        "MAIN MENU",
+        "Main menu",
         "Preprocessing",
         "Training",
         "Inference",
         "Quit"    ],
     'Preprocessing': [
-        "PREPROCESSING",
-        "Json generation",
+        "Preprocessing",
+        "JSON generation",
         "Normalisation",
         "Back to the main menu"]
 }
@@ -120,10 +135,11 @@ DISPLAY_COLORS = {
     'error':   (204,  51,  0, "[X] "), # Red
     'warning': (204, 204,  0, "[!] "), # Orange
     'input':   (153, 204, 51, "[?] "), # Light Green
-    'ok':      ( 51, 153,  0, "[√] "), # Green
-
+    'ok':      (51, 153,  0, "[√] "), # Green
+    'babye':   (255, 16, 240, "[<3] "), # Green
+    
 }
 
 
 # Default mean and standard deviation for Json generation
-DEFAULT_MEAN_STD = (0.5, 0.5, 0.5)
+DEFAULT_MEAN_STD = [np.array([0.5] * 3), np.array([0.5] * 3)]

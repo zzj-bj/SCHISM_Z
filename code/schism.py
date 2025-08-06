@@ -34,31 +34,26 @@ def main():
         main_menu.display_menu()
         choice = main_menu.selection()
 
-        # Menu Preprocessing
         if choice == 1:
             lp.LaunchPreprocessing().menu_preprocessing()
-
-        # Training
         elif choice == 2:
             lt.LaunchTraining().train_model()
-
-         # Inference
         elif choice == 3:
             li.LaunchInference().run_inference()
-
-        # Fin de Programme
         elif choice == 4:
-            exit_prog()
+            if _confirm_exit():
+                break  # exit the loop and end program
+            # else: fall through to re-display the menu
 
-def exit_prog():
-    """ End of Program """
-    text = "Do you really want to leave the program? We'll miss you!"
-    select = vf.answer_yes_or_no(text)
-    if select :
-        print(f"[<3] Goodbye! {ct.BELL}")
+def _confirm_exit():
+    display = dc.DisplayColor()
+    """Ask user to confirm exit. Returns True if exiting, False otherwise."""
+    prompt = "Do you really want to leave the program? We'll miss you!"
+    if vf.answer_yes_or_no(prompt):
+        display.print("Goodbye! \n", colors['babye'])
         print(ct.LOGO_OUT)
-        sys.exit()
-
+        return True
+    return False
 
 if __name__ == "__main__":
     main()

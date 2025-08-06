@@ -9,26 +9,21 @@ and the main training loop.
 import os
 import sys
 import glob
-import json
 from datetime import datetime
 
 import numpy as np
 from tqdm import tqdm
 
-from AI.tiffdatasetloader import TiffDatasetLoader
-from AI.paramconverter import ParamConverter
-from AI.model_registry import model_mapping
-
+import tools.utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+from preprocessing import launch_preprocessing as lp
 
-# from torch.cuda.amp import GradScaler
-from torch.amp.grad_scaler import GradScaler
 import torch
 from torch import nn
-from torch.backends import cudnn
 import torch.nn.functional as nn_func
-from torch.cuda.amp import GradScaler
+from torch.amp import GradScaler
+import torch.backends.cudnn as cudnn
 from torch.nn import (
     CrossEntropyLoss, BCEWithLogitsLoss,
     NLLLoss
@@ -50,6 +45,7 @@ from torchmetrics.classification import (
 )
 
 from training.training_logger import TrainingLogger
+import multiprocessing
 
 from AI.tiffdatasetloader import TiffDatasetLoader
 from AI.tiffdatasetloader import TiffDatasetLoaderConfig
@@ -409,10 +405,18 @@ class Training:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
             raise ValueError(e)
 
-        return model_class(
-                model_config_class(
-                    **typed_required_params, **typed_optional_params
-                )
+        try:
+            return model_class(
+                model_config_class(**typed_required_params, **typed_optional_params)
+            ).to(self.device)
+        except RuntimeError as e:
+            dc.DisplayColor().print(
+                f"CUDA error during model initialization: {e}. Falling back to CPU.",
+                colors['warning']
+            )
+            self.device = 'cpu'
+            return model_class(
+                model_config_class(**typed_required_params, **typed_optional_params)
             ).to(self.device)
 
     def create_unique_folder(self):
@@ -442,59 +446,6 @@ class Training:
         and the splitting of data into training,
         validation, and test sets.
         """
-
-        def load_data_stats(data_dir):
-            """
-            Loads normalization statistics from a JSON file. Provides default normalization
-            stats if the file is missing or improperly formatted.
-
-            Args:
-                data_dir (str): Directory containing the data stats JSON file.
-
-            Returns:
-                dict: A dictionary containing the loaded data statistics.
-            """
-            neutral_stats = [
-                # Default mean and std
-                np.array([0.5] * 3), np.array([0.5] * 3)]
-            json_file_path = os.path.join(data_dir, 'data_stats.json')
-
-            if not os.path.exists(json_file_path):
-                self.display.print("File 'json' not found ! ",
-                                       colors['warning'])
-                self.display.print("Using default normalization stats." ,
-                                       colors['warning'])
-                return {"default": neutral_stats}
-
-            text = "A Json file has been found. Its data will be used during training."
-            self.display.print(text, colors['warning']) 
-
-            try:
-                with open(json_file_path, 'r', encoding="utf-8") as file:
-                    raw_data_stats = json.load(file)
-
-                data_stats_loaded = {}
-                for key, value in raw_data_stats.items():
-                    if not (isinstance(value, list) and len(value) == 2 and
-                            all(isinstance(v, list) and len(v) == 3 for v in value)):
-                        text =f" Invalid format in data_stats.json for key {key}"
-                        raise ValueError(text)
-
-                    data_stats_loaded[key] = [
-                        np.array(value[0]),
-                        np.array(value[1])
-                    ]
-
-                return data_stats_loaded
-
-            except (json.JSONDecodeError, ValueError) as e:
-
-                text = "Error loading data stats from JSON file."
-                self.display.print(text, colors['warning'])
-                text = "Using default normalization stats."
-                self.display.print(text, colors['warning'])
-
-                return {"default": neutral_stats}
 
         def generate_random_indices(num_samples, val_split, subfolders, num_sample_subfolder):
             """
@@ -536,8 +487,8 @@ class Training:
         img_data = {}
         mask_data = {}
         num_sample_per_subfolder = {}
-        data_stats = load_data_stats(self.data_dir)
-
+        data_stats = ut.load_data_stats(self.data_dir, self.data_dir)
+        
         if not self.subfolders or not isinstance(self.subfolders, list):
             text = "The 'subfolders' attribute must be a non-empty list before loading data."
             raise ValueError(text)
@@ -608,17 +559,29 @@ class Training:
             )
         )
 
-        pin_memory = self.device== 'cuda'
+        try:
+            pin_mem = torch.cuda.is_available()
+        except Exception:
+            pin_mem = False
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
-                                  shuffle = True, num_workers = 2, drop_last = True,
-                                  pin_memory = pin_memory)
-        val_loader = DataLoader(val_dataset, batch_size = self.batch_size,
-                                shuffle = False, num_workers = 2, drop_last = True,
-                                pin_memory = pin_memory)
-        test_loader = DataLoader(test_dataset, batch_size=10, shuffle = False,
-                                 num_workers = 2, drop_last = True,
-                                 pin_memory = pin_memory)
+        train_loader = DataLoader(train_dataset, 
+                                batch_size=self.batch_size,
+                                num_workers=(multiprocessing.cpu_count() // 2 or 1), 
+                                shuffle = True, 
+                                drop_last = True,
+                                pin_memory = pin_mem)
+        val_loader =  DataLoader(val_dataset, 
+                                batch_size = self.batch_size,
+                                shuffle = False, 
+                                num_workers=(multiprocessing.cpu_count() // 2 or 1), 
+                                drop_last = True,
+                                pin_memory = pin_mem)
+        test_loader =  DataLoader(test_dataset, 
+                                batch_size=1, 
+                                shuffle = False,
+                                num_workers = 2, 
+                                drop_last = True,
+                                pin_memory = pin_mem)
 
         self.logger.save_indices_to_file(
             [train_indices, val_indices, test_indices])
@@ -641,24 +604,11 @@ class Training:
         Returns:
             tuple: Dictionaries containing losses and metrics for each phase.
         """
-        def print_epoch_box(epoch, total_epochs):
-            # Generate the epoch string
-            epoch_str = f" Epoch {epoch}/{total_epochs} "
-
-            # Determine the width of the box based on the string length
-            box_width = len(epoch_str) + 2  # Add padding for the box
-
-            # Create the box
-            print(f" ╔{'═' * (box_width)}╗")
-            print(f" ║{epoch_str.center(box_width)}║")
-            print(f" ╚{'═' * (box_width)}╝")
-
-
         scaler = None
-        if self.device == "cuda":
-            scaler = GradScaler()
+        if "cuda" in self.device:
+            scaler = GradScaler(device_type="cuda")
             cudnn.benchmark = True
-
+        
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled
         metrics = self.initialize_metrics()
@@ -675,7 +625,7 @@ class Training:
 
         for epoch in range(1, self.epochs + 1):
 
-            print_epoch_box(epoch, self.epochs)
+            ut.print_box(f"Epoch {epoch}/{self.epochs}")
 
             for phase in ["train", "val"]:
                 is_training = phase == "train"
@@ -688,8 +638,6 @@ class Training:
                 running_loss = 0.0
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
-
-                # bar at line 0, metrics at line 1
 
                 with tqdm(
                     total=len(self.dataloaders[phase]),
@@ -708,8 +656,6 @@ class Training:
                     ncols=70,
                     dynamic_ncols=False
                 ) as mbar:
-
-
 
                     for inputs, labels, weights in self.dataloaders[phase]:
 
@@ -826,9 +772,11 @@ class Training:
                                              f"model_best_{metric}.pth")
                             )
 
-        formatted_metrics = {
-            metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
-        print(f" Best Validation Metrics: {formatted_metrics}")
+        formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
+        
+        print("Best validation metrics:")
+        for metric, value in formatted_metrics.items():
+            print(f"  {metric:<10}: {value}")
 
         return loss_dict, metrics_dict, metrics
 
@@ -836,7 +784,8 @@ class Training:
         """
         Starts the training process for the model.
         """
-        
+        print("shit")
+
         optimizer = self.initialize_optimizer()
         scheduler = self.initialize_scheduler(optimizer=optimizer)
         loss_dict, metrics_dict, metrics = self.training_loop(optimizer=optimizer,

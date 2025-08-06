@@ -10,6 +10,8 @@ import os
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 
 #=============================================================================
 # pylint: disable=too-few-public-methods
@@ -17,19 +19,24 @@ class ImageNormalizer:
     """
     This class allows normalizing a group of images.
     """
-    def __init__(self, input_path, output_path, report):
+    def __init__(self, input_path, output_path):
         self.input_path = input_path
         self.output_path = output_path
-        self.report = report
+        self.display = dc.DisplayColor()
+
 
     def normalize_images(self):
         """Normalizes all images in the input directory."""
         # Searching for image files (*.tif)
         files = [f for f in os.listdir(self.input_path) if f.endswith(".tif")]
+        pbar = tqdm(
+            files,
+            ncols=70,
+            bar_format="{desc}: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%"
+        )
+        for filename in pbar:
+            pbar.set_description(f"Normalising {filename}")
 
-        for filename in tqdm(files, ncols=100,
-                bar_format="   Normalization: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
-                ):
             file = os.path.join(self.input_path, filename)
 
             try:
@@ -44,9 +51,10 @@ class ImageNormalizer:
                                  value in enumerate(unique_classes)}
 
                 # Apply the mapping using vectorization
-                compliant_masks = np.zeros_like(masks, dtype=np.uint8)
-                for value, scaled_value in class_mapping.items():
-                    compliant_masks[masks == value] = scaled_value
+                lut = np.zeros(masks.max()+1, dtype=np.uint8)
+                for v, scaled in class_mapping.items():
+                    lut[v] = scaled
+                compliant_masks = lut[masks]
 
                 # Create a new image from the compliant masks
                 normalized_image = Image.fromarray(compliant_masks)
@@ -56,4 +64,5 @@ class ImageNormalizer:
                 normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
 
             except (IOError, ValueError) as e:
-                print(f"\n{e}")
+                self.display.print(f"Normalization error: {e}", colors["error"])
+                continue

@@ -8,10 +8,14 @@ import os
 import json
 import numpy as np
 from colorama import init, Style
-
-from tools import constants as ct
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+from pathlib import Path
+from jsonschema import Draft7Validator
+from tools import constants as ct
+from preprocessing import launch_preprocessing as lp
+
+display = dc.DisplayColor()
 
 # Initialiser colorama
 init(autoreset=True)
@@ -38,68 +42,6 @@ def chck_color(color_key):
         color = (153, 204, 51)
 
     return color
-
-def check_data_stats(dir):
-        """
-        Loads normalization statistics from a JSON file and populates self.data_stats.
-
-        Returns:
-            dict: A dictionary containing the errors found in data_stats
-
-        Raises:
-            Exception: If there is an error loading the JSON file.
-        """
-        error_found = {}
-        json_file_path = os.path.join(str(dir), 'data_stats.json')
-        try:
-            # Read the JSON file
-            with open(json_file_path, 'r', encoding='utf-8') as file:
-                raw_data_stats = json.load(file)
-
-            # Validate content
-            validate_data_stats(raw_data_stats)
-
-            # Convert the JSON content to the desired format
-            data_stats = {
-                key: [np.array(values[0]), np.array(values[1])]
-                for key, values in raw_data_stats.items()
-            }
-
-            return None 
-        
-        except (FileNotFoundError, PermissionError, IsADirectoryError, OSError, UnicodeError,
-        json.JSONDecodeError, AttributeError, TypeError, IndexError, ValueError, NameError) as e:
-            error_found[type(e).__name__] = str(e)
-
-        except Exception as e:
-            error_found["UnknownError"] = f"An unexpected error occurred: {e}"
-
-        return error_found
-
-def validate_data_stats(raw_data_stats):
-    """
-        Validates the entry and the keys of the data_stats.
-    """
-    if not isinstance(raw_data_stats, dict):
-        raise ValueError("Top-level JSON structure must be a dictionary.")
-
-    for key, value in raw_data_stats.items():
-        if not isinstance(key, str):
-            raise TypeError(f"Key '{key}' is not a string.")
-
-        if not isinstance(value, list) or len(value) != 2:
-            raise ValueError(f"Value for key '{key}' must be a list of exactly 2 elements.")
-
-        for i, vec in enumerate(value):
-            if not isinstance(vec, list):
-                raise TypeError(f"Element {i} for key '{key}' is not a list.")
-
-            if len(vec) != 3:
-                raise ValueError(f"Element {i} for key '{key}' must have exactly 3 numeric values.")
-
-            for j, item in enumerate(vec):
-                if not isinstance(item, (int, float)):
-                    raise TypeError(f"Value at index [{i}][{j}] for key '{key}' is not numeric.") 
 
 def get_path(prompt):
     """Requests a valid path from the user."""
@@ -133,10 +75,10 @@ def get_path_color(prompt, color_key='input'):
 
 def answer_yes_or_no(message, color_key='input'):
     """
-    This function retum.
-      True for yes, y, oui, o.
-      False for no, non n.
-     The input does not take uppercase letters into account."
+    This function returns
+        - True for yes, y, oui, o.
+        - False for no, non n.
+        - The input does not take uppercase letters into account."
     Displays the prompt in the specified color.
     If the specified color key is invalid, the prompt will be displayed in Light Green.
 
@@ -151,9 +93,9 @@ def answer_yes_or_no(message, color_key='input'):
         colored_prompt = f"{input_color}[?] {message} (y/n) ? : {Style.RESET_ALL}"
 
         reponse = input(colored_prompt).strip()
-        if reponse in ['yes', 'y']:
+        if reponse in ['yes', 'y', 'YES', 'Y', 'Yes']:
             return True
-        if reponse in ['no',  'n']:
+        if reponse in ['no', 'n', 'NO', 'N', 'No']:
             return False
         text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
@@ -163,6 +105,7 @@ def input_percentage(message, color_key='input'):
     This function returns a real number between 0 and 1
     that corresponds to a percentage.
     """
+    #TODO
     display = dc.DisplayColor()
 
     color = chck_color(color_key)
@@ -185,71 +128,6 @@ def input_percentage(message, color_key='input'):
             text = f"Please enter a valid number. {ct.BELL}"
             display.print(text, colors['error'])
 
-def validate_subfolders(data_dir, subfolders, valid_subfolders, report, folder_type='images'):
-    """
-    Validate the existence and content of specified subfolders.
-
-    This function checks if the specified subfolders contain the required folder type
-    (e.g., 'images' or 'masks'). It verifies if the folder exists and if it contains
-    any TIFF files. If a folder is missing or empty, a message is added to the provided
-    report object.
-
-    Parameters:
-    ----------
-    data_dir : str
-        The base directory where the subfolders are located.
-
-    subfolders : list of str
-        A list of subfolder names to validate.
-
-    valid_subfolders : list of str
-        A list that will be populated with valid subfolder names
-        that contain the required files.
-
-    report : object
-        An object that has an `add` method for logging messages about missing folders
-          or empty directories.
-
-    folder_type : str, optional
-        The type of folder to check for (default is 'images').
-        This can be changed to 'masks' or any other type.
-
-
-    Returns:
-    --The function modifies the `valid_subfolders` list in place
-    and adds messages to the `report`.-----
-
-    """
-
-    nb_files = 0
-    if not os.path.isdir(data_dir):
-        report.add(f" - Folder '{folder_type}' missing in : ", subfolders)
-    else:
-        nb_files = count_tif_files(data_dir)
-        if nb_files == 0:
-            report.add(f" - No file (*.tif) in folder '{folder_type}' : ", subfolders)
-        else:
-            valid_subfolders.append(subfolders)
-    return nb_files
-
-def count_tif_files(folder):
-    """
-    Count the number of files with extention '.tif' in the given directory.
-
-    Parameters
-    ----------
-    repertoire : str
-        directory where find the files.
-
-    Returns
-    -------
-    Numbers of files.
-
-    """
-    files = [f for f in os.listdir(folder)
-             if f.endswith(".tif")]
-    return len(files)
-
 def print_box(text):
     """
     Prints a text string inside a decorative box.
@@ -266,6 +144,94 @@ def print_box(text):
     box_width = len(text) + 2  # Add padding for the box
 
     # Create the box
-    print(f" ╔{'═' * (box_width)}╗")
-    print(f" ║{text.center(box_width)}║")
-    print(f" ╚{'═' * (box_width)}╝")
+    print(f"╔{'═' * (box_width)}╗")
+    print(f"║{text.center(box_width)}║")
+    print(f"╚{'═' * (box_width)}╝")
+
+
+def load_data_stats(json_dir, data_dir):
+    """
+    1. Load+validate data_stats.json
+    2. Check for missing folders
+    3. Optionally regenerate JSON
+    4. Return data_stats dict (or default)
+    """
+    display = dc.DisplayColor()
+    neutral_stats = ct.DEFAULT_MEAN_STD
+    json_path = Path(json_dir) / "data_stats.json"
+
+    # 1) File exists?
+    if not json_path.is_file():
+        if answer_yes_or_no("data_stats.json not found; generate a new one?"):
+            lp.LaunchPreprocessing().launch_json_generation(
+                data_dir=str(data_dir),
+                file_name_report=str(json_path),
+                append=False,
+            )
+            return load_data_stats(json_dir, data_dir)
+        else:
+            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            return {"default": neutral_stats}
+
+    # 2) Read & parse JSON
+    try:
+        raw_text = json_path.read_text(encoding="utf-8")
+        raw = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        display.print(f"JSON parse error: {e}", ct.DISPLAY_COLORS["warning"])
+        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json?"):
+            lp.LaunchPreprocessing().launch_json_generation(
+                data_dir=str(data_dir),
+                file_name_report=str(json_path),
+                append=False,
+            )
+            return load_data_stats(json_dir, data_dir)
+        else:
+            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            return {"default": neutral_stats}
+
+    # 3) Schema validation
+    validator = Draft7Validator(ct.DATA_STATS_SCHEMA)
+    errors = sorted(validator.iter_errors(raw), key=lambda e: e.path)
+    if errors:
+        for err in errors:
+            display.print(f"Schema error: {err.message}", ct.DISPLAY_COLORS["warning"])
+        if answer_yes_or_no("Schema invalid; regenerate data_stats.json?"):
+            lp.LaunchPreprocessing().launch_json_generation(
+                data_dir=str(data_dir),
+                file_name_report=str(json_path),
+                append=True,
+            )
+            return load_data_stats(json_dir, data_dir)
+        else:
+            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            return {"default": neutral_stats}
+
+    # 4) Convert to numpy
+    try:
+        data_stats = {
+            key: [np.array(vals[0], float), np.array(vals[1], float)]
+            for key, vals in raw.items()
+        }
+    except Exception as e:
+        display.print(f"Error converting stats to arrays: {e}", ct.DISPLAY_COLORS["warning"])
+        return {"default": neutral_stats}
+
+    # 5) Check for missing subfolders — **use data_dir**, not dir!
+    subfolders = [d.name for d in Path(data_dir).iterdir() if d.is_dir()]
+    missing = [d for d in subfolders if d not in data_stats]
+    if missing:
+        display.print(f"Datasets without stats: {missing}", ct.DISPLAY_COLORS["warning"])
+        if answer_yes_or_no("Generate updated data_stats.json including them?"):
+            lp.LaunchPreprocessing().launch_json_generation(
+                data_dir=str(data_dir),
+                file_name_report=str(json_path),
+                append=True,
+            )
+            return load_data_stats(json_dir, data_dir)
+        else:
+            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            return {"default": neutral_stats}
+
+    # 6) Success
+    return data_stats

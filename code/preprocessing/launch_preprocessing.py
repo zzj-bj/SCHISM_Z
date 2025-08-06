@@ -14,14 +14,11 @@ This module allows for the following operations:
 """
 
 import os
-
-from tools import error_report as re
+from pathlib import Path
 from tools import utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools import menu
-
-
 from preprocessing import image_normalizer
 from preprocessing import json
 
@@ -59,90 +56,130 @@ class LaunchPreprocessing:
             elif choice == 3:
                 return
 
-    def launch_json_generation(self,data_dir=None,file_name_report=None,append=False):
+    def launch_json_generation(self, data_dir=None, file_name_report=None, append=False):
         """
         Generates a JSON file containing statistics about the datasets.
         """
 
-        ut.print_box("Json generation")
+        ut.print_box("JSON generation")
 
-        report_json = re.ErrorReport()
+        # 1) Ensure data_dir is a Path
         if data_dir is None:
-            data_dir = ut.get_path_color("Enter the data directory")
-        select = ut.answer_yes_or_no("Use all the data (100%)")
-        if select :
+            data_dir = Path(ut.get_path_color("Enter the data directory"))
+        else:
+            data_dir = Path(data_dir)
+
+        # 2) Choose percentage
+        if ut.answer_yes_or_no("Do you want to use all the data to generate data statistics ?"):
             percentage_to_process = 1.0
-        else :
-            percentage_to_process = ut.input_percentage("Please enter a number between 1 and 100")
+        else:
+            percentage_to_process = ut.input_percentage("Please enter a percentage between 1 and 100")
 
-
+        # 3) JSON output path
         if file_name_report is None:
-            file_name_report = os.path.join(data_dir, '', 'data_stats.json')
+            file_name_report = data_dir / "data_stats.json"
+        else:
+            file_name_report = Path(file_name_report)
 
-        subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+        # 4) Gather subfolder Paths
+        subfolders = [p for p in data_dir.iterdir() if p.is_dir()]
+        if not subfolders:
+            self.display.print("The data directory is empty", colors["error"])
+            return
 
         valid_subfolders = []
-        if len(subfolders) == 0 :
-            report_json.add(" - The data directory is Empty ", '')
-        else:
-            for f in subfolders :
-                path = os.path.join(data_dir, f, 'images')
-                ut.validate_subfolders(path, f, valid_subfolders, report_json,
-                                    folder_type='images')
+        for sub in subfolders:
+            images_dir = sub / "images"
+            if not images_dir.is_dir():
+                self.display.print(f"{sub.name}/images not found", colors["error"])
+                continue
 
-        if report_json.is_report() == 0 :
+            tif_files = list(images_dir.glob("*.tif"))
+            if not tif_files:
+                self.display.print(f"No tif files in {sub.name}/images", colors["error"])
+                continue
 
-            self.display.print("Starting Json generation",
-                                       colors['warning'])
+            valid_subfolders.append(sub.name)
 
-            json_generation = json.Json(
-                                    json.JsonConfig(
-                                        parent_dir = data_dir,
-                                        subfolders=valid_subfolders,
-                                        json_file=file_name_report,
-                                        report=report_json,
-                                        percentage_to_process=percentage_to_process
-                                    ))
-            json_generation.process_datasets(append=append)
+        if not valid_subfolders:
+            self.display.print("No valid subfolders found for JSON generation", colors["error"])
+            return
 
-        report_json.status("Json generation")
+        # 5) Launch generation
+        self.display.print("Starting JSON generation", colors["warning"])
+        json_generation = json.Json(
+            json.JsonConfig(
+                parent_dir=data_dir,
+                subfolders=valid_subfolders,
+                json_file=file_name_report,
+                percentage_to_process=percentage_to_process
+            )
+        )
+        json_generation.process_datasets(append=append)
 
     def launch_normalisation(self):
         """
-        Normalization of masks in 8-bit grayscale format
+        Normalizes TIFF masks (8-bit grayscale) by first moving them to
+        raw_masks/ and then rewriting masks/ with the normalized output.
         """
-        ut.print_box("Data Normalization")
+        ut.print_box("Data Normalisation")
 
-        report_normal = re.ErrorReport()
-        data_dir = ut.get_path_color("Enter the data directory")
-        subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
+        # 1) Get and validate data_dir
+        data_dir = Path(ut.get_path_color("Enter the data directory"))
+        if not data_dir.is_dir():
+            self.display.print(f"Invalid data directory: {data_dir}", colors["error"])
+            return
 
-        valid_subfolders = []
-        if len(subfolders) == 0 :
-            report_normal.add(" - The data directory is Empty ", '')
-        else:
-            for f in subfolders :
-                path = os.path.join(data_dir, f, 'masks')
-                ut.validate_subfolders(path, f, valid_subfolders, report_normal,
-                                    folder_type='masks')
-            # # rename masks to raw_masks
-            for f in valid_subfolders:
-                old_directory = os.path.join(data_dir, f, 'masks')
-                new_directory = os.path.join(data_dir, f, 'raw_masks')
-                if not os.path.exists(new_directory):
-                    os.rename(old_directory, new_directory)
+        # 2) Find all subfolders
+        subdirs = [p for p in data_dir.iterdir() if p.is_dir()]
+        if not subdirs:
+            self.display.print("The data directory is empty", colors["error"])
+            return
 
-        if report_normal.is_report() == 0 :
+        # 3) Identify which subfolders actually contain .tif masks
+        valid_subfolders: list[Path] = []
+        for sub in subdirs:
+            masks_dir = sub / "masks"
+            if not masks_dir.is_dir():
+                self.display.print(f"{sub.name}/masks not found", colors["error"])
+                return
 
-            self.display.print("Starting Data normalization", colors['warning'])
+            tif_files = list(masks_dir.glob("*.tif"))
+            if not tif_files:
+                self.display.print(f"No .tif files in {sub.name}/masks", colors["error"])
+                return
 
-            for f in valid_subfolders:
-                print(f" - {f} :")
-                in_path = os.path.join(data_dir, f, 'raw_masks')
-                out_path = os.path.join(data_dir, f, 'masks')
-                os.makedirs(out_path, exist_ok=True)
+            valid_subfolders.append(sub)
 
-                normalizer = image_normalizer.ImageNormalizer(in_path, out_path, report_normal)
-                normalizer.normalize_images()
+        if not valid_subfolders:
+            self.display.print(
+                "No valid subfolders found for normalization", colors["error"]
+            )
+            return
 
-        report_normal.status("Data Normalization")
+        # 4) Proceed with normalization
+        self.display.print("Starting data normalisation", colors["warning"])
+        for sub in valid_subfolders:
+            masks_dir   = sub / "masks"
+            raw_masks   = sub / "raw_masks"
+            new_masks   = sub / "masks"  # will be recreated
+
+            # a) Rename masks → raw_masks (only if raw_masks doesn’t already exist)
+            if raw_masks.exists():
+                self.display.print(
+                    f"{sub.name}/raw_masks already exists, skipping rename", colors["warning"]
+                )
+            else:
+                os.rename(masks_dir, raw_masks)
+
+            # b) Recreate masks/ directory
+            new_masks.mkdir(exist_ok=True)
+
+            # c) Normalize all TIFFs
+            normalizer = image_normalizer.ImageNormalizer(
+                str(raw_masks), 
+                str(new_masks)
+            )
+            normalizer.normalize_images()
+
+        self.display.print("Data normalisation complete", colors["ok"])

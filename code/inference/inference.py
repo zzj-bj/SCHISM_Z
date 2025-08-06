@@ -12,6 +12,7 @@ import numpy as np
 
 from PIL import Image
 from tqdm import tqdm
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -31,6 +32,7 @@ from tools import display_color as dc
 from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 from preprocessing import launch_preprocessing as lp
+import multiprocessing
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -70,11 +72,10 @@ class Inference:
 
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.data_dir = kwargs.get('data_dir')
-        self.run_dir = kwargs.get('run_dir')
+        self.data_dir = Path(kwargs.get('data_dir'))
+        self.run_dir = Path(kwargs.get('run_dir'))
         self.hyperparameters = kwargs.get('hyperparameters')
         self.metric = kwargs.get('selected_metric')
-        self.report = kwargs.get('report')
         self.subfolders = kwargs.get('subfolders')
         self.display = dc.DisplayColor()
 
@@ -88,46 +89,10 @@ class Inference:
         self.crop_size = int(self.data_params.get('crop_size', 224))
         self.num_classes = int(self.model_params.get('num_classes', 1))
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
-        self.data_stats = self.load_data_stats_from_json()
+        self.data_stats = ut.load_data_stats(self.run_dir, self.data_dir)
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
-
-        missing_weight={}
-        # Check if all subfolders have weights in data_stats
-        for dir in self.subfolders:
-            if dir not in self.data_stats:
-                missing_weight[dir] = True
-            else:
-                missing_weight[dir] = False
-
-        folders_without_weight = [key for key, value in missing_weight.items() if value]
-        if folders_without_weight:
-
-            text = f"Dataset(s) found without stats : {folders_without_weight} {ct.BELL}"
-            self.display.print(text, colors['warning'])
-
-        # If there are folders without weight, prompt for JSON generation
-        if folders_without_weight:
-            select = ut.answer_yes_or_no("Do you want to launch the JSON generation")
-            if select :
-                lp.LaunchPreprocessing().launch_json_generation(
-                    self.data_dir,
-                    os.path.join(self.run_dir, '', 'data_stats.json'),
-                    True
-                )
-                self.data_stats = self.load_data_stats_from_json()
-
-                text = "Back to inference with the new data stats."
-                self.display.print(text, colors['warning'])
-
-            else :
-                text = "Default data stats will be used."
-                self.display.print(text, colors['warning'])
-
-
-        self.model = self.initialize_model()
-        
-
+               
     def initialize_model(self) -> nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
@@ -141,9 +106,9 @@ class Inference:
         """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
         if model_name not in self.model_mapping:
-            text =f" - Model '{model_name}' is not supported"
-            raise ValueError(f" Model '{model_name}' is not supported.\n"
-                             " Check your 'model_mapping'.")
+            msg = f"Model '{model_name}' is not supported. Check your 'model_mapping'."
+            self.display.print(msg, colors['error'])
+            raise ValueError(msg)
 
         model_class = self.model_mapping[model_name]
         model_config_class = self.model_config_mapping[model_name]
@@ -159,46 +124,45 @@ class Inference:
             for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
-        # Ensure `model_type` is not included in the parameters
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
-
-        # Ensure 'num_classes' is only in the required parameters,
-        # remove it from optional if present
-        if 'num_classes' in optional_params:
-            del optional_params['num_classes']
+        optional_params.pop('num_classes', None)
 
         try:
-            # Convert the required parameters to their correct types as defined by the model class
             typed_required_params = {
                 k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
             }
         except ValueError as e:
-            text =f" - Error converting parameters for model '{model_name}':\n {e}"
-            raise ValueError(f" Error converting parameters for model '{model_name}':"
-                             "\n {e}") from e
+            msg = f"Error converting parameters for model '{model_name}': {e}"
+            self.display.print(msg, colors['error'])
+            raise ValueError(msg) from e
 
-        # Initialize the model
-        model = model_class(
-            model_config_class(
-                **typed_required_params, **optional_params
-            )).to(self.device)
+        try:
+            model = model_class(
+                model_config_class(**typed_required_params, **optional_params)
+            ).to(self.device)
+        except RuntimeError as e:
+            self.display.print(
+                f"CUDA error loading model: {e}. Falling back to CPU.",
+                colors['warning']
+            )
+            self.device = 'cpu'
+            model = model_class(
+                model_config_class(**typed_required_params, **optional_params)
+            ).to(self.device)
 
-        # Load pre-trained weights
-        checkpoint_path = os.path.join(
-            str(self.run_dir),
-            f"model_best_{self.metric}.pth"
-        )
-        if not os.path.exists(checkpoint_path):
-            text =f" - Checkpoint not found at '{checkpoint_path}'"
-            raise FileNotFoundError(f" Checkpoint not found at '{checkpoint_path}'.\n"
-                                    " Ensure the path is correct.")
+        checkpoint_path = self.run_dir / f"model_best_{self.metric}.pth"
+        if not checkpoint_path.exists():
+            msg = f"Checkpoint not found at '{checkpoint_path}'. Ensure the path is correct."
+            self.display.print(msg, colors['error'])
+            raise FileNotFoundError(msg)
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(str(checkpoint_path), map_location=self.device, weights_only=True)
         model.load_state_dict(checkpoint)
-        model.eval()  # Set the model to evaluation mode
+        model.eval()
 
         return model
+
 
     def load_dataset(self):
         """
@@ -244,38 +208,17 @@ class Inference:
                 inference_mode=True,
             )
         )
-        return DataLoader(dataset, batch_size=1, shuffle=False,pin_memory=torch.cuda.is_available())
 
-    def load_data_stats_from_json(self):
-        """
-        Loads normalization statistics from a JSON file and populates self.data_stats.
-
-        Returns:
-            dict: A dictionary containing the loaded data statistics.
-
-        Raises:
-            Exception: If there is an error loading the JSON file.
-        """
-        json_file_path = os.path.join(str(self.run_dir), 'data_stats.json')
         try:
-            # Read the JSON file
-            with open(json_file_path, 'r', encoding='utf-8') as file:
-                raw_data_stats = json.load(file)
-
-            # Convert the JSON content to the desired format
-            self.data_stats = {
-                key: [np.array(values[0]), np.array(values[1])]
-                for key, values in raw_data_stats.items()
-            }
-
-            text = "Data stats loaded successfully."
-            self.display.print(text, colors['warning'])
-            return self.data_stats  # Return for verification if needed
-
-        except Exception as e:
-            text = f" Error loading data stats: {e}"
-            self.display.print(text, colors['warning'])
-            raise
+            pin_mem = torch.cuda.is_available()
+        except Exception:
+            pin_mem = False
+        
+        return DataLoader(dataset, 
+                          batch_size=1, 
+                          num_workers=(multiprocessing.cpu_count() // 2 or 1), 
+                          shuffle=False,
+                          pin_memory=pin_mem)
 
     def predict(self):
         """
@@ -284,10 +227,22 @@ class Inference:
         This method processes large images in smaller patches, predicts using the model,
         and stitches the patches back together to form the full-size output image.
         """
+
+        try:
+             self.model = self.initialize_model()
+        except (ValueError, FileNotFoundError, RuntimeError) as e:
+             self.display.print(str(e), colors["error"])
+             return
+
         dataloader = self.load_dataset()
 
-        with tqdm(total=len(dataloader), ncols=100,
-          bar_format=" Inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
+        with tqdm(total=len(dataloader), 
+                bar_format="Inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
+                unit="Images",
+                position=0,
+                leave=False,
+                ncols=70,              
+                dynamic_ncols=False, 
           ) as pbar:
 
             for _, (img, _, img_path) in enumerate(dataloader):
@@ -329,12 +284,12 @@ class Inference:
         # Calculate the grid size (number of patches per dimension)
         num_patches = len(patches)
         grid_size = int(num_patches ** 0.5)  # Assuming square grid of patches (e.g., 5x5)
-        dimenssions = grid_size * self.crop_size
+        dimensions = grid_size * self.crop_size
 
         # Initialize an empty tensor to store the final predictions (no overlap handling needed)
         full_pred = torch.zeros((
             self.num_classes,
-            dimenssions, dimenssions),
+            dimensions, dimensions),
             device=self.device
         )
 
@@ -376,7 +331,7 @@ class Inference:
                                         self.crop_size,
                                         self.crop_size)
                                     )
-        reconstructed_image = unpatchify(predicted_patches_reshaped, (dimenssions, dimenssions))
+        reconstructed_image = unpatchify(predicted_patches_reshaped, (dimensions, dimensions))
         full_pred = torch.tensor(reconstructed_image).float()
 
         return full_pred
