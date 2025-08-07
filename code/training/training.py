@@ -11,7 +11,6 @@ and the main training loop.
 import os
 import sys
 import glob
-import multiprocessing
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
@@ -584,9 +583,13 @@ class Training:
             tuple: Dictionaries containing losses and metrics for each phase.
         """
         scaler = None
-        if "cuda" in self.device:
-            scaler = GradScaler(device_type="cuda")
+        # Choose whether to use the gradient scaler
+        if self.device.startswith("cuda"):
+            scaler = GradScaler()              # automatically uses CUDA
             cudnn.benchmark = True
+        else:
+            # disable scaling on CPU
+            scaler = GradScaler(enabled=False)
         
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled

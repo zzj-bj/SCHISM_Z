@@ -48,19 +48,19 @@ class CNNHead(nn.Module):
             self.conv = nn.Sequential(
                 nn.Conv2d(self.embedding_size, ch1, kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(ch1),
-                self.activation_mixin._get_activation(self.activation, inplace=True),
+                self.activation_mixin._get_activation(self.activation),
 
                 nn.Conv2d(ch1, ch2, kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(ch2),
-                self.activation_mixin._get_activation(self.activation, inplace=True),
+                self.activation_mixin._get_activation(self.activation),
 
                 nn.Conv2d(ch2, ch3, kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(ch3),
-                self.activation_mixin._get_activation(self.activation, inplace=True),
+                self.activation_mixin._get_activation(self.activation),
 
                 nn.Conv2d(ch3, ch4, kernel_size=1, bias=False),  # bottleneck
                 nn.BatchNorm2d(ch4),
-                self.activation_mixin._get_activation(self.activation, inplace=True),
+                self.activation_mixin._get_activation(self.activation),
 
                 nn.AdaptiveAvgPool2d(1)
             )
