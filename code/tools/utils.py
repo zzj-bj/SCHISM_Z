@@ -188,7 +188,7 @@ def load_data_stats(
         raw_text = json_path.read_text(encoding="utf-8")
         raw = json.loads(raw_text)
     except json.JSONDecodeError as e:
-        display.print(f"JSON parse error: {e}", ct.DISPLAY_COLORS["warning"])
+        display.print(f"JSON parse error: {e}", ct.DISPLAY_COLORS["error"])
         if answer_yes_or_no("Invalid JSON; regenerate data_stats.json?"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
@@ -205,7 +205,7 @@ def load_data_stats(
     errors = sorted(validator.iter_errors(raw), key=lambda e: e.path)
     if errors:
         for err in errors:
-            display.print(f"Schema error: {err.message}", ct.DISPLAY_COLORS["warning"])
+            display.print(f"Schema error: {err.message}", ct.DISPLAY_COLORS["error"])
         if answer_yes_or_no("Schema invalid; regenerate data_stats.json?"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
@@ -224,7 +224,7 @@ def load_data_stats(
             for key, vals in raw.items()
         }
     except Exception as e:
-        display.print(f"Error converting stats to arrays: {e}", ct.DISPLAY_COLORS["warning"])
+        display.print(f"Error converting stats to arrays: {e}", ct.DISPLAY_COLORS["error"])
         return {"default": neutral_stats}
 
     # 5) Check for missing subfolders — **use data_dir**, not dir!
