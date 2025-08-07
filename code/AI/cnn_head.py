@@ -1,98 +1,93 @@
+# AI/cnn_head.py
 
 from dataclasses import dataclass
-from typing import List, Dict
-
 import torch
 from torch import nn
-import torch.nn.functional as F
 from AI.activation_mixin import ActivationMixin
 
 @dataclass
 class CNNHeadConfig:
-    """
-    Configuration for the CNNHead. All formerly "magic" numbers are now fields here.
-    """
-    embedding_size: int                # size of the incoming feature vector
-    n_features: int = 1                # how many feature maps to concat
-    conv_channels: List[int] = (1024, 512, 256, 128)  
-                                       # sequence of channel counts for conv blocks
-    fc_channels: List[int] = (128,)    # channels for the final conv before output
+    embedding_size: int
+    channels: int = 512
     num_classes: int = 3
-    block_kernel: int = 3               # kernel size for conv blocks
-    fc_kernel: int = 3                  # kernel size for final conv
-    pooling_out: int = 1                # output size for AdaptiveAvgPool2d
-    activation: str = 'relu'            # activation name
-    
-    @property
-    def total_embedding(self) -> int:
-        # after concatenating n_features of embeddings
-        return self.embedding_size * self.n_features
+    k_size: int = 3
+    n_features: int = 1
+    activation: str = 'relu'
 
 class CNNHead(nn.Module, ActivationMixin):
-    """
-    CNN-based head for semantic segmentation, fully driven by CNNHeadConfig.
-    """
-    def __init__(self, cfg: CNNHeadConfig):
+    def __init__(self, cfg: CNNHeadConfig) -> None:
         super().__init__()
-        self.cfg = cfg
-        self.activation_mixin = ActivationMixin()
-        
-        in_channels = cfg.total_embedding
-        layers: List[nn.Module] = []
-        
-        # build conv blocks
-        for out_ch in cfg.conv_channels:
-            layers.append(nn.Conv2d(
-                in_channels, out_ch,
-                kernel_size=cfg.block_kernel, padding=cfg.block_kernel // 2,
-                bias=False
-            ))
-            layers.append(nn.BatchNorm2d(out_ch))
-            layers.append(self.activation_mixin._get_activation(cfg.activation)(inplace=True))
-            in_channels = out_ch
-        
-        # global pooling to a fixed spatial size
-        layers.append(nn.AdaptiveAvgPool2d(cfg.pooling_out))
-        self.conv = nn.Sequential(*layers)
-        
-        # final classifier conv(s)
-        fc_in = cfg.conv_channels[-1]
-        fc_layers = []
-        for out_ch in cfg.fc_channels:
-            fc_layers.append(nn.Conv2d(
-                fc_in, out_ch,
-                kernel_size=cfg.fc_kernel, padding=cfg.fc_kernel // 2
-            ))
-            fc_layers.append(self.activation_mixin._get_activation(cfg.activation)(inplace=True))
-            fc_in = out_ch
-        
-        # output conv to num_classes
-        fc_layers.append(nn.Conv2d(
-            fc_in, cfg.num_classes,
-            kernel_size=cfg.fc_kernel, padding=cfg.fc_kernel // 2
-        ))
-        self.fc = nn.Sequential(*fc_layers)
+        # base params
+        self.n_features     = cfg.n_features
+        self.embedding_size = cfg.embedding_size * self.n_features
+        self.base_ch        = cfg.channels
+        self.num_classes    = cfg.num_classes
+        self.k_size         = cfg.k_size
+        self.activation     = cfg.activation
 
-    def forward(self, inputs: Dict[str, torch.Tensor]) -> torch.Tensor:
-        features = inputs["features"]
-        image   = inputs["image"]
-        
-        # flatten list of features and remove CLS tokens
-        if isinstance(features, list):
-            feats = [f[:,1:,:] for f in features]
-            feats = torch.cat(feats, dim=-1)
+        # alias for mixin activation
+        self.act = lambda **kw: self.get_activation(self.activation, **kw)
+
+        # build conv stack
+        if self.n_features == 1:
+            # single‐block head
+            self.conv = nn.Sequential(
+                nn.Conv2d(self.embedding_size, self.base_ch,
+                          kernel_size=3, stride=1, padding=1),
+                self.act(),
+                nn.AdaptiveAvgPool2d(1)
+            )
+            final_in = self.base_ch
         else:
-            feats = features[:,1:,:]
-        
+            # multi‐block head: embedding → 2x → 1x → 0.5x → 0.25x
+            ch1 = self.base_ch * 2
+            ch2 = self.base_ch
+            ch3 = self.base_ch // 2
+            ch4 = max(1, self.base_ch // 4)
+
+            self.conv = nn.Sequential(
+                nn.Conv2d(self.embedding_size, ch1, kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(ch1),
+                self.act(inplace=True),
+
+                nn.Conv2d(ch1, ch2, kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(ch2),
+                self.act(inplace=True),
+
+                nn.Conv2d(ch2, ch3, kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(ch3),
+                self.act(inplace=True),
+
+                nn.Conv2d(ch3, ch4, kernel_size=1, bias=False),  # bottleneck
+                nn.BatchNorm2d(ch4),
+                self.act(inplace=True),
+
+                nn.AdaptiveAvgPool2d(1)
+            )
+            final_in = ch4
+
+        # final classifier conv
+        self.fc = nn.Conv2d(final_in, self.num_classes,
+                            kernel_size=self.k_size,
+                            padding=self.k_size // 2)
+
+    def forward(self, inputs: dict) -> torch.Tensor:
+        feats = inputs["features"]
+        img   = inputs["image"]
+        # derive patch size
+        patch_sz = img.shape[-1] // 14
+
+        # concatenate features (drop CLS tokens)
+        if isinstance(feats, list):
+            trimmed = [f[:, 1:, :] for f in feats]
+            feats = torch.cat(trimmed, dim=-1)
+        else:
+            feats = feats[:, 1:, :]
+
         B, S, D = feats.shape
-        # assume features form a sqrt grid
-        patch_size = image.shape[-1] // int(S**0.5)
-        
-        x = feats.permute(0,2,1).contiguous() \
-             .view(B, D, patch_size, patch_size)
-        
-        x = self.conv(x)               # [B, last_conv_ch, 1, 1]
-        x = x.view(B, -1, 1, 1)        # preserve as 4D for conv
-        x = self.fc(x)                 # [B, num_classes, 1, 1]
-        
-        return x.squeeze(-1).squeeze(-1)  # [B, num_classes]
+        feats = feats.permute(0, 2, 1).contiguous()
+        feats = feats.view(B, D, patch_sz, patch_sz)
+
+        x = self.conv(feats)
+        x = x.view(x.size(0), -1, 1, 1)  # keep conv2d shape
+        return self.fc(x)
