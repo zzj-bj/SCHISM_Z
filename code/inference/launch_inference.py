@@ -1,7 +1,8 @@
+# Standard library
 from pathlib import Path
-import os
-import json
+from typing import Any, Dict, List
 
+# Local application imports
 from AI.hyperparameters import Hyperparameters
 from tools import menu, utils as ut
 from tools.display_color import DisplayColor
@@ -14,10 +15,10 @@ class LaunchInference:
     Validates inputs, selects metric, then runs prediction.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.display = DisplayColor()
 
-    def run_inference(self):
+    def run_inference(self) -> None:
         ut.print_box("Inference")
 
         # gather paths
@@ -90,4 +91,4 @@ class LaunchInference:
         )
         inf.predict()
 
-        self.display.print(f"Inference completed using {selected_metric}", colors["warning"])
+        self.display.print(f"Inference completed using {selected_metric}", colors["ok"])

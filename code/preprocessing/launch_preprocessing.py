@@ -13,26 +13,34 @@ This module allows for the following operations:
 @author: Pierre.FANCELLI
 """
 
+# Standard library
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+# Third-party
+from colorama import init, Style
+
+# Local application imports
 from tools import utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools import menu
 from preprocessing import image_normalizer
-from preprocessing import json
+from preprocessing import json 
+from tools.constants import IMAGE_EXTENSIONS
 
+# Initialize colorama
+init(autoreset=True)
 #=============================================================================
 
 class LaunchPreprocessing:
 
-    def __init__(self):
-        """
-        Initializes the LaunchPreprocessing class.
-            """
+    def __init__(self) -> None:
+
         self.display = dc.DisplayColor()
 
-    def menu_preprocessing(self):
+    def menu_preprocessing(self) -> None:
         """
         This module allows for the following operations:
             - Json generation
@@ -56,7 +64,11 @@ class LaunchPreprocessing:
             elif choice == 3:
                 return
 
-    def launch_json_generation(self, data_dir=None, file_name_report=None, append=False):
+    def launch_json_generation(self,
+        data_dir: str | None = None,
+        file_name_report: str | None = None,
+        append: bool = False
+    ) -> None:
         """
         Generates a JSON file containing statistics about the datasets.
         """
@@ -94,7 +106,11 @@ class LaunchPreprocessing:
                 self.display.print(f"{sub.name}/images not found", colors["error"])
                 continue
 
-            tif_files = list(images_dir.glob("*.tif"))
+            tif_files = []
+            for ext in IMAGE_EXTENSIONS:
+                tif_files.extend(images_dir.glob(f"*{ext}"))
+            tif_files = sorted(tif_files)
+
             if not tif_files:
                 self.display.print(f"No tif files in {sub.name}/images", colors["error"])
                 continue
@@ -117,11 +133,12 @@ class LaunchPreprocessing:
         )
         json_generation.process_datasets(append=append)
 
-    def launch_normalisation(self):
+    def launch_normalisation(self)-> None:
         """
         Normalizes TIFF masks (8-bit grayscale) by first moving them to
         raw_masks/ and then rewriting masks/ with the normalized output.
         """
+
         ut.print_box("Data Normalisation")
 
         # 1) Get and validate data_dir
@@ -144,7 +161,11 @@ class LaunchPreprocessing:
                 self.display.print(f"{sub.name}/masks not found", colors["error"])
                 return
 
-            tif_files = list(masks_dir.glob("*.tif"))
+            tif_files = []
+            for ext in IMAGE_EXTENSIONS:
+                tif_files.extend(masks_dir.glob(f"*{ext}"))
+            tif_files = sorted(tif_files)
+
             if not tif_files:
                 self.display.print(f"No .tif files in {sub.name}/masks", colors["error"])
                 return

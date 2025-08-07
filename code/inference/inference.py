@@ -1,39 +1,40 @@
+
+# -*- coding: utf-8 -*-
 """
 Inference module for performing predictions on large images using a trained model.
 
 This module handles the initialization of the model, loading of datasets,
 and performing patch-based predictions to reconstruct full-size output images.
 """
+
+# Standard library
 import sys
 import os
 import glob
-import json
-import numpy as np
-
-from PIL import Image
-from tqdm import tqdm
+import multiprocessing
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
+# Third-party libraries
+import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as nn_func
 from torch.utils.data import DataLoader
-
+from PIL import Image
+from tqdm import tqdm
 from patchify import unpatchify
 
-from AI.tiffdatasetloader import TiffDatasetLoader
-from AI.tiffdatasetloader import TiffDatasetLoaderConfig
+# Local application imports
+from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
 from AI.paramconverter import ParamConverter
-from AI.model_registry import model_mapping
-from AI.model_registry import model_config_mapping
-
+from AI.model_registry import model_mapping, model_config_mapping
 from tools import utils as ut
 from tools import display_color as dc
-from tools import constants as ct
 from tools.constants import DISPLAY_COLORS as colors
-from preprocessing import launch_preprocessing as lp
-import multiprocessing
+from tools.constants import NUM_WORKERS
 
+# Ensure project root is on the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #==============================================================================
@@ -48,7 +49,7 @@ class Inference:
     on large images by processing them in smaller patches.
 
     """
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns a string representation of the Inference class.
 
@@ -57,19 +58,7 @@ class Inference:
         """
         return 'Inference'
 
-    def __init__(self, **kwargs):
-        """
-        Initializes the Inference class with the necessary parameters and model setup.
-
-        Args:
-            **kwargs: Keyword arguments containing configuration parameters such as:
-                - data_dir (str): Directory containing the input data.
-                - run_dir (str): Directory for saving results and loading model weights.
-                - hyperparameters (Hyperparameters): An object containing model
-                                    and training parameters.
-                - selected_metric (str): Metric used for model evaluation.
-        """
-
+    def __init__(self, **kwargs: Any) -> None:
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.data_dir = Path(kwargs.get('data_dir'))
@@ -93,7 +82,7 @@ class Inference:
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
                
-    def initialize_model(self) -> nn.Module:
+    def initialize_model(self) -> torch.nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
 
@@ -163,8 +152,7 @@ class Inference:
 
         return model
 
-
-    def load_dataset(self):
+    def load_dataset(self) -> torch.utils.data.DataLoader:
         """
         Initializes the dataset loader in inference mode to process all images.
 
@@ -216,11 +204,11 @@ class Inference:
         
         return DataLoader(dataset, 
                           batch_size=1, 
-                          num_workers=(multiprocessing.cpu_count() // 2 or 1), 
+                          num_workers=NUM_WORKERS,
                           shuffle=False,
                           pin_memory=pin_mem)
 
-    def predict(self):
+    def predict(self) -> None:
         """
         Performs patch-based predictions on the dataset and saves the results.
 
@@ -269,7 +257,7 @@ class Inference:
                 # Mettez à jour la barre de progression
                 pbar.update(1)
 
-    def _patch_based_prediction(self, patches):
+    def _patch_based_prediction(self, patches: List[torch.Tensor]) -> torch.Tensor:
         """
         Reassembles patches into a full-size prediction map.
 
@@ -336,7 +324,7 @@ class Inference:
 
         return full_pred
 
-    def _scale_mask_to_class_values(self, mask_tensor):
+    def _scale_mask_to_class_values(self, mask_tensor: torch.Tensor) -> torch.Tensor:
         """
         Scales the predicted mask tensor to the appropriate class values.
 
@@ -354,7 +342,7 @@ class Inference:
             return scaled_mask
         return mask_tensor * 255  # Converts 0 to 0 and 1 to 255
 
-    def _save_mask(self, mask_tensor, save_path):
+    def _save_mask(self, mask_tensor: torch.Tensor, save_path: str) -> None:
         """
         Saves a segmentation mask to a file.
 

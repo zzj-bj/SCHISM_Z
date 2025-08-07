@@ -5,10 +5,15 @@ This module provides a `TrainingLogger` class that handles the logging of traini
 saving hyperparameters to an INI file, 
 and visualizing results such as learning curves and confusion matrices.
 """
+
+# Standard library
 from dataclasses import dataclass
 import os
 import json
 import configparser
+from typing import Any, Dict, List, Tuple
+
+# Third-party libraries
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -16,27 +21,20 @@ import matplotlib.pyplot as plt
 @dataclass
 # pylint: disable=too-many-instance-attributes
 class TrainingLoggerConfig:
-    """Configuration for the TrainingLogger."""
     save_directory: str
     num_classes: int
-    model_params: dict
-    optimizer_params: dict
-    scheduler_params: dict
-    loss_params: dict
-    training_params: dict
-    data: dict
+    model_params: Dict[str, Any]
+    optimizer_params: Dict[str, Any]
+    scheduler_params: Dict[str, Any]
+    loss_params: Dict[str, Any]
+    training_params: Dict[str, Any]
+    data: Dict[str, Any]
 
 class TrainingLogger:
     """    
     A class to log training metrics, save hyperparameters, and visualize results.
     """
-    def __init__(self, training_logger_config: TrainingLoggerConfig):
-        """
-        Initializes the TrainingLogger.
-
-        Args:
-            training_logger_config (TrainingLoggerConfig): Configuration for the logger.
-        """
+    def __init__(self, training_logger_config: TrainingLoggerConfig) -> None:
         self.save_directory = training_logger_config.save_directory
         self.num_classes = training_logger_config.num_classes
         self.model_params = training_logger_config.model_params
@@ -48,7 +46,7 @@ class TrainingLogger:
 
         os.makedirs(self.save_directory, exist_ok=True)
 
-    def save_indices_to_file(self, indices_list):
+    def save_indices_to_file(self, indices_list: List[List[Tuple[str, int]]]) -> None:
         """
         Saves the indices of the training, validation, and test sets to text files.
 
@@ -68,7 +66,7 @@ class TrainingLogger:
                     f.write(f"{subfolder_name}, {sample_idx}\n")
 
 
-    def save_data_stats(self, data_stats):
+    def save_data_stats(self, data_stats: Dict[str, List[List[float]]]) -> None:
         """
         Saves dataset statistics to a JSON file.
 
@@ -87,7 +85,7 @@ class TrainingLogger:
 
         print(f" Data statistics saved to {json_file_path}")
 
-    def save_hyperparameters(self):
+    def save_hyperparameters(self) -> None:
         """
         Saves hyperparameters to an INI file.
         """
@@ -123,7 +121,10 @@ class TrainingLogger:
 
         print(f" Hyperparameters saved to {ini_file_path}")
 
-    def save_best_metrics(self, loss_dict, metrics_dict):
+    def save_best_metrics(self,
+        loss_dict: Dict[str, Dict[int, float]],
+        metrics_dict: Dict[str, Dict[str, List[float]]]
+    ) -> None:
         """
         Saves validation loss and metrics history.
 
@@ -146,7 +147,10 @@ class TrainingLogger:
 
         print(f" Validation metrics history saved to {file_path}")
 
-    def plot_learning_curves(self, loss_dict, metrics_dict):
+    def plot_learning_curves(self,
+        loss_dict: Dict[str, Dict[int, float]],
+        metrics_dict: Dict[str, Dict[str, List[float]]]
+    ) -> None:
         """
         Plots learning curves for loss and metrics over epochs.
 
@@ -186,7 +190,12 @@ class TrainingLogger:
         print(f" Learning curves saved to {self.save_directory}/learning_curves.png")
 
     # pylint: disable=too-many-locals
-    def save_confusion_matrix(self, conf_metric, model, val_dataloader, device):
+    def save_confusion_matrix(self,
+        conf_metric: Any,
+        model: torch.nn.Module,
+        val_dataloader: torch.utils.data.DataLoader,
+        device: str
+    ) -> None:
         """
         Saves a confusion matrix plot.
 

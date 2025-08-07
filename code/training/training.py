@@ -6,27 +6,24 @@ This module provides a `Training` class that handles the initialization of the m
 data loading, optimizer and scheduler setup, loss function initialization,
 and the main training loop.
 """
+
+# Standard library
 import os
 import sys
 import glob
+import multiprocessing
 from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
+# Third-party
 import numpy as np
-from tqdm import tqdm
-
-import tools.utils as ut
-from tools import display_color as dc
-from tools.constants import DISPLAY_COLORS as colors
-from preprocessing import launch_preprocessing as lp
-
 import torch
-from torch import nn
 import torch.nn.functional as nn_func
-from torch.amp import GradScaler
 import torch.backends.cudnn as cudnn
+from torch import nn
+from torch.amp import GradScaler
 from torch.nn import (
-    CrossEntropyLoss, BCEWithLogitsLoss,
-    NLLLoss
+    CrossEntropyLoss, BCEWithLogitsLoss, NLLLoss
 )
 from torch.optim import (
     Adagrad, Adam, AdamW, NAdam, RMSprop, RAdam, SGD
@@ -37,6 +34,7 @@ from torch.optim.lr_scheduler import (
     ReduceLROnPlateau, CyclicLR, OneCycleLR, CosineAnnealingWarmRestarts
 )
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 from torchmetrics.classification import (
     BinaryJaccardIndex, MulticlassJaccardIndex, MulticlassF1Score, BinaryF1Score,
     BinaryAccuracy, MulticlassAccuracy, BinaryAveragePrecision, MulticlassAveragePrecision,
@@ -44,30 +42,26 @@ from torchmetrics.classification import (
     BinaryRecall, MulticlassRecall
 )
 
-from training.training_logger import TrainingLogger
-import multiprocessing
-
-from AI.tiffdatasetloader import TiffDatasetLoader
-from AI.tiffdatasetloader import TiffDatasetLoaderConfig
+# Local application imports
+import tools.utils as ut
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
+from preprocessing import launch_preprocessing as lp
+from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
 from AI.paramconverter import ParamConverter
-from AI.model_registry import model_mapping
-from AI.model_registry import model_config_mapping
+from AI.model_registry import model_mapping, model_config_mapping
+from training.training_logger import TrainingLogger, TrainingLoggerConfig
+from tools.constants import NUM_WORKERS
 
-from training.training_logger import TrainingLogger
-from training.training_logger import TrainingLoggerConfig
-
-# Add the system path at the end to avoid dependency issues.
+# Ensure project root is on the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# ---------------------------------------------------------------------------
-
 
 class Training:
     """
         A module for training a segmentation model using PyTorch.
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns a string representation of the Training class.
 
@@ -76,28 +70,7 @@ class Training:
         """
         return 'Training'
 
-    def add_to_report(self, text, who, is_critical = True):
-        """
-            Add a message to a report
-        """
-        if self.report is not None:
-            self.report.add(text, who,  is_critical=is_critical) 
-
-    def __init__(self, **kwargs):
-        """
-        Initializes the Training class with given parameters.
-
-        Args:
-            **kwargs: Keyword arguments containing configuration parameters such as:
-                - subfolders (list): List of subfolder names containing the dataset.
-                - data_dir (str): Directory containing the dataset.
-                - run_dir (str): Directory for saving model outputs.
-                - hyperparameters (Hyperparameters): An object containing model
-                                                    and training parameters.
-
-        Raises:
-            Exception: If pathLogDir is not provided.
-        """
+    def __init__(self, **kwargs: Any) -> None:
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
@@ -217,7 +190,10 @@ class Training:
         self.metrics = []  # Initialize metrics attribute
         self.metrics_mapping = {}  # Initialize metrics_mapping attribute
 
-    def create_metric(self, binary_metric, multiclass_metric):
+    def create_metric(self,
+        binary_metric: Any,
+        multiclass_metric: Any
+    ) -> Any:
         """
         Creates a metric based on the number of classes.
 
@@ -236,7 +212,7 @@ class Training:
         )
 
 
-    def initialize_metrics(self):
+    def initialize_metrics(self) -> List[Any]:
         """
         Initializes the specified metrics for evaluation.
 
@@ -273,7 +249,7 @@ class Training:
 
         return selected_metrics
 
-    def initialize_optimizer(self):
+    def initialize_optimizer(self) -> torch.optim.Optimizer:
         """
         Initializes the optimizer based on the specified parameters.
 
@@ -293,7 +269,7 @@ class Training:
 
         return optimizer_class(self.model.parameters(), **converted_params)
 
-    def initialize_scheduler(self, optimizer):
+    def initialize_scheduler(self, optimizer: torch.optim.Optimizer) -> Any:
         """
         Initializes the learning rate scheduler.
 
@@ -318,7 +294,7 @@ class Training:
 
         return scheduler_class(optimizer, **converted_params)
 
-    def initialize_loss(self, **dynamic_params):
+    def initialize_loss(self, **dynamic_params: Any) -> Any:
         """
         Initializes the loss function based on the specified parameters.
 
@@ -360,7 +336,7 @@ class Training:
 
         return loss_class(**final_params)
 
-    def initialize_model(self) -> nn.Module:
+    def initialize_model(self) -> torch.nn.Module:
         """
         Initializes the model based on the specified parameters.
 
@@ -419,7 +395,7 @@ class Training:
                 model_config_class(**typed_required_params, **typed_optional_params)
             ).to(self.device)
 
-    def create_unique_folder(self):
+    def create_unique_folder(self) -> str:
         """
         Creates a unique folder for saving model weights
         and logs based on the current training parameters.
@@ -437,7 +413,7 @@ class Training:
             os.makedirs(save_directory)
         return save_directory
 
-    def load_segmentation_data(self):
+    def load_segmentation_data(self) -> None:
         """
         Loads segmentation data from the specified directories,
         prepares datasets, and creates data loaders.
@@ -566,14 +542,14 @@ class Training:
 
         train_loader = DataLoader(train_dataset, 
                                 batch_size=self.batch_size,
-                                num_workers=(multiprocessing.cpu_count() // 2 or 1), 
+                                num_workers = NUM_WORKERS, 
                                 shuffle = True, 
                                 drop_last = True,
                                 pin_memory = pin_mem)
         val_loader =  DataLoader(val_dataset, 
                                 batch_size = self.batch_size,
                                 shuffle = False, 
-                                num_workers=(multiprocessing.cpu_count() // 2 or 1), 
+                                num_workers= NUM_WORKERS, 
                                 drop_last = True,
                                 pin_memory = pin_mem)
         test_loader =  DataLoader(test_dataset, 
@@ -593,7 +569,10 @@ class Training:
             'indices': indices,
         }
 
-    def training_loop(self, optimizer, scheduler):
+    def training_loop(self,
+        optimizer: torch.optim.Optimizer,
+        scheduler: Any
+    ) -> Tuple[Dict[str, Dict[int, float]], Dict[str, Dict[str, List[float]]], List[Any]]:
         """
         Main training loop that handles the training and validation of the model.
 
@@ -780,11 +759,10 @@ class Training:
 
         return loss_dict, metrics_dict, metrics
 
-    def train(self):
+    def train(self) -> None:
         """
         Starts the training process for the model.
         """
-        print("shit")
 
         optimizer = self.initialize_optimizer()
         scheduler = self.initialize_scheduler(optimizer=optimizer)

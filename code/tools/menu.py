@@ -6,16 +6,20 @@ It is possible to opt for a static menu or a dynamic menu.
 
 @author: Pierre.FANCELLI
 """
+# Standard library
 import sys
+from typing import Any, Dict, List, Tuple
 
+# Third-party
 from colorama import init, Style
 
-from tools import utils as ut
+# Local application imports
 from tools import constants as ct
-from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+from tools import utils as ut
+from tools import display_color as dc
 
-# Initialiser colorama
+# Initialize colorama
 init(autoreset=True)
 
 #============================================================================
@@ -31,10 +35,9 @@ class Menu :
     """
 
 
-    def __init__(self, selected_menu,  dynamic_menu = None, style = ''):
+    def __init__(self, selected_menu: str, dynamic_menu: List[str] | None = None, style: str = '') -> None:
 
-        display = dc.DisplayColor()
-
+        self.display = dc.DisplayColor()
         self.selected_menu = selected_menu
         self.dynamic_menu = dynamic_menu
         self.style = style
@@ -44,7 +47,7 @@ class Menu :
         if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
                 text = f" '{self.board[0]}' : !!! The menu is absent !!!"
-                display.print(text, colors['error'])
+                self.display.print(text, colors['error'])
                 print('!!! The menu is absent !!!')
                 sys.exit()
             else:
@@ -65,16 +68,15 @@ class Menu :
         self.ligne = 0
 
 
-    def display_menu(self):
+    def display_menu(self) -> None:
         """        
         Method to display the menu based on the selected style and content.
         """
 
-        display = dc.DisplayColor()
         if self.unknown_menu :
 
-            text = f" '{self.selected_menu}' : This menu doesn't exist in the dictionary !"
-            display.print(text, colors['error'])
+            text = f"'{self.selected_menu}' : This menu doesn't exist in the dictionary !"
+            self.display.print(text, colors['error'])
             sys.exit()
         else:
             max_length = max(len(chaine) for chaine in self.board)
@@ -91,16 +93,13 @@ class Menu :
 
             if self.ligne < 2 :
                 text = f" '{self.board[0]}' : Menu without a choice !"
-                display.print(text, colors['error'])
+                self.display.print(text, colors['error'])
                 sys.exit()
 
-    def selection(self):
+    def selection(self) -> int:
         """
         Method to manage the user's choice in the menu.
         """
-
-        display = dc.DisplayColor()
-
         color = colors['input']
 
         while True:
@@ -116,7 +115,7 @@ class Menu :
                 if 1 <= select <= self.ligne - 1 :
                     return select
                 text = f"Oops! That selection isn't valid. Please try again! {ct.BELL}"
-                display.print(text, colors['error'])
+                self.display.print(text, colors['error'])
 
             # Input is not a number
             except ValueError:
@@ -124,4 +123,4 @@ class Menu :
                         f"It looks like you didn't enter a valid number. "
                         f"Please try again! {ct.BELL}"
                     )
-                display.print(text, colors['error'])
+                self.display.print(text, colors['error'])

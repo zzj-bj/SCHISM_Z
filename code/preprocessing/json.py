@@ -10,29 +10,30 @@ and saves the results in a JSON file.
 
 @author: Pierre.FANCELLI
 """
+# Standard library
 from dataclasses import dataclass
-
 import os
 import json
+from typing import Any, Dict, List, Tuple
+
+# Third-party
 import numpy as np
 import cv2
 from tqdm import tqdm
+
+# Local application imports
 import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
-from tools import display_color as dc
+import tools.display_color as dc
+from tools.constants import IMAGE_EXTENSIONS
 
 #---------------------------------------------------------------------------
 
 @dataclass
 class JsonConfig:
-    """JsonConfig Class for Configuring Json Generation
 
-    This class defines the configuration parameters for the Json.
-    It includes parameters such as parent directory, subfolders, JSON file name,
-    report object, and percentage of data to process.
-    """
     parent_dir: str
-    subfolders: list
+    subfolders: List[str]
     json_file: str
     percentage_to_process: float = 1.0
 
@@ -41,7 +42,7 @@ class Json:
     This module generates a 'json' file from the provided data.
     You can specify the percentage of data to be included.
     """
-    def __init__(self, json_config: JsonConfig):
+    def __init__(self, json_config: JsonConfig) -> None:
         self.parent_dir = json_config.parent_dir
         self.subfolders = json_config.subfolders
         self.json_file = json_config.json_file
@@ -50,7 +51,7 @@ class Json:
         self.display = dc.DisplayColor()
 
 
-    def process_datasets(self, add_default=False, append=False):
+    def process_datasets(self, add_default: bool = False, append: bool = False) -> None:
         """
         Process each dataset in the specified subfolders.
 
@@ -80,7 +81,6 @@ class Json:
             except (IOError, ValueError) as e:
                 self.display.print(f"Error processing {folder_name}:\n {e}", colors["error"])
 
-
         if add_default:
             # Add default values for 'mean' and 'std_dev' if not present
             if "default" not in self.results:
@@ -97,7 +97,7 @@ class Json:
             json.dump(self.results, json_file, indent=4)
 
 
-    def calculate_mean_and_std_rgb(self, folder_path, rep_name):
+    def calculate_mean_and_std_rgb(self, folder_path: str, rep_name: str) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate the mean and standard deviation of RGB values for images in a specified folder.
 
@@ -115,7 +115,7 @@ class Json:
             Exception: If an error occurs while processing the images.
         """
         image_files = [f for f in sorted(os.listdir(folder_path))
-                if f.lower().endswith(('.tiff', '.tif'))]
+                if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
 
         num_items_to_process = int(len(image_files) * self.percentage_to_process)
 

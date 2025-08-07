@@ -6,12 +6,20 @@
 
  @author : Pierre.FANCELLI
 """
+
+# Standard library
 import os
+from typing import Any, Dict, List, Tuple
+
+# Third-party
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
+
+# Local application imports
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 
 #=============================================================================
 # pylint: disable=too-few-public-methods
@@ -19,16 +27,17 @@ class ImageNormalizer:
     """
     This class allows normalizing a group of images.
     """
-    def __init__(self, input_path, output_path):
+    def __init__(self, input_path: str, output_path: str) -> None:
         self.input_path = input_path
         self.output_path = output_path
         self.display = dc.DisplayColor()
 
 
-    def normalize_images(self):
+    def normalize_images(self) -> None:
         """Normalizes all images in the input directory."""
-        # Searching for image files (*.tif)
-        files = [f for f in os.listdir(self.input_path) if f.endswith(".tif")]
+        files = [f for f in os.listdir(self.input_path) if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
+        errors: List[Tuple[str, str]] = []      
+
         pbar = tqdm(
             files,
             ncols=70,
@@ -64,5 +73,16 @@ class ImageNormalizer:
                 normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
 
             except (IOError, ValueError) as e:
-                self.display.print(f"Normalization error: {e}", colors["error"])
-                continue
+                # collect the filename and the short reason
+                errors.append((filename, str(e)))
+
+        if errors:
+            self.display.print(
+                f"{len(errors)} files failed to normalize. See details below:", 
+                colors["error"]
+            )
+            for fname, reason in errors:
+                self.display.print(f"- {fname}: {reason}", colors["error"])
+        else:
+            self.display.print("All files normalized successfully.", colors["ok"])          
+            

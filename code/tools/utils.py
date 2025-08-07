@@ -4,28 +4,34 @@ Collection of non-specific functions used in the program.
 @author: Pierre.FANCELLI
 """
 
-import os
+# Standard library
 import json
+import os
+from pathlib import Path
+from typing import Dict, List, Tuple, Union
+
+# Third-party
 import numpy as np
 from colorama import init, Style
-from tools import display_color as dc
-from tools.constants import DISPLAY_COLORS as colors
-from pathlib import Path
 from jsonschema import Draft7Validator
-from tools import constants as ct
-from preprocessing import launch_preprocessing as lp
+
+# Local application imports
+import preprocessing.launch_preprocessing as lp
+import tools.constants as ct
+from tools.constants import DISPLAY_COLORS as colors
+import tools.display_color as dc
+
+# Initialize colorama
+init(autoreset=True)
 
 display = dc.DisplayColor()
 
-# Initialiser colorama
-init(autoreset=True)
-
 #==============================================================================
-def rgb_to_ansi(rgb):
+def rgb_to_ansi(rgb: Tuple[int, int, int]) -> str:
     """Convert RGB color to ANSI escape code."""
     return f"\033[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m"
 
-def chck_color(color_key):
+def chck_color(color_key: str) -> Tuple[int, int, int]:
     """
     Check if the color key exists in the DISPLAY_COLORS dictionary.
     If it does, return the corresponding RGB value.
@@ -43,7 +49,8 @@ def chck_color(color_key):
 
     return color
 
-def get_path(prompt):
+
+def get_path(prompt: str) -> str:
     """Requests a valid path from the user."""
     display = dc.DisplayColor()
     while True:
@@ -53,7 +60,7 @@ def get_path(prompt):
         text = f"Invalid path: {path}. Please try again. {ct.BELL}"
         display.print(text, colors['error'])
 
-def get_path_color(prompt, color_key='input'):
+def get_path_color(prompt: str, color_key: str = 'input') -> str:
     """
     Requests a valid path from the user.
     Displays the prompt in the specified color.
@@ -73,7 +80,7 @@ def get_path_color(prompt, color_key='input'):
         text = f"Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
 
-def answer_yes_or_no(message, color_key='input'):
+def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
     """
     This function returns
         - True for yes, y, oui, o.
@@ -100,7 +107,7 @@ def answer_yes_or_no(message, color_key='input'):
         text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
 
-def input_percentage(message, color_key='input'):
+def input_percentage(message: str, color_key: str = 'input') -> float:
     """
     This function returns a real number between 0 and 1
     that corresponds to a percentage.
@@ -128,7 +135,7 @@ def input_percentage(message, color_key='input'):
             text = f"Please enter a valid number. {ct.BELL}"
             display.print(text, colors['error'])
 
-def print_box(text):
+def print_box(text: str) -> None:
     """
     Prints a text string inside a decorative box.
 
@@ -149,7 +156,10 @@ def print_box(text):
     print(f"╚{'═' * (box_width)}╝")
 
 
-def load_data_stats(json_dir, data_dir):
+def load_data_stats(
+    json_dir: Union[str, Path],
+    data_dir: Union[str, Path]
+) -> Dict[str, List[np.ndarray]]:
     """
     1. Load+validate data_stats.json
     2. Check for missing folders

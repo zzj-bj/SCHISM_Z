@@ -1,16 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Set of constants used in the program:
-    - Logo for SCHISM
-    - Sound system for Error
-    - symbols for frame creation
-    - Constants for displaying menus
-    - Code colors & prefixes for display
-    - Default mean and standard deviation for Json generation
-
 @author: Pierre.FANCELLI
 """
-
+from multiprocessing import cpu_count
 import numpy as np
 #------------------------------------------------------------------
 
@@ -75,9 +67,17 @@ LOGO_OUT = """
                         █████████████████ 
 """
 
+# number of DataLoader workers
+NUM_WORKERS: int = max(1, cpu_count() // 2)
+
+# supported image extensions
+IMAGE_EXTENSIONS = [".tif", ".tiff"]
+
+# progress bar width
+TQDM_NCOLS = 70
+
 # Sound system for Error.
 BELL = "\a"
-
 
 # symbols for frame creation
 PATTERN ={
@@ -97,7 +97,6 @@ PATTERN ={
             "─", "│"
            ],
     }
-
 
 DATA_STATS_SCHEMA = {
     "type": "object",
@@ -129,7 +128,6 @@ MENUS = {
         "Back to the main menu"]
 }
 
-
 # Code colors & prefixes for display
 DISPLAY_COLORS = {
     'error':   (204,  51,  0, "[X] "), # Red
@@ -139,7 +137,6 @@ DISPLAY_COLORS = {
     'babye':   (255, 16, 240, "[<3] "), # Green
     
 }
-
 
 # Default mean and standard deviation for Json generation
 DEFAULT_MEAN_STD = [np.array([0.5] * 3), np.array([0.5] * 3)]
