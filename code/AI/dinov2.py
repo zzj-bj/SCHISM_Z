@@ -153,10 +153,6 @@ class DinoV2Segmentor(nn.Module):
             if self.n_features == 1:
                 features = self.backbone(pixel_values=x).last_hidden_state
             else:
-                features = tuple(
-                    list(self.backbone(pixel_values=x,
-                         output_hidden_states=True)
-                         ['hidden_states'])[-self.n_features:]
-                )
+                features = list(self.backbone(pixel_values=x, output_hidden_states=True)['hidden_states'])[-self.n_features:]
         inputs = {"features" : features, "image" : x}
         return self.seg_head(inputs)
