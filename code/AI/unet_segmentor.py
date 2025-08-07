@@ -92,7 +92,6 @@ class UnetSegmentor(nn.Module,ActivationMixin):
             padding=1
         )
 
-        self.activation_mixin = ActivationMixin()
 
     def _create_encoder_conv_block(self, channels):
         """

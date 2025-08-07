@@ -14,7 +14,7 @@ class CNNHeadConfig:
     n_features: int = 1
     activation: str = 'relu'
 
-class CNNHead(nn.Module, ActivationMixin):
+class CNNHead(nn.Module):
     def __init__(self, cfg: CNNHeadConfig) -> None:
         super().__init__()
         # base params
@@ -25,8 +25,8 @@ class CNNHead(nn.Module, ActivationMixin):
         self.k_size         = cfg.k_size
         self.activation     = cfg.activation
 
-        # alias for mixin activation
-        self.act = lambda **kw: self.get_activation(self.activation, **kw)
+        # instantiate mixin for activations
+        self.activation_mixin = ActivationMixin()
 
         # build conv stack
         if self.n_features == 1:
@@ -34,7 +34,7 @@ class CNNHead(nn.Module, ActivationMixin):
             self.conv = nn.Sequential(
                 nn.Conv2d(self.embedding_size, self.base_ch,
                           kernel_size=3, stride=1, padding=1),
-                self.act(),
+                self.activation_mixin._get_activation(self.activation),
                 nn.AdaptiveAvgPool2d(1)
             )
             final_in = self.base_ch
@@ -48,28 +48,31 @@ class CNNHead(nn.Module, ActivationMixin):
             self.conv = nn.Sequential(
                 nn.Conv2d(self.embedding_size, ch1, kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(ch1),
-                self.act(inplace=True),
+                self.activation_mixin._get_activation(self.activation, inplace=True),
 
                 nn.Conv2d(ch1, ch2, kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(ch2),
-                self.act(inplace=True),
+                self.activation_mixin._get_activation(self.activation, inplace=True),
 
                 nn.Conv2d(ch2, ch3, kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(ch3),
-                self.act(inplace=True),
+                self.activation_mixin._get_activation(self.activation, inplace=True),
 
                 nn.Conv2d(ch3, ch4, kernel_size=1, bias=False),  # bottleneck
                 nn.BatchNorm2d(ch4),
-                self.act(inplace=True),
+                self.activation_mixin._get_activation(self.activation, inplace=True),
 
                 nn.AdaptiveAvgPool2d(1)
             )
             final_in = ch4
 
         # final classifier conv
-        self.fc = nn.Conv2d(final_in, self.num_classes,
-                            kernel_size=self.k_size,
-                            padding=self.k_size // 2)
+        self.fc = nn.Conv2d(
+            final_in,
+            self.num_classes,
+            kernel_size=self.k_size,
+            padding=self.k_size // 2
+        )
 
     def forward(self, inputs: dict) -> torch.Tensor:
         feats = inputs["features"]
