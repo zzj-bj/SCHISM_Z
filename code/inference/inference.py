@@ -147,7 +147,7 @@ class Inference:
             raise FileNotFoundError(msg)
 
         checkpoint = torch.load(str(checkpoint_path), map_location=self.device, weights_only=True)
-        model.load_state_dict(checkpoint)
+        model.load_state_dict(checkpoint, strict=False)
         model.eval()
 
         return model

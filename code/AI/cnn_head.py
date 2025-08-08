@@ -86,12 +86,10 @@ class CNNHead(nn.Module):
     
         x = self.conv(feats)                      # [B, final_in, patch_sz, patch_sz]
         logits = self.classifier(x)               # [B, num_classes, patch_sz, patch_sz]
-        print(logits.shape)
 
         # make logits match labels spatial size
         if logits.shape[-2:] != img.shape[-2:]:
             logits = torch.nn.functional.interpolate(
                 logits, size=img.shape[-2:], mode="bilinear", align_corners=False
             )
-        print(logits.shape)
         return logits
