@@ -31,7 +31,7 @@ class DinoV2SegmentorConfig:
     kernel size, activation function, size of the model, number of features,
     PEFT configuration, quantization settings, and inference mode.
     """
-    channels: int = 3
+    channels: int = 512
     num_classes: int = 3
     linear_head: bool = True
     k_size: int = 3
@@ -89,6 +89,7 @@ class DinoV2Segmentor(nn.Module):
         assert self.size in self.emb_size.keys(), "Invalid size embedding size"
         self.embedding_size = self.emb_size[str(dinov2_segmentor_config.size)]
         self.n_features = dinov2_segmentor_config.n_features
+        print('n_features : ', self.n_features)
         self.peft = dinov2_segmentor_config.peft
         self.quantize = dinov2_segmentor_config.quantize
         self.r = dinov2_segmentor_config.r
@@ -137,18 +138,6 @@ class DinoV2Segmentor(nn.Module):
         )
 
     def forward(self, x):
-        """
-        Forward pass of the DinoV2Segmentor model.
-        
-        This method processes the input tensor through the backbone and segmentation head,
-		returning the segmentation map.
-        
-        Args:
-			x (torch.Tensor): Input tensor of shape (batch_size, channels, height, width).
-        Returns:
-			torch.Tensor: Output tensor of shape (batch_size, num_classes, height, width).
-		"""
-        # frozen weights of dino
         with torch.set_grad_enabled(self.peft and self.training):
             if self.n_features == 1:
                 features = self.backbone(pixel_values=x).last_hidden_state

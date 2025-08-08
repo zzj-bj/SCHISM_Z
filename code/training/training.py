@@ -80,7 +80,6 @@ class Training:
         self.hyperparameters = kwargs.get('hyperparameters')
         if self.hyperparameters is None:
             raise ValueError("The 'hyperparameters' argument must be provided and not None.")
-        self.num_file = kwargs.get('num_file')
         self.report = kwargs.get('report')
         self.dataloaders = {}  # Initialize dataloaders attribute
         self.display = dc.DisplayColor()
@@ -117,21 +116,6 @@ class Training:
         self.img_res = int(self.data.get('img_res', 560))
         self.crop_size = int(self.data.get('crop_size', 224))
         self.num_samples = int(self.data.get('num_samples', 500))
-
-        # Control Num image to process
-        if self.num_file is None or self.num_samples is None:
-            text = "'num_file' and 'num_samples' must not be None."
-            raise ValueError(text)
-
-        if self.num_file <= self.num_samples:
-            text = (
-                f' - num_samples ({self.num_samples}) > '
-                f'maximum number of images to process ({self.num_file})'
-                )
-            raise ValueError (text)
-        if self.num_samples < 16:
-            text = f'num_samples ({self.num_samples}) must be >= 16 '
-            raise ValueError (text)
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')

@@ -67,7 +67,6 @@ class LaunchTraining:
             return
 
         valid_subfolders: List[str] = []
-        total_images = 0
 
         for sub in data_dir.iterdir():
             if not sub.is_dir():
@@ -110,7 +109,6 @@ class LaunchTraining:
                 return
 
             valid_subfolders.append(name)
-            total_images += len(img_files)
 
         if not valid_subfolders:
             self.display.print("No valid subfolders to train on", colors["error"])
@@ -122,7 +120,6 @@ class LaunchTraining:
             subfolders=valid_subfolders,
             run_dir=str(run_dir),
             hyperparameters=hyperparameters,
-            num_file=total_images
         )
         try:
             trainer.load_segmentation_data()
