@@ -39,11 +39,6 @@ class CNNHead(nn.Module):
         device = "cuda"
         self._build_layers(device)
 
-        self.initial_conv = None
-        self.decoder_convs = None
-        self.stages = None
-        self.projections = None
-        self.classifier = None
     
     def _calculate_up_factors_dynamic(self, n_features: int, img_res: int) -> Tuple[float, ...]:
         """
@@ -137,10 +132,8 @@ class CNNHead(nn.Module):
         
         B, S, D = feats.shape
         x = feats.view(B, D, patch_sz, patch_sz)
-        print("1")
         # Initial conv
         x = self.initial_conv(x)
-        print("2")
 
         # Calculate all target sizes upfront to avoid accumulation errors
         target_sizes = []
@@ -158,15 +151,12 @@ class CNNHead(nn.Module):
             # Interpolate to exact target size
             x = F.interpolate(x, size=(target_size, target_size), 
                             mode="bicubic", align_corners=False)
-            print("3")
 
             # Apply convolution first
             conv_out = self.stages[i](x)
-            print("4")
 
             # Apply projection for residual connection
             identity = self.projections[i](x)
-            print("5")
 
             # Ensure sizes match before addition (handle any edge cases)
             if identity.shape != conv_out.shape:
@@ -175,7 +165,6 @@ class CNNHead(nn.Module):
                 conv_out = F.interpolate(conv_out, size=(h, w), mode='bilinear', align_corners=False)
             
             x = identity + conv_out
-            print("6")
 
             
             if i % 2 == 1 and i != 0:
@@ -185,7 +174,6 @@ class CNNHead(nn.Module):
         
         # Final classifier
         logits = self.classifier(x)
-        print("7")
 
         # Ensure exact size match
         if logits.shape[-2:] != (img_res, img_res):
