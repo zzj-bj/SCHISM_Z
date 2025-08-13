@@ -127,7 +127,7 @@ class DinoV2Segmentor(nn.Module):
         else:
             self.seg_head = CNNHead(CNNHeadConfig(
                 embedding_size=self.embedding_size,
-                channels=self.channels,
+                #channels=self.channels,
                 num_classes=self.num_classes,
                 k_size=self.k_size,
                 n_features=self.n_features,
