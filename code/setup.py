@@ -89,5 +89,5 @@ setup(
         "License :: Apache-2.0 license",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.10",
 )
