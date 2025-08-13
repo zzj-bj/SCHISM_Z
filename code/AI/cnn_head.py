@@ -37,7 +37,9 @@ class CNNHead(nn.Module):
         self.up_factors = self._calculate_up_factors_dynamic(self.n_features, 560)
             
         device = "cuda"
+        print('test 1')
         self._build_layers(device)
+        print('test 2')
 
         self.initial_conv = None
         self.decoder_convs = None
