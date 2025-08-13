@@ -37,9 +37,7 @@ class CNNHead(nn.Module):
         self.up_factors = self._calculate_up_factors_dynamic(self.n_features, 560)
             
         device = "cuda"
-        print('test 1')
         self._build_layers(device)
-        print('test 2')
 
         self.initial_conv = None
         self.decoder_convs = None
@@ -139,10 +137,11 @@ class CNNHead(nn.Module):
         
         B, S, D = feats.shape
         x = feats.view(B, D, patch_sz, patch_sz)
-      
+        print("1")
         # Initial conv
         x = self.initial_conv(x)
-        
+        print("2")
+
         # Calculate all target sizes upfront to avoid accumulation errors
         target_sizes = []
         current_size = patch_sz
@@ -159,13 +158,16 @@ class CNNHead(nn.Module):
             # Interpolate to exact target size
             x = F.interpolate(x, size=(target_size, target_size), 
                             mode="bicubic", align_corners=False)
-            
+            print("3")
+
             # Apply convolution first
             conv_out = self.stages[i](x)
-            
+            print("4")
+
             # Apply projection for residual connection
             identity = self.projections[i](x)
-            
+            print("5")
+
             # Ensure sizes match before addition (handle any edge cases)
             if identity.shape != conv_out.shape:
                 # This shouldn't happen with proper padding, but just in case
@@ -173,6 +175,8 @@ class CNNHead(nn.Module):
                 conv_out = F.interpolate(conv_out, size=(h, w), mode='bilinear', align_corners=False)
             
             x = identity + conv_out
+            print("6")
+
             
             if i % 2 == 1 and i != 0:
                 x = F.dropout(x, p=self.dropout, training=self.training)
@@ -181,7 +185,8 @@ class CNNHead(nn.Module):
         
         # Final classifier
         logits = self.classifier(x)
-        
+        print("7")
+
         # Ensure exact size match
         if logits.shape[-2:] != (img_res, img_res):
             logits = F.interpolate(logits, size=(img_res, img_res), 
