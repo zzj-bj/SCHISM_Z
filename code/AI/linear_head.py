@@ -53,19 +53,25 @@ class LinearHead(nn.Module):
         Returns:
             torch.Tensor: The output logits after processing the input features.
         """
-        features = inputs["features"]
+        feats = inputs["features"]
         img_shape = inputs["image"].shape[-1]
         patch_feature_size = img_shape // 14
-        if self.n_features > 1:
-            features = torch.cat(features, dim=-1)
-            features = features[:, 1:].permute(0, 2, 1).reshape(
-            -1, self.embedding_size, patch_feature_size, patch_feature_size
-        )
+        
+        if isinstance(feats, list):
+            feats = torch.cat([f[:, 1:, :] for f in feats], dim=-1)
         else:
-        # For n_features == 1, reshape features to 4D
-            features = features[:, 1:].permute(0, 2, 1).reshape(
-            -1, self.embedding_size, patch_feature_size, patch_feature_size
+            feats = feats[:, 1:, :]
+        
+        B, S, D = feats.shape
+        x = feats.view(B, D, patch_feature_size, patch_feature_size)
+
+        logits = self.head(x)
+
+        logits = F.interpolate(
+            input=logits, size=(int(img_shape),int(img_shape)),
+                                mode="bilinear",align_corners=False
         )
+        return logits
         logits = self.head(features)
         logits = F.interpolate(
             input=logits, size=(int(img_shape),int(img_shape)),
