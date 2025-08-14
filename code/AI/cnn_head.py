@@ -156,23 +156,15 @@ class CNNHead(nn.Module):
         for i in range(self.n_blocks):
             # Inverse relationship: more upsampling = fewer channels
             upsampling_ratio = cumulative_factors[i]
-            
-            if self.channel_reduction == "maintain":
+
+            if upsampling_ratio >= 8.0:
+                next_channels = max(64, initial_channels // 4)
+            elif upsampling_ratio >= 4.0:
+                next_channels = max(96, initial_channels // 2)
+            elif upsampling_ratio >= 2.0:
+                next_channels = max(128, int(initial_channels / 1.5))
+            else:
                 next_channels = initial_channels
-            elif self.channel_reduction == "aggressive":
-                # Very aggressive reduction: halve each time
-                next_channels = max(64, initial_channels // (2 ** (i + 1)))
-            else:  # gradual (default) - smart memory-aware reduction
-                # Reduce channels based on resolution increase
-                # At 2x: keep channels, at 4x: halve, at 8x+: quarter
-                if upsampling_ratio >= 8.0:
-                    next_channels = max(64, initial_channels // 4)
-                elif upsampling_ratio >= 4.0:
-                    next_channels = max(96, initial_channels // 2)
-                elif upsampling_ratio >= 2.0:
-                    next_channels = max(128, int(initial_channels / 1.5))
-                else:
-                    next_channels = initial_channels
             
             # Round to nearest 32 for efficiency
             next_channels = int(round(next_channels / 32) * 32)
