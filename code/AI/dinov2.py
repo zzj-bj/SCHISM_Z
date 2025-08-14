@@ -80,7 +80,7 @@ class DinoV2Segmentor(nn.Module):
         super().__init__()
 
         self.inference_mode=dinov2_segmentor_config.inference_mode
-        self.channels = dinov2_segmentor_config.channels
+        #self.channels = dinov2_segmentor_config.channels
         self.num_classes = dinov2_segmentor_config.num_classes
         self.linear_head = dinov2_segmentor_config.linear_head
         self.k_size = dinov2_segmentor_config.k_size
@@ -89,7 +89,6 @@ class DinoV2Segmentor(nn.Module):
         assert self.size in self.emb_size.keys(), "Invalid size embedding size"
         self.embedding_size = self.emb_size[str(dinov2_segmentor_config.size)]
         self.n_features = dinov2_segmentor_config.n_features
-        print('n_features : ', self.n_features)
         self.peft = dinov2_segmentor_config.peft
         self.quantize = dinov2_segmentor_config.quantize
         self.r = dinov2_segmentor_config.r
@@ -127,7 +126,6 @@ class DinoV2Segmentor(nn.Module):
         else:
             self.seg_head = CNNHead(CNNHeadConfig(
                 embedding_size=self.embedding_size,
-                #channels=self.channels,
                 num_classes=self.num_classes,
                 k_size=self.k_size,
                 n_features=self.n_features,
