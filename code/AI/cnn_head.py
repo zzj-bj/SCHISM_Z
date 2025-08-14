@@ -58,8 +58,7 @@ class CNNHead(nn.Module):
     def _build_layers(self, device: torch.device, img_res: int):
         """Build all CNN layers with proper stages and projections."""
         # Calculate up_factors if not provided
-        if self.up_factors is None:
-            self.up_factors = self._calculate_up_factors_dynamic(self.n_features, img_res)
+        self.up_factors = self._calculate_up_factors_dynamic(self.n_features, img_res)
         
         # Scale channels based on input features
         initial_channels = self.embedding_size // 2
