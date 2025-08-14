@@ -44,6 +44,8 @@ class DinoV2SegmentorConfig:
     lora_alpha: int = 32
     lora_dropout: float = 0.1
     inference_mode: bool = False
+    n_blocks: int = 4
+
 
 class DinoV2Segmentor(nn.Module):
     """
@@ -65,7 +67,8 @@ class DinoV2Segmentor(nn.Module):
 		'r': int,
 		'lora_alpha': int,
 		'lora_dropout': float,
-		'inference_mode': bool
+		'inference_mode': bool,
+        'n_blocks' : int
 	}
 
     emb_size = {
@@ -93,6 +96,7 @@ class DinoV2Segmentor(nn.Module):
         self.r = dinov2_segmentor_config.r
         self.lora_alpha = dinov2_segmentor_config.lora_alpha
         self.lora_dropout = dinov2_segmentor_config.lora_dropout
+        self.n_blocks= dinov2_segmentor_config.n_blocks
 
         if self.quantize :
             self.quantization_config = BitsAndBytesConfig(
@@ -126,6 +130,7 @@ class DinoV2Segmentor(nn.Module):
             self.seg_head = CNNHead(CNNHeadConfig(
                 embedding_size=self.embedding_size,
                 num_classes=self.num_classes,
+                n_blocks= self.n_blocks,
                 k_size=self.k_size,
                 n_features=self.n_features,
                 activation=self.activation))
