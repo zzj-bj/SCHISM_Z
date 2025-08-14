@@ -33,7 +33,6 @@ class CNNHead(nn.Module):
         self.num_classes = cfg.num_classes
         self.dropout = cfg.dropout
         self.activation = cfg.activation.lower()
-        self.memory_efficient = cfg.memory_efficient
         self.activation_mixin = ActivationMixin()
         
         # Smart calculation of upsampling factors
@@ -186,22 +185,9 @@ class CNNHead(nn.Module):
     def _build_layers(self, device: torch.device):
         """Build all CNN layers with proper stages and projections."""
         # Scale channels based on input features - SMARTER scaling
-        if self.memory_efficient:
-            # Memory-efficient mode: aggressive channel reduction
-            if self.n_features >= 4:
-                divisor = 8  # Very aggressive for many features
-                max_initial = 128
-            elif self.n_features >= 2:
-                divisor = 4
-                max_initial = 192
-            else:
-                divisor = 3
-                max_initial = 256
-            initial_channels = max(64, min(max_initial, self.embedding_size // divisor))
-        else:
-            # Original mode (may cause OOM with large n_features)
-            divisor = 2
-            initial_channels = max(128, self.embedding_size // divisor)
+       
+        divisor = 2
+        initial_channels = max(128, self.embedding_size // divisor)
                 
         self.initial_conv = nn.Conv2d(
             in_channels=self.embedding_size,
