@@ -14,8 +14,11 @@ class CNNHeadConfig:
     n_features: int = 1
     k_size: int = 3
     activation: str = "relu"
-    up_factors: Optional[Tuple[float, ...]] = None
     dropout: float = 0.1
+    if torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
 
 
 class CNNHead(nn.Module):
@@ -25,15 +28,13 @@ class CNNHead(nn.Module):
         self.embedding_size = cfg.embedding_size * self.n_features
         self.num_classes = cfg.num_classes
         self.dropout = cfg.dropout
-        self.up_factors = self._calculate_up_factors_dynamic(self.n_features, 560)
+        self.up_factors = self._calculate_up_factors_dynamic(self.n_features)
         self.activation = cfg.activation.lower()
         self.activation_mixin = ActivationMixin()
-
-        device = "cuda"
-        self._build_layers(device)
+        self._build_layers(cfg.device)
 
     
-    def _calculate_up_factors_dynamic(self, n_features: int, img_res: int) -> Tuple[float, ...]:
+    def _calculate_up_factors_dynamic(self, n_features: int) -> Tuple[float, ...]:
         """
         ONE simple function to calculate up_factors mathematically.
         

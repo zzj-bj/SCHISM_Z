@@ -80,7 +80,6 @@ class DinoV2Segmentor(nn.Module):
         super().__init__()
 
         self.inference_mode=dinov2_segmentor_config.inference_mode
-        #self.channels = dinov2_segmentor_config.channels
         self.num_classes = dinov2_segmentor_config.num_classes
         self.linear_head = dinov2_segmentor_config.linear_head
         self.k_size = dinov2_segmentor_config.k_size
