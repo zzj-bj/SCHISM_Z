@@ -337,6 +337,7 @@ class Training:
         model_config_class = self.model_config_mapping[model_name]
 
         self.model_params['num_classes'] = self.num_classes
+        self.model_params['img_res'] = self.img_res
 
         required_params = {
             k: self.param_converter.convert_param(v)

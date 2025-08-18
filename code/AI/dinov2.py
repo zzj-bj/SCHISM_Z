@@ -31,7 +31,7 @@ class DinoV2SegmentorConfig:
     kernel size, activation function, size of the model, number of features,
     PEFT configuration, quantization settings, and inference mode.
     """
-    channels: int = 512
+    img_res: int
     num_classes: int = 3
     linear_head: bool = True
     k_size: int = 3
@@ -68,7 +68,8 @@ class DinoV2Segmentor(nn.Module):
 		'lora_alpha': int,
 		'lora_dropout': float,
 		'inference_mode': bool,
-        'n_blocks' : int
+        'n_blocks' : int,
+        'img_res' : int
 	}
 
     emb_size = {
@@ -97,6 +98,8 @@ class DinoV2Segmentor(nn.Module):
         self.lora_alpha = dinov2_segmentor_config.lora_alpha
         self.lora_dropout = dinov2_segmentor_config.lora_dropout
         self.n_blocks= dinov2_segmentor_config.n_blocks
+        self.img_res = dinov2_segmentor_config.img_res
+
 
         if self.quantize :
             self.quantization_config = BitsAndBytesConfig(
@@ -129,6 +132,7 @@ class DinoV2Segmentor(nn.Module):
         else:
             self.seg_head = CNNHead(CNNHeadConfig(
                 embedding_size=self.embedding_size,
+                img_res = self.img_res,
                 num_classes=self.num_classes,
                 n_blocks= self.n_blocks,
                 k_size=self.k_size,
