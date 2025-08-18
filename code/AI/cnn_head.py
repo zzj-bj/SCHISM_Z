@@ -94,9 +94,7 @@ class CNNHead(nn.Module):
 
         self.features = nn.Sequential(*layers)
         self.classifier = nn.Conv2d(channels_list[-1], self.num_classes, kernel_size=1)
-        nn.init.kaiming_normal_(self.classifier.weight, nonlinearity="linear")
-        nn.init.zeros_(self.classifier.bias)
-
+      
     def compute_scale_factors(self, input_size, output_size, n_blocks):
         factors = []
         current = input_size
