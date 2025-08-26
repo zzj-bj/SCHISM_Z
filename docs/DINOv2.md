@@ -55,8 +55,7 @@ A simple and lightweight head designed for basic segmentation tasks. It processe
 A more advanced head for high-quality segmentation, leveraging convolutional blocks for feature refinement and upsampling.
 
 **Key Features**:
-- Multi-block architecture with configurable `channels`.
-- Upsampling via bicubic interpolation and pixel shuffling.
+- Multi-block architecture.
 - Supports multiple activation functions (e.g., `relu`, `leakyrelu`).
 - Dropout for regularisation and robust segmentation outputs.
 
