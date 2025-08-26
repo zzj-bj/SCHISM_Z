@@ -13,7 +13,7 @@ class CNNHeadConfig:
     n_blocks: int = 4
     k_size: int = 3
     activation: str = "relu"
-    dropout: float = 0.5
+    dropout: float = 0.1
     channel_reduction: str = "gradual"
 
 def _gn_groups(c: int) -> int:
@@ -70,7 +70,7 @@ class CNNHead(nn.Module):
         print(channels_list)
         dinov2_feat_size = self.img_res // 14
         scale_factors = self.compute_scale_factors(dinov2_feat_size, self.img_res, self.n_blocks)
-
+        print(scale_factors)
         layers = []
         act_fn = self.activation_mixin._get_activation(self.activation)
         for i in range(self.n_blocks):
@@ -94,7 +94,8 @@ class CNNHead(nn.Module):
 
         self.features = nn.Sequential(*layers)
         self.classifier = nn.Conv2d(channels_list[-1], self.num_classes, kernel_size=1)
-      
+        print(self)
+
     def compute_scale_factors(self, input_size, output_size, n_blocks):
         factors = []
         current = input_size
@@ -128,7 +129,7 @@ class CNNHead(nn.Module):
         feats = torch.cat([f[:, 1:, :] for f in feats], dim=-1) if isinstance(feats, list) else feats[:, 1:, :]
         B, S, D = feats.shape
         assert S == patch_sz * patch_sz, f"S={S} patch={patch_sz}"
-        x = feats.view(B, D, patch_sz, patch_sz)
+        x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_sz, patch_sz)
         #print(f"in {x.shape}")
     
         out = x

@@ -63,7 +63,7 @@ class LinearHead(nn.Module):
             feats = feats[:, 1:, :]
         
         B, S, D = feats.shape
-        x = feats.view(B, D, patch_feature_size, patch_feature_size)
+        x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_feature_size, patch_feature_size)
 
         logits = self.head(x)
 
@@ -72,9 +72,4 @@ class LinearHead(nn.Module):
                                 mode="bilinear",align_corners=False
         )
         return logits
-        logits = self.head(features)
-        logits = F.interpolate(
-            input=logits, size=(int(img_shape),int(img_shape)),
-                                mode="bilinear",align_corners=False
-        )
-        return logits
+   
