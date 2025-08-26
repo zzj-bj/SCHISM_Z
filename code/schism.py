@@ -1,120 +1,56 @@
-import os
-import sys
-from classes.Training import Training
-from classes.Inference import Inference
-from classes.Hyperparameters import Hyperparameters
+# -*- coding: utf-8 -*-
+""" SCHISM """
 
-ASCII_MENU = """
-╔══════════════════════════════════════════════════╗
-║  ███████╗ ██████╗██╗  ██╗██╗███████╗███╗   ███╗  ║
-║  ██╔════╝██╔════╝██║  ██║██║██╔════╝████╗ ████║  ║
-║  ███████╗██║     ███████║██║███████╗██╔████╔██║  ║
-║  ╚════██║██║     ██╔══██║██║╚════██║██║╚██╔╝██║  ║
-║  ███████║╚██████╗██║  ██║██║███████║██║ ╚═╝ ██║  ║
-║  ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝     ╚═╝  ║
-╠══════════════════════════════════════════════════╣
-║        -Let's do some cool segmentation-         ║
-╠══════════════════════════════════════════════════╣
-║ ▓▓▓▓▓▓ 1 -► Training       ░░░░░░░░░░░░░░░░██████║
-║ ▓▓▓▓ 2 -► Inference     ░░░░░░░░░░░░░░░░░████████║
-║ ▓▓ 3 -► Quit        ░░░░░░░░░░░░░░░░░░███████████║
-╚══════════════════════════════════════════════════╝
-"""
+# Third-party
+import torch
 
-def get_path(prompt):
-    """Requests a valid path from the user."""
-    while True:
-        path = input(f"[?] {prompt}: ").strip()
-        if os.path.exists(path):
-            return path
-        print("[X] Invalid path. Try again.")
+# Local application imports
+from tools import menu, utils as vf
+from tools import display_color as dc
+from tools import constants as ct
+from tools.constants import DISPLAY_COLORS as colors
+from preprocessing import launch_preprocessing as lp
+from training import launch_training as lt
+from inference import launch_inference as li
 
-def train_model():
-    """Executes the training process in CLI."""
-    print("\n[ Training Mode ]")
-    data_dir = get_path("Enter the data directory")
-    run_dir = get_path("Enter the directory to save runs")
-    hyperparameters_path = get_path("Enter the path to the hyperparameters INI file")
-    hyperparameters_path = os.path.join(hyperparameters_path, "hyperparameters.ini")
+#=======================================================================
 
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    hyperparameters = Hyperparameters(hyperparameters_path)
-
-    train_object = Training(
-        data_dir=data_dir,
-        subfolders=subfolders,
-        run_dir=run_dir,
-        hyperparameters=hyperparameters
-    )
-
-    print("\n[!] Starting training...")
-    train_object.load_segmentation_data()
-    train_object.train()
-    print("\n[√] Training completed successfully!")
-
-def run_inference():
-    """Executes the inference process in CLI."""
-    print("\n[ Inference Mode ]")
-    data_dir = get_path("Enter the directory containing data to predict")
-    run_dir = get_path("Enter the directory containing model weights")
-
-    hyperparameters_path = os.path.join(run_dir, "hyperparameters.ini")
-    if not os.path.exists(hyperparameters_path):
-        print("[X] The hyperparameters.ini file was not found in the weights directory.")
-        return
-
-    hyperparameters = Hyperparameters(hyperparameters_path)
-    params = hyperparameters.get_parameters().get("Training", {})
-    metrics = [metric.strip() for metric in params.get("metrics", "Jaccard").split(",") if metric.strip()]
-
-    if not metrics:
-        print("[X] No metrics found in the hyperparameters.")
-        return
-
-    # Filter out 'ConfusionMatrix' if it's part of the metrics
-    available_metrics = [metric for metric in metrics if metric != "ConfusionMatrix"]
-
-    # Display the available metrics for inference
-    for i, metric in enumerate(available_metrics, start=1):
-        print(f" {i} --> {metric}")
-
-    while True:
-        choice = input("\n[?] Enter the metric number: ").strip()
-        if choice.isdigit() and 1 <= int(choice) <= len(metrics):
-            selected_metric = metrics[int(choice) - 1]
-            break
-        print("[X] Invalid selection. Try again.")
-
-    subfolders = [f.name for f in os.scandir(data_dir) if f.is_dir()]
-    pred_object = Inference(
-        data_dir=data_dir,
-        subfolders=subfolders,
-        run_dir=run_dir,
-        selected_metric=selected_metric,
-        hyperparameters=hyperparameters
-    )
-
-    print("\n[!] Starting inference...")
-
-    pred_object.predict()
-    
-    print("\n[√] Inference completed successfully!")
-
-def main():
+def main() -> None:
     """Displays the CLI menu and handles user choices."""
-    while True:
-        print("\n" + ASCII_MENU)
+    display = dc.DisplayColor()
+    print(ct.LOGO_IN)
 
-        choice = input("[?] Make your selection: ").strip()
-        if choice == "1":
-            train_model()
-        elif choice == "2":
-            run_inference()
-        elif choice == "3":
-            print("\n[<3] Goodbye! o/")
-            sys.exit()
-        else:
-            print("[X] Invalid choice. Try again.")
+    if torch.cuda.is_available():
+        display.print("CUDA is available! Running on GPU.\n", colors['ok'])
+    else:
+        display.print("CUDA is not available! Running on CPU.\n", colors['warning'])
+
+    main_menu = menu.Menu('MAIN')
+    while True:
+        main_menu.display_menu()
+        choice = main_menu.selection()
+
+        if choice == 1:
+            lp.LaunchPreprocessing().menu_preprocessing()
+        elif choice == 2:
+            lt.LaunchTraining().train_model()
+        elif choice == 3:
+            li.LaunchInference().run_inference()
+        elif choice == 4:
+            if _confirm_exit():
+                break  # exit the loop and end program
+
+def _confirm_exit() -> bool:
+    """
+    Ask user to confirm exit. Returns True if exiting, False otherwise.
+    """
+    display = dc.DisplayColor()
+    prompt = "Do you really want to leave the program? We'll miss you!"
+    if vf.answer_yes_or_no(prompt):
+        display.print("Goodbye! \n", colors['babye'])
+        # print(ct.LOGO_OUT)
+        return True
+    return False
 
 if __name__ == "__main__":
     main()
