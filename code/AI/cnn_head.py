@@ -94,7 +94,6 @@ class CNNHead(nn.Module):
 
         self.features = nn.Sequential(*layers)
         self.classifier = nn.Conv2d(channels_list[-1], self.num_classes, kernel_size=1)
-        print(self)
 
     def compute_scale_factors(self, input_size, output_size, n_blocks):
         factors = []
@@ -129,19 +128,15 @@ class CNNHead(nn.Module):
         feats = torch.cat([f[:, 1:, :] for f in feats], dim=-1) if isinstance(feats, list) else feats[:, 1:, :]
         B, S, D = feats.shape
         assert S == patch_sz * patch_sz, f"S={S} patch={patch_sz}"
-        x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_sz, patch_sz)
-        #print(f"in {x.shape}")
-    
+        x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_sz, patch_sz)    
         out = x
+
         for b in range(self.n_blocks):
             conv = self.features[2*b]
             up   = self.features[2*b + 1]
-            #print(f"block {b} in {out.shape}")
             out = conv(out)
-            #print(f"block {b} after conv {out.shape}")
             out = up(out)
-            #print(f"block {b} after up {out.shape}")
     
         out = self.classifier(out)
-        #print(f"class out {out.shape}")
+
         return out
