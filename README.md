@@ -156,7 +156,7 @@ If you use our solution or find our work helpful, please consider citing it as f
 ```
 @misc{schism2025,
   title       = {SCHISM: Semantic Classification of High-resolution Imaging for Scanned Materials},
-  author      = {Florent Brondolo and Samuel Beaussant and Soufiane Elbouazaoui and Saïd Ezzedine and Pierre Fancelli},
+  author      = {Florent Brondolo and Samuel Beaussant and Mehdi Mankaï and Saïd Ezzedine and Pierre Fancelli},
   year        = {2025},
   howpublished= {\url{https://github.com/FloFive/SCHISM}},
   note        = {GitHub repository}
