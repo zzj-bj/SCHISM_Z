@@ -4,7 +4,7 @@
 
 DinoV2Segmentor leverages DINOv2, a state-of-the-art self-supervised learning (SSL) method for pre-training vision foundation models. Foundation models like DINOv2 are pre-trained on massive datasets to serve as adaptable bases for various downstream tasks, enabling efficient fine-tuning on smaller, task-specific datasets. This approach delivers superior performance compared to training models from scratch, particularly in data-scarce scenarios.
 
-DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create robust image encoders capable of capturing complex patterns and features. Pre-trained on diverse "natural" image datasets, DINOv2 models excel in tasks such as image classification, object detection, and segmentation. DinoV2Segmentor builds on this foundation, integrating modular segmentation heads to adapt these powerful encoders for precise, multi-class image segmentation.
+DINOv2 utilises Vision Transformers (ViTs) and attention mechanisms to develop robust image encoders that can capture complex patterns and features. Pre-trained on diverse "natural" image datasets, DINOv2 models excel in tasks such as image classification, object detection, and segmentation. DinoV2Segmentor builds on this foundation, integrating modular segmentation heads to adapt these powerful encoders for precise, multi-class image segmentation.
 
 ---
 ## Features
@@ -12,8 +12,9 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
 - **Configurable Parameters**:
   - `k_size`: Kernel size for convolutional layers.
   - `linear_head`: Option to switch between a linear or CNN-based segmentation head.
+  - `n_blocks`: Number of convolutional blocks in the CNN-based segmentation head.
   - `n_features`: Number of transformer layers used for feature aggregation.
-  - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference. Depending on your GPU, this option might have to be disabled in order for the training to run nicely.
+  - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference. Depending on your GPU, this option may need to be disabled for the training to run smoothly.
   - `peft`: Incorporates LoRA for efficient fine-tuning of the backbone model.
   - `size`: Backbone model size (`small`, `base`, or `large`).
   - `num_classes`: Number of output segmentation classes.
