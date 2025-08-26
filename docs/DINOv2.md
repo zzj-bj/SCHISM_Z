@@ -10,7 +10,6 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
 ## Features
 
 - **Configurable Parameters**:
-  - `channels`: Number of initial feature channels in the segmentation head.
   - `k_size`: Kernel size for convolutional layers.
   - `linear_head`: Option to switch between a linear or CNN-based segmentation head.
   - `n_features`: Number of transformer layers used for feature aggregation.
@@ -67,7 +66,6 @@ The segmentation head generates a final segmentation map with `num_classes` chan
 | Parameter       | Type    | Description                                                                | Default    |
 |-----------------|---------|----------------------------------------------------------------------------|------------|
 | `n_block`       | `int`   | Number of convolutional blocks in the CNN-based segmentation head.         | 4          |
-| `channels`      | `int`   | Number of channels in the CNN-based head's first layer.                   | 512        |
 | `k_size`        | `int`   | Kernel size for all convolutional layers.                                 | 3          |
 | `linear_head`   | `bool`  | Whether to use a linear segmentation head (`True`) or CNN-based head.     | `True`     |
 | `n_features`    | `int`   | Number of transformer layers used for feature extraction.                 | 1          |
