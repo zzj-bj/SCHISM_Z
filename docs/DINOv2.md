@@ -66,21 +66,21 @@ The segmentation head generates a final segmentation map with `num_classes` chan
 ---
 ## Constructor Parameters
 
-| Parameter       | Type    | Description                                                                | Default    |
-|-----------------|---------|----------------------------------------------------------------------------|------------|
-| `n_block`       | `int`   | Number of convolutional blocks in the CNN-based segmentation head.         | 4          |
-| `dropout`       | `int`   | Probability of zeroing activations in conv blocks to reduce overfitting.   | 0.1        |
-| `channel_reduction`| `int`   | Strategy for decreasing channels across blocks                          | `gradual`  |
-| `k_size`        | `int`   | Kernel size for all convolutional layers.                                 | 3          |
-| `linear_head`   | `bool`  | Whether to use a linear segmentation head (`True`) or CNN-based head.     | `True`     |
-| `n_features`    | `int`   | Number of transformer layers used for feature extraction.                 | 1          |
-| `quantize`      | `bool`  | Enables 4-bit quantization for memory efficiency.                         | `True`    |
-| `peft`          | `bool`  | Enables parameter-efficient fine-tuning (LoRA).                          | `True`    |
-| `size`          | `str`   | Backbone size (`small`, `base`, or `large`).                              | `base`     |
-| `num_classes`   | `int`   | Number of output segmentation classes.                                    | 3          |
-| `activation`    | `str`   | Activation function for CNN-based segmentation head.                      | `relu`     |
-| `r`             | `int`   | LoRA rank parameter for fine-tuning.                                      | 32         |
-| `lora_alpha`    | `int`   | LoRA alpha parameter for fine-tuning.                                     | 32         |
-| `lora_dropout`  | `float` | Dropout probability for LoRA fine-tuning.                                 | 0.1        |
+| Parameter          | Type    | Description                                                                | Default    | Scope     |
+|--------------------|---------|----------------------------------------------------------------------------|------------|-----------|
+| `n_block`          | `int`   | Number of convolutional blocks in the CNN-based segmentation head.         | 4          | CNN       |
+| `dropout`          | `int`   | Probability of zeroing activations in conv blocks to reduce overfitting.   | 0.1        | CNN       |
+| `channel_reduction`| `int`   | Strategy for decreasing channels across blocks.                            | `gradual`  | CNN       |
+| `k_size`           | `int`   | Kernel size for all convolutional layers.                                 | 3          | CNN       |
+| `linear_head`      | `bool`  | Whether to use a linear segmentation head (`True`) or CNN-based head.     | `True`     | CNN/Linear|
+| `n_features`       | `int`   | Number of transformer layers used for feature extraction.                 | 1          | CNN/Linear|
+| `quantize`         | `bool`  | Enables 4-bit quantization for memory efficiency.                         | `True`     | Backbone  |
+| `peft`             | `bool`  | Enables parameter-efficient fine-tuning (LoRA).                           | `True`     | Backbone  |
+| `size`             | `str`   | Backbone size (`small`, `base`, or `large`).                              | `base`     | Backbone  |
+| `num_classes`      | `int`   | Number of output segmentation classes.                                    | 3          | CNN/Linear|
+| `activation`       | `str`   | Activation function for CNN-based segmentation head.                      | `relu`     | CNN       |
+| `r`                | `int`   | LoRA rank parameter for fine-tuning.                                      | 32         | Backbone  |
+| `lora_alpha`       | `int`   | LoRA alpha parameter for fine-tuning.                                     | 32         | Backbone  |
+| `lora_dropout`     | `float` | Dropout probability for LoRA fine-tuning.                                 | 0.1        | Backbone  |
 
 ---
