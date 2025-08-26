@@ -12,8 +12,10 @@ DINOv2 utilises Vision Transformers (ViTs) and attention mechanisms to develop r
 - **Configurable Parameters**:
   - `k_size`: Kernel size for convolutional layers.
   - `linear_head`: Option to switch between a linear or CNN-based segmentation head.
-  - `n_blocks`: Number of convolutional blocks in the CNN-based segmentation head.
+  - `n_block`: Number of convolutional blocks in the CNN-based segmentation head.
   - `n_features`: Number of transformer layers used for feature aggregation.
+  - `dropout`: Probability of zeroing activations in conv blocks to reduce overfitting.
+  - `channel_reduction`: Strategy for decreasing channels across blocks (`gradual` (default) or `aggressive`).
   - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference. Depending on your GPU, this option may need to be disabled for the training to run smoothly.
   - `peft`: Incorporates LoRA for efficient fine-tuning of the backbone model.
   - `size`: Backbone model size (`small`, `base`, or `large`).
@@ -67,6 +69,8 @@ The segmentation head generates a final segmentation map with `num_classes` chan
 | Parameter       | Type    | Description                                                                | Default    |
 |-----------------|---------|----------------------------------------------------------------------------|------------|
 | `n_block`       | `int`   | Number of convolutional blocks in the CNN-based segmentation head.         | 4          |
+| `dropout`       | `int`   | Probability of zeroing activations in conv blocks to reduce overfitting.   | 0.1        |
+| `channel_reduction`| `int`   | Strategy for decreasing channels across blocks                          | `gradual`  |
 | `k_size`        | `int`   | Kernel size for all convolutional layers.                                 | 3          |
 | `linear_head`   | `bool`  | Whether to use a linear segmentation head (`True`) or CNN-based head.     | `True`     |
 | `n_features`    | `int`   | Number of transformer layers used for feature extraction.                 | 1          |
