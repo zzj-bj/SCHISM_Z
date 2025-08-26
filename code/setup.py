@@ -74,15 +74,17 @@ setup(
     packages=find_packages(where="classes"),
     install_requires=[
         "torchmetrics>=1.7.1",
-        "numpy>=2.2.6",
-        "torch>=2.5.1"
+        "numpy>=1.26,<2.0",
+        "torch>=2.5.1",
         "matplotlib>=3.10.3",
         "tqdm>=4.67.1",
         "torchvision>=0.2",
         "patchify>=0.2.3",
         "peft>=0.15.1",
         "transformers>=4.46.3",
-        "bitsandbytes>=0.46.1"
+        "bitsandbytes>=0.46.1",
+        "jsonschema>=4.0.0",
+        "opencv-python>=4.0.0",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
