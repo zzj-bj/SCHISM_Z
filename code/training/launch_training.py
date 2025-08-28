@@ -14,9 +14,10 @@ from typing import Any, Dict, List, Tuple
 from tools import utils as ut
 from tools.display_color import DisplayColor
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 from AI.hyperparameters import Hyperparameters
 from training.training import Training
-from tools.constants import IMAGE_EXTENSIONS
+
 
 class LaunchTraining:
     def __init__(self) -> None:
@@ -62,8 +63,8 @@ class LaunchTraining:
 
         try:
             hyperparameters = Hyperparameters(str(hyper_file))
-        except Exception as e:
-            self.display.print(f"Cannot load hyperparameters {e}", colors["error"])
+        except Exception:
+            ut.gerer_erreur('Hyperparameters')
             return
 
         valid_subfolders: List[str] = []
@@ -81,7 +82,7 @@ class LaunchTraining:
             if not masks_dir.is_dir():
                 self.display.print(f"{name}/masks not found", colors["error"])
                 return
-            
+
             img_files = []
             for ext in IMAGE_EXTENSIONS:
                 img_files.extend(images_dir.glob(f"*{ext}"))
@@ -97,15 +98,18 @@ class LaunchTraining:
 
             if len(img_files) != len(msk_files):
                 self.display.print(
-                    f"Count mismatch in {name}- nb images: {len(img_files)} / nb masks: {len(msk_files)}",
+                    f"Count mismatch in {name}- nb images: {len(img_files)} / nb masks:"
+                    f" {len(msk_files)}",
                     colors["error"]
                 )
                 return
 
             ok, miss_img, miss_msk = self.compare_number(images_dir, masks_dir)
             if not ok:
-                self.display.print(f"Missing masks for images in {name}: {miss_img}", colors["error"])
-                self.display.print(f"Missing images for masks in {name}: {miss_msk}", colors["error"])
+                self.display.print(f"Missing masks for images in {name}: {miss_img}",
+                                    colors["error"])
+                self.display.print(f"Missing images for masks in {name}: {miss_msk}", 
+                                   colors["error"])
                 return
 
             valid_subfolders.append(name)
@@ -115,18 +119,22 @@ class LaunchTraining:
             return
 
         self.display.print("Starting training", colors["warning"])
-        trainer = Training(
-            data_dir=str(data_dir),
-            subfolders=valid_subfolders,
-            run_dir=str(run_dir),
-            hyperparameters=hyperparameters,
-        )
+
         try:
+
+            trainer = Training(
+                data_dir=str(data_dir),
+                subfolders=valid_subfolders,
+                run_dir=str(run_dir),
+                hyperparameters=hyperparameters,
+            )
+
             trainer.load_segmentation_data()
             trainer.train()
 
-        except Exception as e:
-            self.display.print(f"Training failed {e}", colors["error"])
+        except Exception :
+            ut.gerer_erreur('Training')
+
             return
 
         self.display.print("Training completed", colors["ok"])
