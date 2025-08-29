@@ -112,7 +112,6 @@ def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
 def gerer_erreur(texte) -> None  :
     """
     Handles errors based on the specified level of detail.   
-    
     """
 
     display = dc.DisplayColor()
@@ -120,23 +119,20 @@ def gerer_erreur(texte) -> None  :
     # Retrieve the type, value, and traceback of the most recent exception
     exc_type, exc_value, exc_traceback = sys.exc_info()
 
-    # Format the traceback into a list of strings
     tb = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    tb_type = traceback.format_exception_only(exc_type, exc_value)
 
-    if not ct.DEBUG_MODE:
-        # Extract only the final error message
-        if isinstance(exc_value, Exception):
-            # We want the last line of the error message
-            last_line = ''.join(tb).strip()  # Convert the list to a string and remove extra spaces
-            last_line = last_line.splitlines()[-1]  # Get the last line
-            prompt = texte + " :\n" + last_line
-            display.print(prompt, colors['error'])
+    # Display the error message
+    if ct.DEBUG_MODE:
+        # Display the complete traceback
+        prompt =  f"{texte} :\n {''.join(tb)}"
+        display.print(prompt, colors['error'])
 
     else:
-        # Display the complete error message
-        text = ''.join(tb).strip()  # Convert the list to a string and remove extra spaces
-        prompt = texte + " :\n" + text
+        # Display the type of exception only 
+        prompt = f"{texte} :\n {''.join(tb_type)}"
         display.print(prompt, colors['error'])
+
 
 
 def input_percentage(message: str, color_key: str = 'input') -> float:
