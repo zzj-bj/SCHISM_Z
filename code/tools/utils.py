@@ -109,7 +109,7 @@ def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
         text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
 
-def gerer_erreur(texte) -> None  :
+def gerer_erreur(texte : str) -> None  :
     """
     Handles errors based on the specified level of detail.   
     """
@@ -126,12 +126,11 @@ def gerer_erreur(texte) -> None  :
     if ct.DEBUG_MODE:
         # Display the complete traceback
         prompt =  f"{texte} :\n {''.join(tb)}"
-        display.print(prompt, colors['error'])
-
     else:
         # Display the type of exception only 
         prompt = f"{texte} :\n {''.join(tb_type)}"
-        display.print(prompt, colors['error'])
+
+    display.print(prompt, colors['error'])
 
 
 
