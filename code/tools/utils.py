@@ -127,7 +127,7 @@ def gerer_erreur(texte : str) -> None  :
         # Display the complete traceback
         prompt =  f"{texte} :\n {''.join(tb)}"
     else:
-        # Display the type of exception only 
+        # Display the type of exception only
         prompt = f"{texte} :\n {''.join(tb_type)}"
 
     display.print(prompt, colors['error'])
