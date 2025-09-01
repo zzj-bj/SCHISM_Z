@@ -109,7 +109,38 @@ def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
         text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
 
-def gerer_erreur(texte : str) -> None  :
+def brigth_mode(message: str, color_key: str = 'input') -> str :
+    """
+    This function returns
+        - single
+        - all
+
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+
+    """
+    display = dc.DisplayColor()
+
+    color = chck_color(color_key)
+    while True:
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+        # Displays the prompt in color
+        colored_prompt = f"{input_color}[?] {message} : {Style.RESET_ALL}"
+
+        reponse = input(colored_prompt).strip()
+        if reponse in ['s', 'S']:
+            return 'single'
+        if reponse in ['a', 'A']:
+            return "all"
+        text = f"Please provide a valid answer (s/a) {ct.BELL}"
+        display.print(text, colors['error'])
+
+
+
+
+
+def format_and_display_error(texte : str) -> None  :
     """
     Handles errors based on the specified level of detail.   
     """

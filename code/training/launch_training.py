@@ -64,7 +64,7 @@ class LaunchTraining:
         try:
             hyperparameters = Hyperparameters(str(hyper_file))
         except Exception:
-            ut.gerer_erreur('Hyperparameters')
+            ut.format_and_display_error('Hyperparameters')
             return
 
         valid_subfolders: List[str] = []
@@ -133,7 +133,7 @@ class LaunchTraining:
             trainer.train()
 
         except Exception :
-            ut.gerer_erreur('Training')
+            ut.format_and_display_error('Training')
 
             return
 

@@ -25,10 +25,11 @@ from colorama import init, Style
 from tools import utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 from tools import menu
 from preprocessing import image_normalizer
-from preprocessing import json 
-from tools.constants import IMAGE_EXTENSIONS
+from preprocessing import json
+
 
 # Initialize colorama
 init(autoreset=True)
@@ -52,17 +53,93 @@ class LaunchPreprocessing:
             preprocessing_menu.display_menu()
             choice = preprocessing_menu.selection()
 
-            # **** Json generation ****
+            # **** Brightness adjustment ****
             if choice == 1:
+                self.launch_brightness_adjust()
+
+            # **** Json generation ****
+            if choice == 2:
                 self.launch_json_generation()
 
             # **** Normalization ****
-            elif choice == 2:
+            elif choice == 3:
                 self.launch_normalisation()
 
             # **** Return main menu ****
-            elif choice == 3:
+            elif choice == 4:
                 return
+
+    def launch_brightness_adjust(self) -> None:
+        """
+        Launches Brightness adjustment.
+        """
+
+        ut.print_box("New Menu")
+
+        # 1) Get and validate data_dir
+        data_dir = Path(ut.get_path_color("Enter the data directory"))
+        if not data_dir.is_dir():
+            self.display.print(f"Invalid data directory: {data_dir}", colors["error"])
+            return
+
+        # 2) Type of adjustment
+        prompt = "Choose the type of brightness adjustment\n" \
+                " [s]ingle image / [a]ll images in the dataset" 
+        adjustment_type = ut.brigth_mode(prompt)
+        print(f"Adjustment type: {adjustment_type}")
+
+        # 3) Find all subfolders
+        subdirs = [p for p in data_dir.iterdir() if p.is_dir()]
+        if not subdirs:
+            self.display.print("The data directory is empty", colors["error"])
+            return
+
+        # 4) Identify which subfolders actually contain .tif masks
+        valid_subfolders: list[Path] = []
+        for sub in subdirs:
+            masks_dir = sub / "images"
+            if not masks_dir.is_dir():
+                self.display.print(f"{sub.name}/images not found", colors["error"])
+                return
+
+            tif_files = []
+            for ext in IMAGE_EXTENSIONS:
+                tif_files.extend(masks_dir.glob(f"*{ext}"))
+            tif_files = sorted(tif_files)
+
+            if not tif_files:
+                self.display.print(f"No .tif files in {sub.name}/images", colors["error"])
+                return
+
+            valid_subfolders.append(sub)
+
+        if not valid_subfolders:
+            self.display.print(
+                "No valid subfolders found for ????", colors["error"]
+            )
+            return
+
+        # 5) Proceed with ?????
+        self.display.print("Starting ????", colors["warning"])
+        for sub in valid_subfolders:
+            images_dir   = sub / "images"
+            raw_images   = sub / "raw_images"
+            new_images   = sub / "images"  # will be recreated
+
+            # a) Rename images → raw_images (only if raw_images doesn’t already exist)
+            if raw_images.exists():
+                self.display.print(
+                    f"{sub.name}/raw_images already exists, skipping rename", colors["warning"]
+                )
+            else:
+                os.rename(images_dir, raw_images)
+
+            # b) Recreate masks/ directory
+            new_images.mkdir(exist_ok=True)
+
+        # 6  Brightness adjustment
+
+
 
     def launch_json_generation(self,
         data_dir: str | None = None,
@@ -85,7 +162,8 @@ class LaunchPreprocessing:
         if ut.answer_yes_or_no("Do you want to use all the data to generate data statistics ?"):
             percentage_to_process = 1.0
         else:
-            percentage_to_process = ut.input_percentage("Please enter a percentage between 1 and 100")
+            prompt = "Please enter a percentage between 1 and 100"
+            percentage_to_process = ut.input_percentage(prompt)
 
         # 3) JSON output path
         if file_name_report is None:
@@ -123,6 +201,7 @@ class LaunchPreprocessing:
 
         # 5) Launch generation
         self.display.print("Starting JSON generation", colors["warning"])
+
         json_generation = json.Json(
             json.JsonConfig(
                 parent_dir=data_dir,
@@ -132,6 +211,7 @@ class LaunchPreprocessing:
             )
         )
         json_generation.process_datasets(append=append)
+
 
     def launch_normalisation(self)-> None:
         """
@@ -198,7 +278,7 @@ class LaunchPreprocessing:
 
             # c) Normalize all TIFFs
             normalizer = image_normalizer.ImageNormalizer(
-                str(raw_masks), 
+                str(raw_masks),
                 str(new_masks)
             )
             normalizer.normalize_images()
