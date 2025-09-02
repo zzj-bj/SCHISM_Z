@@ -18,6 +18,7 @@ from PIL import Image
 
 # Local application imports
 from tools import display_color as dc
+import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
 
@@ -41,7 +42,7 @@ class ImageNormalizer:
 
         pbar = tqdm(
             files,
-            ncols=70,
+            ncols=ct.TQDM_NCOLS,
             bar_format="{desc}: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%"
         )
         for filename in pbar:

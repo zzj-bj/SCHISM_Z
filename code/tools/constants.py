@@ -81,7 +81,7 @@ NUM_WORKERS: int = max(1, cpu_count() // 2)
 IMAGE_EXTENSIONS = [".tif", ".tiff"]
 
 # progress bar width
-TQDM_NCOLS = 70
+TQDM_NCOLS = 80
 
 # Sound system for Error.
 BELL = "\a"

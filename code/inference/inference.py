@@ -33,6 +33,7 @@ from tools import utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import NUM_WORKERS
+import tools.constants as ct
 
 # Ensure project root is on the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -229,8 +230,8 @@ class Inference:
                 unit="Images",
                 position=0,
                 leave=False,
-                ncols=70,              
-                dynamic_ncols=False, 
+                ncols=ct.TQDM_NCOLS,             
+                dynamic_ncols=False,
           ) as pbar:
 
             for _, (img, _, img_path) in enumerate(dataloader):

@@ -23,6 +23,7 @@ from tqdm import tqdm
 
 # Local application imports
 import tools.constants as ct
+from tools import utils as ut
 from tools.constants import DISPLAY_COLORS as colors
 import tools.display_color as dc
 from tools.constants import IMAGE_EXTENSIONS
@@ -78,8 +79,8 @@ class Json:
             try:
                 std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path, rep_name)
                 self.results[folder_name] = [std_dev, mean]
-            except (IOError, ValueError) as e:
-                self.display.print(f"Error processing {folder_name}:\n {e}", colors["error"])
+            except Exception:
+                ut.format_and_display_error('Json')
 
         if add_default:
             # Add default values for 'mean' and 'std_dev' if not present
@@ -129,7 +130,7 @@ class Json:
         pixel_sum_squared = np.zeros(3, dtype=np.float32)
         pixel_count = 0
 
-        for idx in tqdm(indices_to_process, ncols=70,
+        for idx in tqdm(indices_to_process, ncols=ct.TQDM_NCOLS,
                         bar_format= rep_name + " : {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%",
                         ):
 

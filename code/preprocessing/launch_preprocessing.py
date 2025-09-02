@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+
 """
 Launches the preprocessing operations for datasets.
 This script provides functionalities for preprocessing datasets,
-including JSON generation and image normalization.
+including Brightness adjustment, JSON generation and image normalization.
 It prompts the user for the necessary directories and parameters,
 validates the input, and then executes the preprocessing tasks.
 
@@ -79,7 +80,7 @@ class LaunchPreprocessing:
             return
 
         # 2) Type of adjustment
-        prompt = "Choose the type of brightness adjustment\n" \
+        prompt = "Choose the type of brightness adjustment : " \
                 " (s)ingle image / (a)ll images " 
         adjustment_type = vf.brigth_mode(prompt)
         print(f"Adjustment type: {adjustment_type}")
@@ -115,8 +116,8 @@ class LaunchPreprocessing:
             )
             return
 
-        # 5) Proceed with ?????
-        self.display.print("Starting ????", colors["warning"])
+        # 5) Proceed with Brightness adjustment
+        self.display.print("Starting Brightness adjustment", colors["warning"])
         for sub in valid_subfolders:
             images_dir   = sub / "images"
             raw_images   = sub / "raw_images"
@@ -133,8 +134,15 @@ class LaunchPreprocessing:
             # b) Recreate masks/ directory
             new_images.mkdir(exist_ok=True)
 
-        # 6  Brightness adjustment
+            # # c) Adjust brightness all TIFFs
+            # brightness = brightness_adjust.BrightnessAdjust(
+            #     str(raw_images),
+            #     str(new_images),
+            #     mode=adjustment_type
+            # )
+            # brightness.brightness_images()
 
+        self.display.print("Data brightness adjust complete", colors["ok"])
 
 
     def launch_json_generation(self,
@@ -207,6 +215,8 @@ class LaunchPreprocessing:
             )
         )
         json_generation.process_datasets(append=append)
+
+        self.display.print("JSON generation complete", colors["warning"])
 
 
     def launch_normalisation(self)-> None:

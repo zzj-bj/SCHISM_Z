@@ -138,8 +138,6 @@ def brigth_mode(message: str, color_key: str = 'input') -> str :
 
 
 
-
-
 def format_and_display_error(texte : str) -> None  :
     """
     Handles errors based on the specified level of detail.   

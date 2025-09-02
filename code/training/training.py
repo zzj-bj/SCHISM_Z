@@ -46,6 +46,7 @@ import tools.utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import NUM_WORKERS
+import tools.constants as ct
 from preprocessing import launch_preprocessing as lp
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
 from AI.paramconverter import ParamConverter
@@ -613,7 +614,7 @@ class Training:
                     unit="batch",
                     position=0,
                     leave=False,
-                    ncols=70,              
+                    ncols=ct.TQDM_NCOLS,              
                     dynamic_ncols=False, 
                 ) as pbar, tqdm(
                     total=0,
@@ -621,7 +622,7 @@ class Training:
                     position=1,
                     bar_format="{desc}",
                     leave=False,
-                    ncols=70,
+                    ncols=ct.TQDM_NCOLS,
                     dynamic_ncols=False
                 ) as mbar:
 
