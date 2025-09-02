@@ -7,6 +7,7 @@ It prompts the user for the necessary directories and parameters,
 validates the input, and then executes the preprocessing tasks.
 
 This module allows for the following operations:
+    - Brightness adjustment.
     - Json generation.
     - Normalization of masks in 8-bit grayscale format.
 
@@ -18,21 +19,16 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-# Third-party
-from colorama import init, Style
 
 # Local application imports
-from tools import utils as ut
+from tools import menu, utils as vf
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
-from tools import menu
 from preprocessing import image_normalizer
 from preprocessing import json
 
 
-# Initialize colorama
-init(autoreset=True)
 #=============================================================================
 
 class LaunchPreprocessing:
@@ -74,18 +70,18 @@ class LaunchPreprocessing:
         Launches Brightness adjustment.
         """
 
-        ut.print_box("New Menu")
+        vf.print_box("Brightness adjustment")
 
         # 1) Get and validate data_dir
-        data_dir = Path(ut.get_path_color("Enter the data directory"))
+        data_dir = Path(vf.get_path_color("Enter the data directory"))
         if not data_dir.is_dir():
             self.display.print(f"Invalid data directory: {data_dir}", colors["error"])
             return
 
         # 2) Type of adjustment
         prompt = "Choose the type of brightness adjustment\n" \
-                " [s]ingle image / [a]ll images in the dataset" 
-        adjustment_type = ut.brigth_mode(prompt)
+                " (s)ingle image / (a)ll images " 
+        adjustment_type = vf.brigth_mode(prompt)
         print(f"Adjustment type: {adjustment_type}")
 
         # 3) Find all subfolders
@@ -97,14 +93,14 @@ class LaunchPreprocessing:
         # 4) Identify which subfolders actually contain .tif masks
         valid_subfolders: list[Path] = []
         for sub in subdirs:
-            masks_dir = sub / "images"
-            if not masks_dir.is_dir():
+            images_dir = sub / "images"
+            if not images_dir.is_dir():
                 self.display.print(f"{sub.name}/images not found", colors["error"])
                 return
 
             tif_files = []
             for ext in IMAGE_EXTENSIONS:
-                tif_files.extend(masks_dir.glob(f"*{ext}"))
+                tif_files.extend(images_dir.glob(f"*{ext}"))
             tif_files = sorted(tif_files)
 
             if not tif_files:
@@ -150,20 +146,20 @@ class LaunchPreprocessing:
         Generates a JSON file containing statistics about the datasets.
         """
 
-        ut.print_box("JSON generation")
+        vf.print_box("JSON generation")
 
         # 1) Ensure data_dir is a Path
         if data_dir is None:
-            data_dir = Path(ut.get_path_color("Enter the data directory"))
+            data_dir = Path(vf.get_path_color("Enter the data directory"))
         else:
             data_dir = Path(data_dir)
 
         # 2) Choose percentage
-        if ut.answer_yes_or_no("Do you want to use all the data to generate data statistics ?"):
+        if vf.answer_yes_or_no("Do you want to use all the data to generate data statistics ?"):
             percentage_to_process = 1.0
         else:
             prompt = "Please enter a percentage between 1 and 100"
-            percentage_to_process = ut.input_percentage(prompt)
+            percentage_to_process = vf.input_percentage(prompt)
 
         # 3) JSON output path
         if file_name_report is None:
@@ -219,10 +215,10 @@ class LaunchPreprocessing:
         raw_masks/ and then rewriting masks/ with the normalized output.
         """
 
-        ut.print_box("Data Normalisation")
+        vf.print_box("Data Normalisation")
 
         # 1) Get and validate data_dir
-        data_dir = Path(ut.get_path_color("Enter the data directory"))
+        data_dir = Path(vf.get_path_color("Enter the data directory"))
         if not data_dir.is_dir():
             self.display.print(f"Invalid data directory: {data_dir}", colors["error"])
             return
