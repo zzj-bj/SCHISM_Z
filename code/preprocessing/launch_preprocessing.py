@@ -91,7 +91,7 @@ class LaunchPreprocessing:
             self.display.print("The data directory is empty", colors["error"])
             return
 
-        # 4) Identify which subfolders actually contain .tif masks
+        # 4) Identify which subfolders actually contain .tif images
         valid_subfolders: list[Path] = []
         for sub in subdirs:
             images_dir = sub / "images"
@@ -112,7 +112,7 @@ class LaunchPreprocessing:
 
         if not valid_subfolders:
             self.display.print(
-                "No valid subfolders found for ????", colors["error"]
+                "No valid subfolders found for rightness adjustment", colors["error"]
             )
             return
 
@@ -216,7 +216,7 @@ class LaunchPreprocessing:
         )
         json_generation.process_datasets(append=append)
 
-        self.display.print("JSON generation complete", colors["warning"])
+        self.display.print("JSON generation complete", colors["ok"])
 
 
     def launch_normalisation(self)-> None:
