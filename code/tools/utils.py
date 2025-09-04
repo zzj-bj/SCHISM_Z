@@ -168,7 +168,7 @@ def input_percentage(message: str, color_key: str = 'input') -> float:
     This function returns a real number between 0 and 1
     that corresponds to a percentage.
     """
-    #TODO
+
     display = dc.DisplayColor()
 
     color = chck_color(color_key)
@@ -180,7 +180,6 @@ def input_percentage(message: str, color_key: str = 'input') -> float:
         colored_prompt = f"{input_color}[?] {message} : {Style.RESET_ALL}"
 
         try:
-            # enter = input(colored_prompt).strip()
             value = float(input(colored_prompt).strip())
             if 1 <= value <= 100:
                 return value / 100
