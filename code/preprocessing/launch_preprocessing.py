@@ -2,12 +2,12 @@
 """
 Launches the preprocessing operations for datasets.
 This script provides functionalities for preprocessing datasets,
-including JSON generation and image normalization.
+including auto brightness/contrast adjustment, JSON generation and image normalization.
 It prompts the user for the necessary directories and parameters,
 validates the input, and then executes the preprocessing tasks.
 
 This module allows for the following operations:
-    - Brightness adjustment.
+    - Auto brightness/contrast adjustment.
     - Json generation.
     - Normalization of masks in 8-bit grayscale format.
 
@@ -25,6 +25,7 @@ from tools import menu, utils as vf
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
+from preprocessing import brightness_contrast_adjuster
 from preprocessing import image_normalizer
 from preprocessing import json
 
@@ -40,6 +41,7 @@ class LaunchPreprocessing:
     def menu_preprocessing(self) -> None:
         """
         This module allows for the following operations:
+            - Auto brightness/contrast adjustment.
             - Json generation
             - Normalization of masks in 8-bit grayscale format.
         """
@@ -49,9 +51,9 @@ class LaunchPreprocessing:
             preprocessing_menu.display_menu()
             choice = preprocessing_menu.selection()
 
-            # **** Brightness adjustment ****
+            # **** Auto brightness/contrast adjustment ****
             if choice == 1:
-                self.launch_brightness_adjust()
+                self.launch_auto_adjust_brightness_contrast()
 
             # **** Json generation ****
             if choice == 2:
@@ -65,77 +67,66 @@ class LaunchPreprocessing:
             elif choice == 4:
                 return
 
-    def launch_brightness_adjust(self) -> None:
+    def launch_auto_adjust_brightness_contrast(self) -> None:
         """
-        Launches Brightness adjustment.
+        Perform automatic brightness/contrast adjustment similar to Fiji's autoAdjust()
+        for TIFF images (8-bit grayscale).
         """
 
-        vf.print_box("Brightness adjustment")
+        vf.print_box("Auto brightness/contrast adjustment")
 
         # 1) Get and validate data_dir
-        data_dir = Path(vf.get_path_color("Enter the data directory"))
-        if not data_dir.is_dir():
-            self.display.print(f"Invalid data directory: {data_dir}", colors["error"])
+        sequence_dir = Path(vf.get_path_color("Enter the image sequence directory"))
+        if not sequence_dir.is_dir():
+            self.display.print(f"Invalid sequence directory: {sequence_dir}", colors["error"])
             return
 
-        # 2) Type of adjustment
-        prompt = "Choose the type of brightness adjustment\n" \
-                " (s)ingle image / (a)ll images " 
-        adjustment_type = vf.brigth_mode(prompt)
-        print(f"Adjustment type: {adjustment_type}")
+        # 2) Select the hmin/hmax calculation mode used in auto brightness/contrast adjustment:
+        # - "ref image": the first image is used for reference to defines hmin/hmax for all images
+        # - "per image": each image calculates its own hmin/hmax
+        prompt = "Select the calculation mode of hmin/hmax\n" \
+                " (r)ef image / (p)er image "
+        hmin_hmax_calc_mode = vf.get_hmin_hmax_calc_mode(prompt)
 
-        # 3) Find all subfolders
-        subdirs = [p for p in data_dir.iterdir() if p.is_dir()]
-        if not subdirs:
-            self.display.print("The data directory is empty", colors["error"])
+        # 3) Identify all .tif files in the input directory
+        tif_files = []
+        for ext in IMAGE_EXTENSIONS:
+            tif_files.extend(sequence_dir.glob(f"*{ext}"))
+        tif_files = sorted(tif_files)
+
+        if not tif_files:
+            self.display.print(f"No .tif files in {sequence_dir}", colors["error"])
             return
 
-        # 4) Identify which subfolders actually contain .tif masks
-        valid_subfolders: list[Path] = []
-        for sub in subdirs:
-            images_dir = sub / "images"
-            if not images_dir.is_dir():
-                self.display.print(f"{sub.name}/images not found", colors["error"])
+        # 4) Select the reference image index if using "ref image" mode
+        ref_img_path = None
+        if hmin_hmax_calc_mode == "ref_image":
+            ref_img_path = Path(vf.get_path_color("Enter the reference image path"))
+            if not ref_img_path.is_file():
+                self.display.print(f"Invalid reference image path: {ref_img_path}", colors["error"])
                 return
+        
+        # 5) Proceed with auto brightness/contrast adjustment
+        self.display.print("Starting auto brightness/contrast adjustment", colors["warning"])
+        raw_images = os.path.join(os.path.dirname(sequence_dir), "raw_images")
 
-            tif_files = []
-            for ext in IMAGE_EXTENSIONS:
-                tif_files.extend(images_dir.glob(f"*{ext}"))
-            tif_files = sorted(tif_files)
-
-            if not tif_files:
-                self.display.print(f"No .tif files in {sub.name}/images", colors["error"])
-                return
-
-            valid_subfolders.append(sub)
-
-        if not valid_subfolders:
+        # a) Rename images → raw_images (only if raw_images doesn’t already exist)
+        if os.path.exists(raw_images):
             self.display.print(
-                "No valid subfolders found for ????", colors["error"]
+                f"{raw_images} already exists, skipping rename", colors["warning"]
             )
-            return
+        else:
+            os.rename(sequence_dir, raw_images)
 
-        # 5) Proceed with ?????
-        self.display.print("Starting ????", colors["warning"])
-        for sub in valid_subfolders:
-            images_dir   = sub / "images"
-            raw_images   = sub / "raw_images"
-            new_images   = sub / "images"  # will be recreated
+        # b) Recreate images directory
+        sequence_dir.mkdir(exist_ok=True)
 
-            # a) Rename images → raw_images (only if raw_images doesn’t already exist)
-            if raw_images.exists():
-                self.display.print(
-                    f"{sub.name}/raw_images already exists, skipping rename", colors["warning"]
-                )
-            else:
-                os.rename(images_dir, raw_images)
-
-            # b) Recreate masks/ directory
-            new_images.mkdir(exist_ok=True)
-
-        # 6  Brightness adjustment
-
-
+        # 6) Auto brightness/contrast adjustment
+        auto_adjuster = brightness_contrast_adjuster.BrightnessContrastAdjuster(
+            input_path=raw_images,
+            output_path=sequence_dir
+        )
+        auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode, ref_img_path=ref_img_path)
 
     def launch_json_generation(self,
         data_dir: str | None = None,
