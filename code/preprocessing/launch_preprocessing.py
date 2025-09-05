@@ -108,7 +108,8 @@ class LaunchPreprocessing:
         
         # 5) Proceed with auto brightness/contrast adjustment
         self.display.print("Starting auto brightness/contrast adjustment", colors["warning"])
-        raw_images = os.path.join(os.path.dirname(sequence_dir), "raw_images")
+        raw_folder_name = "raw_" + os.path.basename(sequence_dir)
+        raw_images = os.path.join(os.path.dirname(sequence_dir), raw_folder_name)
 
         # a) Rename images → raw_images (only if raw_images doesn’t already exist)
         if os.path.exists(raw_images):
