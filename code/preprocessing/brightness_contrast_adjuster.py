@@ -199,7 +199,7 @@ class BrightnessContrastAdjuster:
         else:
             # Success message
             self.display.print(
-                "All the images in the folder were successfully adjusted",
+                "All images in the folder have been successfully adjusted",
                 DISPLAY_COLORS["ok"]
             )
 
