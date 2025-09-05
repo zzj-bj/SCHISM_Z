@@ -82,7 +82,7 @@ class LaunchPreprocessing:
             return
 
         # 2) Select the hmin/hmax calculation mode used in auto brightness/contrast adjustment:
-        # - "ref image": the first image is used for reference to defines hmin/hmax for all images
+        # - "ref image": the reference image is used for reference to defines hmin/hmax for all images
         # - "per image": each image calculates its own hmin/hmax
         prompt = "Select the calculation mode of hmin/hmax\n" \
                 " (r)ef image / (p)er image "
@@ -98,12 +98,14 @@ class LaunchPreprocessing:
             self.display.print(f"No .tif files in {sequence_dir}", colors["error"])
             return
 
-        # 4) Select the reference image index if using "ref image" mode
-        ref_img_path = None
+        # 4) Select the reference image if using "ref image" mode
+        ref_img_name = None
         if hmin_hmax_calc_mode == "ref_image":
-            ref_img_path = Path(vf.get_path_color("Enter the reference image path"))
+            ref_img_name = Path(vf.get_file_name_color("Enter the reference image name"))
+            ref_img_path = Path(sequence_dir) / ref_img_name
+            print(ref_img_path)
             if not ref_img_path.is_file():
-                self.display.print(f"Invalid reference image path: {ref_img_path}", colors["error"])
+                self.display.print(f"Invalid reference image: {ref_img_name}", colors["error"])
                 return
         
         # 5) Proceed with auto brightness/contrast adjustment
