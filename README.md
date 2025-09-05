@@ -34,8 +34,8 @@ SCHISM offers three main functionalities: **Preprocessing**,  **Training** and *
 ### Preprocessing workflow
 Three available options :
    - Auto brightness/contrast adjustment: Automatically adjust the brightness and contrast of your images. This process rescales pixel values based on histogram minimum/maximum (hmin/hmax). The original `images` folder will be renamed to `raw_images`, and the new adjusted images will be saved in a newly created `images` folder. The function has been inspired by the work of [Schindelin et al. 2012](https://www.nature.com/articles/nmeth.2019) / [Fiji](https://github.com/fiji). Two options are made available to the user:
-       - ref image (r): Use one chosen image to set hmin/hmax for all images (consistent contrast).
-       - per image (p): Compute hmin/hmax separately for each image (max local contrast, less consistency).
+       - ref image: Use one chosen image to set hmin/hmax for all images (consistent contrast).
+       - per image: Compute hmin/hmax separately for each image (max local contrast, less consistency).
    - JSON generation: Compute the mean and standard deviation from part or all of your dataset. The results will be saved as a JSON file in your dataset folder.
    - Normalisation: Process your data to produce SCHISM-compatible segmentation masks. The original `masks` folder will be renamed to `raw_masks`, and the new, normalised masks will be saved in a newly created `masks` folder.
 
