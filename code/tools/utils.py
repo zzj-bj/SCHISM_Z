@@ -21,6 +21,7 @@ from jsonschema import Draft7Validator
 import preprocessing.launch_preprocessing as lp
 import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 import tools.display_color as dc
 
 # Initialize colorama
@@ -80,6 +81,34 @@ def get_path_color(prompt: str, color_key: str = 'input') -> str:
         if os.path.exists(path):
             return path
         text = f"Invalid path: {path}. Please try again."
+        display.print(text, colors['error'])
+
+def get_file_name_color(prompt: str, color_key: str = 'input') -> str:
+    """
+    Requests a file name from the user.
+    Ensures it has a supported extension.
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+    """
+    display = dc.DisplayColor()
+
+    color = chck_color(color_key)
+    while True:
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+
+        # Display the prompt in color
+        colored_prompt = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
+        file_name = input(colored_prompt).strip()
+
+        # Extract extension
+        _, ext = os.path.splitext(file_name)
+
+        # Validate extension
+        if ext.lower() in IMAGE_EXTENSIONS:
+            return file_name
+
+        text = f"Invalid file extension: {ext}. Please try again."
         display.print(text, colors['error'])
 
 def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
