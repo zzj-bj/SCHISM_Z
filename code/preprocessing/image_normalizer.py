@@ -35,8 +35,9 @@ class ImageNormalizer:
 
     def normalize_images(self) -> None:
         """Normalizes all images in the input directory."""
-        files = [f for f in os.listdir(self.input_path) if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
-        errors: List[Tuple[str, str]] = []      
+        files = [f for f in os.listdir(self.input_path)
+                 if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
+        errors: List[Tuple[str, str]] = []
 
         pbar = tqdm(
             files,
@@ -84,5 +85,5 @@ class ImageNormalizer:
             for fname, reason in errors:
                 self.display.print(f"- {fname}: {reason}", colors["error"])
         else:
-            self.display.print("All files normalized successfully.", colors["ok"])          
+            self.display.print("All files normalized successfully.", colors["ok"])
             

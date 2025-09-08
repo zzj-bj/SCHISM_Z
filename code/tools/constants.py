@@ -67,6 +67,13 @@ LOGO_OUT = """
                         █████████████████ 
 """
 
+# Mode debug
+"""
+True  : The full error message is displayed.
+False : The error message is displayed in a concise format.
+"""
+DEBUG_MODE = False
+
 # number of DataLoader workers
 NUM_WORKERS: int = max(1, cpu_count() // 2)
 
@@ -123,6 +130,7 @@ MENUS = {
         "Quit"    ],
     'Preprocessing': [
         "Preprocessing",
+        "Auto brightness/contrast adjustment",
         "JSON generation",
         "Normalisation",
         "Back to the main menu"]
@@ -135,7 +143,7 @@ DISPLAY_COLORS = {
     'input':   (153, 204, 51, "[?] "), # Light Green
     'ok':      (51, 153,  0, "[√] "), # Green
     'babye':   (255, 16, 240, "[<3] "), # Green
-    
+
 }
 
 # Default mean and standard deviation for Json generation

@@ -4,6 +4,7 @@
 # Third-party
 import torch
 
+
 # Local application imports
 from tools import menu, utils as vf
 from tools import display_color as dc
@@ -12,6 +13,7 @@ from tools.constants import DISPLAY_COLORS as colors
 from preprocessing import launch_preprocessing as lp
 from training import launch_training as lt
 from inference import launch_inference as li
+
 
 #=======================================================================
 
@@ -51,6 +53,7 @@ def _confirm_exit() -> bool:
         # print(ct.LOGO_OUT)
         return True
     return False
+
 
 if __name__ == "__main__":
     main()
