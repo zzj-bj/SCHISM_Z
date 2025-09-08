@@ -101,14 +101,15 @@ class LaunchPreprocessing:
 
         # 4) Select the reference image if using "ref image" mode
         ref_img_name = None
+        ref_img_path = None
         if hmin_hmax_calc_mode == "ref_image":
             ref_img_name = Path(vf.get_file_name_color("Enter the reference image name"))
-            ref_img_path = Path(sequence_dir) / ref_img_name
-            print(ref_img_path)
+            ref_img_path = Path.joinpath(sequence_dir, ref_img_name)
+
             if not ref_img_path.is_file():
                 self.display.print(f"Invalid reference image: {ref_img_name}", colors["error"])
                 return
-        
+
         # 5) Proceed with auto brightness/contrast adjustment
         self.display.print("Starting auto brightness/contrast adjustment", colors["warning"])
         raw_folder_name = "raw_" + os.path.basename(sequence_dir)
@@ -122,7 +123,11 @@ class LaunchPreprocessing:
         else:
             os.rename(sequence_dir, raw_images)
 
-        # b) Recreate images directory
+        # b) Adapt reference image path if needed
+        if not ref_img_path is None:
+            ref_img_path = os.path.join(raw_images, ref_img_name)    
+
+        # c) Recreate images directory
         sequence_dir.mkdir(exist_ok=True)
 
         # 6) Auto brightness/contrast adjustment

@@ -19,11 +19,14 @@ from inference import launch_inference as li
 
 def main() -> None:
 
-    print(f"\n****** {ct.init_random_seed} ********\n")
+    display = dc.DisplayColor()
 
     # Displays the CLI menu and handles user choices.
-    display = dc.DisplayColor()
+
     print(ct.LOGO_IN)
+
+    if ct.DEBUG_MODE:
+        display.print("The debug mode is active. \n", colors['warning'])
 
     if torch.cuda.is_available():
         display.print("CUDA is available! Running on GPU.\n", colors['ok'])
