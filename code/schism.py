@@ -18,7 +18,10 @@ from inference import launch_inference as li
 #=======================================================================
 
 def main() -> None:
-    """Displays the CLI menu and handles user choices."""
+
+    print(f"\n****** {ct.init_random_seed} ********\n")
+
+    # Displays the CLI menu and handles user choices.
     display = dc.DisplayColor()
     print(ct.LOGO_IN)
 
@@ -26,6 +29,7 @@ def main() -> None:
         display.print("CUDA is available! Running on GPU.\n", colors['ok'])
     else:
         display.print("CUDA is not available! Running on CPU.\n", colors['warning'])
+
 
     main_menu = menu.Menu('MAIN')
     while True:

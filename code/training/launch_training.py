@@ -128,6 +128,11 @@ class LaunchTraining:
                 run_dir=str(run_dir),
                 hyperparameters=hyperparameters,
             )
+        except Exception :
+            ut.format_and_display_error('Training Loader')
+
+
+        try:
 
             trainer.load_segmentation_data()
             trainer.train()

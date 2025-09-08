@@ -482,68 +482,80 @@ class Training:
 
         indices = [train_indices, val_indices, test_indices]
 
-        train_dataset = TiffDatasetLoader(
-            TiffDatasetLoaderConfig(
-                indices=train_indices,
-                img_data=img_data,
-                mask_data=mask_data,
-                num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
-                data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background
-            )
-        )
 
-        val_dataset = TiffDatasetLoader(
-            TiffDatasetLoaderConfig(
-                indices=val_indices,
-                img_data=img_data,
-                mask_data=mask_data,
-                num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
-                data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background
+        #  
+        try:
+            train_dataset = TiffDatasetLoader(
+                TiffDatasetLoaderConfig(
+                    indices=train_indices,
+                    img_data=img_data,
+                    mask_data=mask_data,
+                    num_classes=self.num_classes,
+                    crop_size=(self.crop_size, self.crop_size),
+                    data_stats=data_stats,
+                    img_res=self.img_res,
+                    ignore_background=self.ignore_background
+                )
             )
-        )
 
-        test_dataset = TiffDatasetLoader(
-            TiffDatasetLoaderConfig(
-                indices=test_indices,
-                img_data=img_data,
-                mask_data=mask_data,
-                num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
-                data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background
+            val_dataset = TiffDatasetLoader(
+                TiffDatasetLoaderConfig(
+                    indices=val_indices,
+                    img_data=img_data,
+                    mask_data=mask_data,
+                    num_classes=self.num_classes,
+                    crop_size=(self.crop_size, self.crop_size),
+                    data_stats=data_stats,
+                    img_res=self.img_res,
+                    ignore_background=self.ignore_background
+                )
             )
-        )
 
+            test_dataset = TiffDatasetLoader(
+                TiffDatasetLoaderConfig(
+                    indices=test_indices,
+                    img_data=img_data,
+                    mask_data=mask_data,
+                    num_classes=self.num_classes,
+                    crop_size=(self.crop_size, self.crop_size),
+                    data_stats=data_stats,
+                    img_res=self.img_res,
+                    ignore_background=self.ignore_background
+                )
+            )
+        except Exception :
+            ut.format_and_display_error('TiffDataset Loader')
         try:
             pin_mem = torch.cuda.is_available()
         except Exception:
             pin_mem = False
 
-        train_loader = DataLoader(train_dataset, 
-                                batch_size=self.batch_size,
-                                num_workers = NUM_WORKERS, 
-                                shuffle = True, 
-                                drop_last = True,
-                                pin_memory = pin_mem)
-        val_loader =  DataLoader(val_dataset, 
-                                batch_size = self.batch_size,
-                                shuffle = False, 
-                                num_workers= NUM_WORKERS, 
-                                drop_last = True,
-                                pin_memory = pin_mem)
-        test_loader =  DataLoader(test_dataset, 
-                                batch_size=1, 
-                                shuffle = False,
-                                num_workers = 2, 
-                                drop_last = True,
-                                pin_memory = pin_mem)
+
+        try:
+            train_loader = DataLoader(train_dataset, 
+                                    batch_size=self.batch_size,
+                                    num_workers = NUM_WORKERS, 
+                                    shuffle = True, 
+                                    drop_last = True,
+                                    pin_memory = pin_mem)
+            val_loader =  DataLoader(val_dataset, 
+                                    batch_size = self.batch_size,
+                                    shuffle = False, 
+                                    num_workers= NUM_WORKERS, 
+                                    drop_last = True,
+                                    pin_memory = pin_mem)
+            test_loader =  DataLoader(test_dataset, 
+                                    batch_size=1, 
+                                    shuffle = False,
+                                    num_workers = 2, 
+                                    drop_last = True,
+                                    pin_memory = pin_mem)
+        except Exception as e:
+            print("\n[----------------------------------------------------")
+            print (e)
+            print("----------------------------------------------------]\n")
+
+            ut.format_and_display_error('Dataset Loader')
 
         self.logger.save_indices_to_file(
             [train_indices, val_indices, test_indices])
