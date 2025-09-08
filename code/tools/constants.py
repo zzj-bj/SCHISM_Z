@@ -130,7 +130,7 @@ MENUS = {
         "Quit"    ],
     'Preprocessing': [
         "Preprocessing",
-        "Brightness adjustment",
+        "Auto brightness/contrast adjustment",
         "JSON generation",
         "Normalisation",
         "Back to the main menu"]

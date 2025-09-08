@@ -21,6 +21,7 @@ from jsonschema import Draft7Validator
 import preprocessing.launch_preprocessing as lp
 import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 import tools.display_color as dc
 
 # Initialize colorama
@@ -82,6 +83,34 @@ def get_path_color(prompt: str, color_key: str = 'input') -> str:
         text = f"Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
 
+def get_file_name_color(prompt: str, color_key: str = 'input') -> str:
+    """
+    Requests a file name from the user.
+    Ensures it has a supported extension.
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+    """
+    display = dc.DisplayColor()
+
+    color = chck_color(color_key)
+    while True:
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+
+        # Display the prompt in color
+        colored_prompt = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
+        file_name = input(colored_prompt).strip()
+
+        # Extract extension
+        _, ext = os.path.splitext(file_name)
+
+        # Validate extension
+        if ext.lower() in IMAGE_EXTENSIONS:
+            return file_name
+
+        text = f"Invalid file extension: {ext}. Please try again."
+        display.print(text, colors['error'])
+
 def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
     """
     This function returns
@@ -109,11 +138,11 @@ def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
         text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
 
-def brigth_mode(message: str, color_key: str = 'input') -> str :
+def get_hmin_hmax_calc_mode(message: str, color_key: str = 'input') -> str :
     """
     This function returns
-        - single
-        - all
+        - "ref_image" → a single reference image defines hmin/hmax for all images
+        - "per_image" → each image calculates its own hmin/hmax
 
     Displays the prompt in the specified color.
     If the specified color key is invalid, the prompt will be displayed in Light Green.
@@ -129,11 +158,11 @@ def brigth_mode(message: str, color_key: str = 'input') -> str :
         colored_prompt = f"{input_color}[?] {message} : {Style.RESET_ALL}"
 
         reponse = input(colored_prompt).strip()
-        if reponse in ['s', 'S']:
-            return 'single'
-        if reponse in ['a', 'A']:
-            return "all"
-        text = f"Please provide a valid answer (s/a) {ct.BELL}"
+        if reponse in ['r', 'R']:
+            return 'ref_image'
+        if reponse in ['p', 'P']:
+            return "per_image"
+        text = f"Please provide a valid answer (r/p) {ct.BELL}"
         display.print(text, colors['error'])
 
 
