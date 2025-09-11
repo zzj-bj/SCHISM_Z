@@ -7,6 +7,8 @@ Collection of non-specific functions used in the program.
 # Standard library
 import json
 import os
+import sys
+import traceback
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
@@ -19,6 +21,7 @@ from jsonschema import Draft7Validator
 import preprocessing.launch_preprocessing as lp
 import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 import tools.display_color as dc
 
 # Initialize colorama
@@ -80,6 +83,34 @@ def get_path_color(prompt: str, color_key: str = 'input') -> str:
         text = f"Invalid path: {path}. Please try again."
         display.print(text, colors['error'])
 
+def get_file_name_color(prompt: str, color_key: str = 'input') -> str:
+    """
+    Requests a file name from the user.
+    Ensures it has a supported extension.
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+    """
+    display = dc.DisplayColor()
+
+    color = chck_color(color_key)
+    while True:
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+
+        # Display the prompt in color
+        colored_prompt = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
+        file_name = input(colored_prompt).strip()
+
+        # Extract extension
+        _, ext = os.path.splitext(file_name)
+
+        # Validate extension
+        if ext.lower() in IMAGE_EXTENSIONS:
+            return file_name
+
+        text = f"Invalid file extension: {ext}. Please try again."
+        display.print(text, colors['error'])
+
 def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
     """
     This function returns
@@ -106,6 +137,62 @@ def answer_yes_or_no(message: str, color_key: str = 'input') -> bool:
             return False
         text = f"Please provide a valid answer (y/n) {ct.BELL}"
         display.print(text, colors['error'])
+
+def get_hmin_hmax_calc_mode(message: str, color_key: str = 'input') -> str :
+    """
+    This function returns
+        - "ref_image" → a single reference image defines hmin/hmax for all images
+        - "per_image" → each image calculates its own hmin/hmax
+
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+
+    """
+    display = dc.DisplayColor()
+
+    color = chck_color(color_key)
+    while True:
+        # Convert the input color from DISPLAY_COLORS to ANSI
+        input_color = rgb_to_ansi(color)
+        # Displays the prompt in color
+        colored_prompt = f"{input_color}[?] {message} : {Style.RESET_ALL}"
+
+        reponse = input(colored_prompt).strip()
+        if reponse in ['r', 'R']:
+            return 'ref_image'
+        if reponse in ['p', 'P']:
+            return "per_image"
+        text = f"Please provide a valid answer (r/p) {ct.BELL}"
+        display.print(text, colors['error'])
+
+
+
+
+
+def format_and_display_error(texte : str) -> None  :
+    """
+    Handles errors based on the specified level of detail.   
+    """
+
+    display = dc.DisplayColor()
+
+    # Retrieve the type, value, and traceback of the most recent exception
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+
+    tb = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    tb_type = traceback.format_exception_only(exc_type, exc_value)
+
+    # Display the error message
+    if ct.DEBUG_MODE:
+        # Display the complete traceback
+        prompt =  f"{texte} :\n {''.join(tb)}"
+    else:
+        # Display the type of exception only
+        prompt = f"{texte} :\n {''.join(tb_type)}"
+
+    display.print(prompt, colors['error'])
+
+
 
 def input_percentage(message: str, color_key: str = 'input') -> float:
     """

@@ -74,7 +74,7 @@ class Json:
 
             dataset_path = os.path.join(self.parent_dir, folder_name, 'images')
             rep_name = folder_name.split("\\")[-1]
- 
+
             try:
                 std_dev, mean = self.calculate_mean_and_std_rgb(dataset_path, rep_name)
                 self.results[folder_name] = [std_dev, mean]
@@ -97,7 +97,9 @@ class Json:
             json.dump(self.results, json_file, indent=4)
 
 
-    def calculate_mean_and_std_rgb(self, folder_path: str, rep_name: str) -> Tuple[np.ndarray, np.ndarray]:
+    def calculate_mean_and_std_rgb(self,
+                                   folder_path: str,
+                                   rep_name: str) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate the mean and standard deviation of RGB values for images in a specified folder.
 
@@ -134,7 +136,8 @@ class Json:
             image_path = os.path.join(folder_path, image_files[idx])
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             if image is None:
-                self.display.print("Unable to load image at path: {image_path}", colors["error"])
+                print("\n")
+                self.display.print(f"Unable to load image at path: {image_path}", colors["error"])
                 continue
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)

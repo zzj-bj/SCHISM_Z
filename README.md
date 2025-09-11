@@ -32,7 +32,10 @@ SCHISM offers three main functionalities: **Preprocessing**,  **Training** and *
 
 ---
 ### Preprocessing workflow
-Two available options :
+Three available options :
+   - Auto brightness/contrast adjustment: Automatically adjust the brightness and contrast of your images. This process rescales pixel values based on histogram minimum/maximum (hmin/hmax). The original `images` folder will be renamed to `raw_images`, and the new adjusted images will be saved in a newly created `images` folder. The function has been inspired by the work of [Schindelin et al. 2012](https://www.nature.com/articles/nmeth.2019) / [Fiji](https://github.com/fiji). Two options are made available to the user:
+       - ref image: Use one chosen image to set hmin/hmax for all images (consistent contrast).
+       - per image: Compute hmin/hmax separately for each image (max local contrast, less consistency).
    - JSON generation: Compute the mean and standard deviation from part or all of your dataset. The results will be saved as a JSON file in your dataset folder.
    - Normalisation: Process your data to produce SCHISM-compatible segmentation masks. The original `masks` folder will be renamed to `raw_masks`, and the new, normalised masks will be saved in a newly created `masks` folder.
 
@@ -156,7 +159,7 @@ If you use our solution or find our work helpful, please consider citing it as f
 ```
 @misc{schism2025,
   title       = {SCHISM: Semantic Classification of High-resolution Imaging for Scanned Materials},
-  author      = {Florent Brondolo and Samuel Beaussant and Mehdi Mankaï and Saïd Ezzedine and Pierre Fancelli},
+  author      = {Florent Brondolo and Samuel Beaussant and Mehdi Mankaï and Saïd Ezzedine and Ozan Yazar and Pierre Fancelli},
   year        = {2025},
   howpublished= {\url{https://github.com/FloFive/SCHISM}},
   note        = {GitHub repository}

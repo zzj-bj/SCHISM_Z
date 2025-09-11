@@ -45,12 +45,13 @@ from torchmetrics.classification import (
 import tools.utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import NUM_WORKERS
 from preprocessing import launch_preprocessing as lp
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
 from AI.paramconverter import ParamConverter
 from AI.model_registry import model_mapping, model_config_mapping
 from training.training_logger import TrainingLogger, TrainingLoggerConfig
-from tools.constants import NUM_WORKERS
+
 
 # Ensure project root is on the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

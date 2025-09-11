@@ -115,7 +115,7 @@ class TiffDatasetLoader(VisionDataset):
 
         if h < th or w < tw:
             raise ValueError(f"Required crop size {(th, tw)}"
-                             " is larger than input image size {(h, w)}")
+                             f" is larger than input image size {(h, w)}")
 
         if w == tw and h == th:
             return 0, 0, h, w

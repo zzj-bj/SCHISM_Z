@@ -4,7 +4,7 @@
 
 DinoV2Segmentor leverages DINOv2, a state-of-the-art self-supervised learning (SSL) method for pre-training vision foundation models. Foundation models like DINOv2 are pre-trained on massive datasets to serve as adaptable bases for various downstream tasks, enabling efficient fine-tuning on smaller, task-specific datasets. This approach delivers superior performance compared to training models from scratch, particularly in data-scarce scenarios.
 
-DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create robust image encoders capable of capturing complex patterns and features. Pre-trained on diverse "natural" image datasets, DINOv2 models excel in tasks such as image classification, object detection, and segmentation. DinoV2Segmentor builds on this foundation, integrating modular segmentation heads to adapt these powerful encoders for precise, multi-class image segmentation.
+DINOv2 utilises Vision Transformers (ViTs) and attention mechanisms to develop robust image encoders that can capture complex patterns and features. Pre-trained on diverse "natural" image datasets, DINOv2 models excel in tasks such as image classification, object detection, and segmentation. DinoV2Segmentor builds on this foundation, integrating modular segmentation heads to adapt these powerful encoders for precise, multi-class image segmentation.
 
 ---
 ## Features
@@ -12,8 +12,11 @@ DINOv2 employs Vision Transformers (ViTs) and attention mechanisms to create rob
 - **Configurable Parameters**:
   - `k_size`: Kernel size for convolutional layers.
   - `linear_head`: Option to switch between a linear or CNN-based segmentation head.
+  - `n_block`: Number of convolutional blocks in the CNN-based segmentation head.
   - `n_features`: Number of transformer layers used for feature aggregation.
-  - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference. Depending on your GPU, this option might have to be disabled in order for the training to run nicely.
+  - `dropout`: Probability of zeroing activations in conv blocks to reduce overfitting.
+  - `channel_reduction`: Strategy for decreasing channels across blocks (`gradual` (default) or `aggressive`).
+  - `quantize`: Enables 4-bit quantization for reduced memory usage and faster inference. Depending on your GPU, this option may need to be disabled for the training to run smoothly.
   - `peft`: Incorporates LoRA for efficient fine-tuning of the backbone model.
   - `size`: Backbone model size (`small`, `base`, or `large`).
   - `num_classes`: Number of output segmentation classes.
@@ -52,8 +55,7 @@ A simple and lightweight head designed for basic segmentation tasks. It processe
 A more advanced head for high-quality segmentation, leveraging convolutional blocks for feature refinement and upsampling.
 
 **Key Features**:
-- Multi-block architecture with configurable `channels`.
-- Upsampling via bicubic interpolation and pixel shuffling.
+- Multi-block architecture.
 - Supports multiple activation functions (e.g., `relu`, `leakyrelu`).
 - Dropout for regularisation and robust segmentation outputs.
 
@@ -63,19 +65,21 @@ The segmentation head generates a final segmentation map with `num_classes` chan
 ---
 ## Constructor Parameters
 
-| Parameter       | Type    | Description                                                                | Default    |
-|-----------------|---------|----------------------------------------------------------------------------|------------|
-| `n_block`       | `int`   | Number of convolutional blocks in the CNN-based segmentation head.         | 4          |
-| `k_size`        | `int`   | Kernel size for all convolutional layers.                                 | 3          |
-| `linear_head`   | `bool`  | Whether to use a linear segmentation head (`True`) or CNN-based head.     | `True`     |
-| `n_features`    | `int`   | Number of transformer layers used for feature extraction.                 | 1          |
-| `quantize`      | `bool`  | Enables 4-bit quantization for memory efficiency.                         | `True`    |
-| `peft`          | `bool`  | Enables parameter-efficient fine-tuning (LoRA).                          | `True`    |
-| `size`          | `str`   | Backbone size (`small`, `base`, or `large`).                              | `base`     |
-| `num_classes`   | `int`   | Number of output segmentation classes.                                    | 3          |
-| `activation`    | `str`   | Activation function for CNN-based segmentation head.                      | `relu`     |
-| `r`             | `int`   | LoRA rank parameter for fine-tuning.                                      | 32         |
-| `lora_alpha`    | `int`   | LoRA alpha parameter for fine-tuning.                                     | 32         |
-| `lora_dropout`  | `float` | Dropout probability for LoRA fine-tuning.                                 | 0.1        |
+| Parameter          | Type    | Description                                                                | Default    | Scope     |
+|--------------------|---------|----------------------------------------------------------------------------|------------|-----------|
+| `n_block`          | `int`   | Number of convolutional blocks in the CNN-based segmentation head.         | 4          | CNN       |
+| `dropout`          | `int`   | Probability of zeroing activations in conv blocks to reduce overfitting.   | 0.1        | CNN       |
+| `channel_reduction`| `int`   | Strategy for decreasing channels across blocks.                            | `gradual`  | CNN       |
+| `k_size`           | `int`   | Kernel size for all convolutional layers.                                 | 3          | CNN       |
+| `linear_head`      | `bool`  | Whether to use a linear segmentation head (`True`) or CNN-based head.     | `True`     | CNN/Linear|
+| `n_features`       | `int`   | Number of transformer layers used for feature extraction.                 | 1          | CNN/Linear|
+| `quantize`         | `bool`  | Enables 4-bit quantization for memory efficiency.                         | `True`     | Backbone  |
+| `peft`             | `bool`  | Enables parameter-efficient fine-tuning (LoRA).                           | `True`     | Backbone  |
+| `size`             | `str`   | Backbone size (`small`, `base`, or `large`).                              | `base`     | Backbone  |
+| `num_classes`      | `int`   | Number of output segmentation classes.                                    | 3          | CNN/Linear|
+| `activation`       | `str`   | Activation function for CNN-based segmentation head.                      | `relu`     | CNN       |
+| `r`                | `int`   | LoRA rank parameter for fine-tuning.                                      | 32         | Backbone  |
+| `lora_alpha`       | `int`   | LoRA alpha parameter for fine-tuning.                                     | 32         | Backbone  |
+| `lora_dropout`     | `float` | Dropout probability for LoRA fine-tuning.                                 | 0.1        | Backbone  |
 
 ---
