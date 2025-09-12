@@ -47,7 +47,6 @@ from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import NUM_WORKERS
 import tools.constants as ct
-from preprocessing import launch_preprocessing as lp
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
 from AI.paramconverter import ParamConverter
 from AI.model_registry import model_mapping, model_config_mapping
@@ -82,7 +81,6 @@ class Training:
         self.hyperparameters = kwargs.get('hyperparameters')
         if self.hyperparameters is None:
             raise ValueError("The 'hyperparameters' argument must be provided and not None.")
-        self.report = kwargs.get('report')
         self.dataloaders = {}  # Initialize dataloaders attribute
         self.display = dc.DisplayColor()
 
@@ -95,8 +93,12 @@ class Training:
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
 
         # Determine the number of classes
-        self.num_classes = int(self.model_params.get('num_classes', 1))
-        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
+        try:
+            self.num_classes = int(self.model_params.get('num_classes', 1))
+            self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
+        except ValueError:  # Handle non-integer num_classes
+            text = " hyperparameter : 'num_classes' must be an integer."
+            raise ValueError(text)
 
         # Loss parameters
         self.weights = self.param_converter.convert_param(
@@ -110,14 +112,41 @@ class Training:
             self.ignore_index = -100
 
         # Training parameters
-        self.batch_size = int(self.training_params.get('batch_size', 8))
-        self.val_split = float(self.training_params.get('val_split', 0.8))
-        self.epochs = int(self.training_params.get('epochs', 10))
+        try:
+            self.batch_size = int(self.training_params.get('batch_size', 8))
+        except ValueError:  # Handle non-integer batch size
+            text = " hyperparameter : 'batch_size' must be an integer."
+            raise ValueError(text)
+
+        try:
+            self.val_split = float(self.training_params.get('val_split', 0.8))
+        except ValueError:  # Handle non-float val_split
+            text = " hyperparameter : 'val_split' must be a float."
+            raise ValueError(text)
+
+        try:
+            self.epochs = int(self.training_params.get('epochs', 10))
+        except ValueError:  # Handle non-integer epochs
+            text = " hyperparameter : 'epochs' must be an integer."
+            raise ValueError(text)
 
         # Data parameters
-        self.img_res = int(self.data.get('img_res', 560))
-        self.crop_size = int(self.data.get('crop_size', 224))
-        self.num_samples = int(self.data.get('num_samples', 500))
+        try:
+            self.img_res = int(self.data.get('img_res', 560))
+        except ValueError:  # Handle non-integer img_res
+            text = " hyperparameter : 'img_res' must be an integer."
+            raise ValueError(text)
+        try:
+            self.crop_size = int(self.data.get('crop_size', 224))
+        except ValueError:  # Handle non-integer crop_size
+            text = " hyperparameter : 'crop_size' must be an integer."  
+            raise ValueError(text)
+
+        try:
+            self.num_samples = int(self.data.get('num_samples', 500))
+        except ValueError:  # Handle non-integer num_samples
+            text = " hyperparameter : 'num_samples' must be an integer."
+            raise ValueError(text)
 
         # Extract and parse metrics from the ini file
         self.metrics_str = self.training_params.get('metrics', '')
@@ -248,7 +277,6 @@ class Training:
             text =f" - Optimizer '{optimizer_name}' is not supported"
             raise ValueError(text)
 
-
         converted_params = {k: self.param_converter.convert_param(v)
                             for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
@@ -293,9 +321,8 @@ class Training:
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
-            text = f" - Loss '{loss_name}' is not supported"
-            raise ValueError(
-                f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
+            text = f" - Loss '{loss_name}' is not supported. Check your 'loss_mapping'."
+            raise ValueError(text)
 
         # Convert static parameters from config
         converted_params = {
@@ -331,9 +358,8 @@ class Training:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
-            text = f" - Model '{model_name}' is not supported"
-            raise ValueError(
-                f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
+            text = f" - Model '{model_name}' is not supported. Check your 'model_mapping'."
+            raise ValueError(text)
 
         model_class = self.model_mapping[model_name]
         model_config_class = self.model_config_mapping[model_name]
@@ -365,7 +391,7 @@ class Training:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
-            raise ValueError(e)
+            raise ValueError(text)
 
         try:
             return model_class(
@@ -450,7 +476,7 @@ class Training:
         mask_data = {}
         num_sample_per_subfolder = {}
         data_stats = ut.load_data_stats(self.data_dir, self.data_dir)
-        
+
         if not self.subfolders or not isinstance(self.subfolders, list):
             text = "The 'subfolders' attribute must be a non-empty list before loading data."
             raise ValueError(text)
@@ -482,80 +508,70 @@ class Training:
 
         indices = [train_indices, val_indices, test_indices]
 
-
-        #  
-        try:
-            train_dataset = TiffDatasetLoader(
-                TiffDatasetLoaderConfig(
-                    indices=train_indices,
-                    img_data=img_data,
-                    mask_data=mask_data,
-                    num_classes=self.num_classes,
-                    crop_size=(self.crop_size, self.crop_size),
-                    data_stats=data_stats,
-                    img_res=self.img_res,
-                    ignore_background=self.ignore_background
-                )
+        train_dataset = TiffDatasetLoader(
+            TiffDatasetLoaderConfig(
+                indices=train_indices,
+                img_data=img_data,
+                mask_data=mask_data,
+                num_classes=self.num_classes,
+                crop_size=(self.crop_size, self.crop_size),
+                data_stats=data_stats,
+                img_res=self.img_res,
+                ignore_background=self.ignore_background
             )
+        )
 
-            val_dataset = TiffDatasetLoader(
-                TiffDatasetLoaderConfig(
-                    indices=val_indices,
-                    img_data=img_data,
-                    mask_data=mask_data,
-                    num_classes=self.num_classes,
-                    crop_size=(self.crop_size, self.crop_size),
-                    data_stats=data_stats,
-                    img_res=self.img_res,
-                    ignore_background=self.ignore_background
-                )
+        val_dataset = TiffDatasetLoader(
+            TiffDatasetLoaderConfig(
+                indices=val_indices,
+                img_data=img_data,
+                mask_data=mask_data,
+                num_classes=self.num_classes,
+                crop_size=(self.crop_size, self.crop_size),
+                data_stats=data_stats,
+                img_res=self.img_res,
+                ignore_background=self.ignore_background
             )
+        )
 
-            test_dataset = TiffDatasetLoader(
-                TiffDatasetLoaderConfig(
-                    indices=test_indices,
-                    img_data=img_data,
-                    mask_data=mask_data,
-                    num_classes=self.num_classes,
-                    crop_size=(self.crop_size, self.crop_size),
-                    data_stats=data_stats,
-                    img_res=self.img_res,
-                    ignore_background=self.ignore_background
-                )
+        test_dataset = TiffDatasetLoader(
+            TiffDatasetLoaderConfig(
+                indices=test_indices,
+                img_data=img_data,
+                mask_data=mask_data,
+                num_classes=self.num_classes,
+                crop_size=(self.crop_size, self.crop_size),
+                data_stats=data_stats,
+                img_res=self.img_res,
+                ignore_background=self.ignore_background
             )
-        except Exception :
-            ut.format_and_display_error('TiffDataset Loader')
+        )
+
         try:
             pin_mem = torch.cuda.is_available()
-        except Exception:
-            pin_mem = False
-
-
-        try:
-            train_loader = DataLoader(train_dataset, 
-                                    batch_size=self.batch_size,
-                                    num_workers = NUM_WORKERS, 
-                                    shuffle = True, 
-                                    drop_last = True,
-                                    pin_memory = pin_mem)
-            val_loader =  DataLoader(val_dataset, 
-                                    batch_size = self.batch_size,
-                                    shuffle = False, 
-                                    num_workers= NUM_WORKERS, 
-                                    drop_last = True,
-                                    pin_memory = pin_mem)
-            test_loader =  DataLoader(test_dataset, 
-                                    batch_size=1, 
-                                    shuffle = False,
-                                    num_workers = 2, 
-                                    drop_last = True,
-                                    pin_memory = pin_mem)
         except Exception as e:
-            print("\n[----------------------------------------------------")
-            print (e)
-            print("----------------------------------------------------]\n")
+            pin_mem = False
+            raise (e)
 
-            ut.format_and_display_error('Dataset Loader')
+
+        train_loader = DataLoader(train_dataset, 
+                                batch_size=self.batch_size,
+                                num_workers = NUM_WORKERS, 
+                                shuffle = True, 
+                                drop_last = True,
+                                pin_memory = pin_mem)
+        val_loader =  DataLoader(val_dataset, 
+                                batch_size = self.batch_size,
+                                shuffle = False, 
+                                num_workers= NUM_WORKERS, 
+                                drop_last = True,
+                                pin_memory = pin_mem)
+        test_loader =  DataLoader(test_dataset, 
+                                batch_size=1, 
+                                shuffle = False,
+                                num_workers = 2, 
+                                drop_last = True,
+                                pin_memory = pin_mem)
 
         self.logger.save_indices_to_file(
             [train_indices, val_indices, test_indices])
@@ -589,7 +605,7 @@ class Training:
         else:
             # disable scaling on CPU
             scaler = GradScaler(enabled=False)
-        
+
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled
         metrics = self.initialize_metrics()
@@ -720,7 +736,7 @@ class Training:
                         )
                         # overwrite the empty desc of the second bar
                         mbar.set_description(metrics_str)
-                        
+
                 epoch_loss = running_loss / len(self.dataloaders[phase])
                 epoch_metrics = {metric: running_metrics[metric] /
                                  len(self.dataloaders[phase])
@@ -754,7 +770,7 @@ class Training:
                             )
 
         formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
-        
+
         print("Best validation metrics:")
         for metric, value in formatted_metrics.items():
             print(f"  {metric:<10}: {value}")

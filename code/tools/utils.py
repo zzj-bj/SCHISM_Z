@@ -176,9 +176,8 @@ def format_and_display_error(texte : str) -> None  :
 
     # Retrieve the type, value, and traceback of the most recent exception
     exc_type, exc_value, exc_traceback = sys.exc_info()
-
+    last_line = str(exc_value).splitlines()[-1]
     tb = traceback.format_exception(exc_type, exc_value, exc_traceback)
-    tb_type = traceback.format_exception_only(exc_type, exc_value)
 
     # Display the error message
     if ct.DEBUG_MODE:
@@ -186,7 +185,7 @@ def format_and_display_error(texte : str) -> None  :
         prompt =  f"{texte} :\n {''.join(tb)}"
     else:
         # Display the type of exception only
-        prompt = f"{texte} :\n {''.join(tb_type)}"
+        prompt = f"{texte} :\n {''.join(last_line)}"
 
     display.print(prompt, colors['error'])
 

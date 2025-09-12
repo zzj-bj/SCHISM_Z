@@ -121,7 +121,6 @@ class LaunchTraining:
         self.display.print("Starting training", colors["warning"])
 
         try:
-
             trainer = Training(
                 data_dir=str(data_dir),
                 subfolders=valid_subfolders,
@@ -130,16 +129,13 @@ class LaunchTraining:
             )
         except Exception :
             ut.format_and_display_error('Training Loader')
-
+            return
 
         try:
-
             trainer.load_segmentation_data()
             trainer.train()
-
         except Exception :
             ut.format_and_display_error('Training')
-
             return
 
         self.display.print("Training completed", colors["ok"])
