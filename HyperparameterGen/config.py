@@ -1,7 +1,6 @@
 import logging
 import nest_asyncio
 import openai
-import os
 
 # ================================
 # Configuration

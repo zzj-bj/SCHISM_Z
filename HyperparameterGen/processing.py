@@ -1,10 +1,11 @@
 from textwrap import dedent
-import openai
+import streamlit as st
 import requests
 import os
 import re
 from config import logger, EXTERNAL_URLS
 from bs4 import BeautifulSoup
+from utils_gen import estimate_call_cost
 
 def openai_ask_requests(messages, model="gpt-4o", response_format=None):
  
@@ -12,7 +13,7 @@ def openai_ask_requests(messages, model="gpt-4o", response_format=None):
 	headers = {
 		"Content-Type": "application/json",
 		"Cache-Control": "no-cache",
-		"api-key": "d02c33118c6241bdaee674cf7ed80489"
+		"api-key": st.session_state.get('API_key')
 	}
  
 	data = {
@@ -73,7 +74,6 @@ def read_ini_files(root_folder, part):
             except Exception as e:
                 logger.error(f"Error reading file {ini_file}: {e}")
     return knowledge_base.strip()
-
 
 def fetch_github_docs(urls, external_urls=None):
     """Fetches and concatenates documentation from GitHub URLs (and optionally external URLs)."""
@@ -183,7 +183,8 @@ def query_llm_component_choice(prompt, valid_options):
 		{"role": "user", "content": prompt}
 	  ]
     
-
+    st.session_state['NbTokens'] += estimate_call_cost(messages, model="gpt-4o")
+    print(st.session_state.get('NbTokens'))
     try:
         response_text = openai_ask_requests(messages)
         tokens = [token.strip() for token in response_text.split(",") if token.strip()]
@@ -208,7 +209,8 @@ def query_llm_section(prompt):
 		  },
 		  {"role": "user", "content": prompt}
 	  ]
-
+    st.session_state['NbTokens'] += estimate_call_cost(messages, model="gpt-4o")
+    print(st.session_state.get('NbTokens'))
     try:
         return openai_ask_requests(messages).strip()
     except Exception as e:
@@ -589,7 +591,6 @@ def determine_component_choice_model(user_input, available_options, model_doc, d
 
     model_ini = query_llm_section(prompt_options)
     return model_ini.strip()
-
 
 def determine_data_augmentation_section(user_input, part="Data_augmentation"):
     """

@@ -1,17 +1,16 @@
-from collections import defaultdict
 import re
-
 import requests
-from .processing import (
+import streamlit as st
+from utils_gen import estimate_call_cost
+from collections import defaultdict
+from processing import (
     read_ini_files,
     determine_component_choice_model,
     determine_component_choice_loss,
     fetch_and_parse_docs,
     determine_component_choice_O_S_L,
     determine_component_choice_training,
-    determine_data_parameters,
-
-    # ajoute les autres ici
+    determine_data_parameters
 )
 
 #############################################
@@ -109,6 +108,9 @@ def generate_optimized_ini(root_folder, user_input, part) -> str:
             except Exception as e:
                 print(f"[ERREUR] Impossible de charger {model_name} : {e}")
         return dict(sections), model_params
+    
+    st.session_state['NbTokens'] += estimate_call_cost(user_input, model="gpt-4o")
+    print(st.session_state.get('NbTokens'))
 
     available_opts, model_docs = fetch_dynamic_available_opts()
     
@@ -164,7 +166,7 @@ def generate_optimized_ini(root_folder, user_input, part) -> str:
         #     user_input
         # ))
     ]
-
+    print(st.session_state.get('NbTokens'))
     outputs = []
     # Exécution en boucle
     for part, func, arg_builder in components:
