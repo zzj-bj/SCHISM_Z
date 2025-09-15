@@ -25,13 +25,13 @@ def main() -> None:
 
     print(ct.LOGO_IN)
 
-    if ct.DEBUG_MODE:
-        display.print("The debug mode is active. \n", colors['warning'])
+    display.print(f"Debug mode {'ON' if ct.DEBUG_MODE else 'OFF'}.", colors['warning'])
 
-    if torch.cuda.is_available():
-        display.print("CUDA is available! Running on GPU.\n", colors['ok'])
-    else:
-        display.print("CUDA is not available! Running on CPU.\n", colors['warning'])
+    prompt = (
+        f"CUDA {'' if torch.cuda.is_available() else 'not'} available"
+        f" - Running on {'GPU' if torch.cuda.is_available() else 'CPU'}.\n"
+    )
+    display.print(prompt, colors['warning'])
 
 
     main_menu = menu.Menu('MAIN')

@@ -70,7 +70,7 @@ class LaunchInference:
             selected_metric = metrics[choice - 1]
         else:
             selected_metric = metrics[0]
-        
+
         expected_ckpt = run_dir / f"model_best_{selected_metric}.pth"
         if not expected_ckpt.exists():
             self.display.print(
@@ -82,13 +82,18 @@ class LaunchInference:
         self.display.print(f"Starting inference using {selected_metric}", colors["warning"])
 
         # run inference
-        inf = Inference(
-            data_dir=str(data_dir),
-            subfolders=subfolders,
-            run_dir=str(run_dir),
-            selected_metric=selected_metric,
-            hyperparameters=hyper,
-        )
-        inf.predict()
+        try:
+            inf = Inference(
+                data_dir=str(data_dir),
+                subfolders=subfolders,
+                run_dir=str(run_dir),
+                selected_metric=selected_metric,
+                hyperparameters=hyper,
+            )
+            inf.predict()
+        except Exception :
+            ut.format_and_display_error('Training Loader')
+            return
+
         #TODO
         self.display.print(f"Inference completed using {selected_metric}", colors["ok"])
