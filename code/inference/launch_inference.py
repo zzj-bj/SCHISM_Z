@@ -7,6 +7,7 @@ from AI.hyperparameters import Hyperparameters
 from tools import menu, utils as ut
 from tools.display_color import DisplayColor
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 from inference.inference import Inference
 
 class LaunchInference:
@@ -48,6 +49,16 @@ class LaunchInference:
                 self.display.print(e, colors["error"])
             return
 
+        for sub in data_dir.iterdir():
+            if not sub.is_dir():
+                continue
+            name = sub.name
+            images_dir = sub / "images"
+            if not images_dir.is_dir():
+                self.display.print(f"{name}/images not found", colors["error"])
+                return
+
+
         # load hyperparameters and extract metrics
         hyper = Hyperparameters(str(hyper_path))
         params = hyper.get_parameters().get("Training", {})
@@ -78,8 +89,9 @@ class LaunchInference:
                 colors["error"]
             )
             return
-        
+
         self.display.print(f"Starting inference using {selected_metric}", colors["warning"])
+
 
         # run inference
         try:
