@@ -15,7 +15,7 @@ from tools import utils as ut
 from tools.display_color import DisplayColor
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
-from AI.hyperparameters import Hyperparameters
+from tools.hyperparameters import Hyperparameters
 from training.training import Training
 
 
