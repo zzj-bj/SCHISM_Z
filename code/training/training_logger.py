@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 
 @dataclass
 # pylint: disable=too-many-instance-attributes
@@ -34,6 +36,8 @@ class TrainingLogger:
     """    
     A class to log training metrics, save hyperparameters, and visualize results.
     """
+    
+
     def __init__(self, training_logger_config: TrainingLoggerConfig) -> None:
         self.save_directory = training_logger_config.save_directory
         self.num_classes = training_logger_config.num_classes
@@ -43,7 +47,7 @@ class TrainingLogger:
         self.loss_params = training_logger_config.loss_params
         self.training_params = training_logger_config.training_params
         self.data = training_logger_config.data
-
+        self.display = dc.DisplayColor()
         os.makedirs(self.save_directory, exist_ok=True)
 
     def save_indices_to_file(self, indices_list: List[List[Tuple[str, int]]]) -> None:
@@ -83,7 +87,7 @@ class TrainingLogger:
         with open(json_file_path, 'w', encoding="utf-8") as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
-        print(f" Data statistics saved to {json_file_path}")
+        self.display.print(f" Data statistics saved to {json_file_path}", colors['ok'])
 
     def save_hyperparameters(self) -> None:
         """
@@ -119,7 +123,7 @@ class TrainingLogger:
         with open(ini_file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)
 
-        print(f" Hyperparameters saved to {ini_file_path}")
+        self.display.print(f" Hyperparameters saved to {ini_file_path}", colors['ok'])
 
     def save_best_metrics(self,
         loss_dict: Dict[str, Dict[int, float]],
@@ -145,7 +149,7 @@ class TrainingLogger:
                     f.write(f"  - {metric}: {values[epoch - 1]:.4f}\n")
                 f.write("\n" + "-" * 30 + "\n\n")
 
-        print(f" Validation metrics history saved to {file_path}")
+        self.display.print(f" Validation metrics history saved to {file_path}", colors['ok'])
 
     def plot_learning_curves(self,
         loss_dict: Dict[str, Dict[int, float]],
@@ -187,7 +191,7 @@ class TrainingLogger:
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
         plt.close()
-        print(f" Learning curves saved to {self.save_directory}/learning_curves.png")
+        self.display.print(f" Learning curves saved to {self.save_directory}/learning_curves.png", colors['ok'])
 
     # pylint: disable=too-many-locals
     def save_confusion_matrix(self,
@@ -254,4 +258,5 @@ class TrainingLogger:
                 os.path.join(self.save_directory, "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png")
+            self.display.print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png", colors['ok'])
+    

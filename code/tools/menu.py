@@ -46,9 +46,8 @@ class Menu :
         self.unknown_menu = False
         if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
-                text = f" '{self.board[0]}' : !!! The menu is absent !!!"
+                text = f" '{self.board[0]}' : Missing menu."
                 self.display.print(text, colors['error'])
-                print('!!! The menu is absent !!!')
                 sys.exit()
             else:
                 self.board = [str(element) for element in self.dynamic_menu]

@@ -40,6 +40,7 @@ from torchmetrics.classification import (
     BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision,
     BinaryRecall, MulticlassRecall
 )
+from early_stopping_pytorch import EarlyStopping
 
 # Local application imports
 import tools.utils as ut
@@ -48,7 +49,7 @@ from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import NUM_WORKERS
 import tools.constants as ct
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
-from AI.paramconverter import ParamConverter
+from tools.paramconverter import ParamConverter
 from AI.model_registry import model_mapping, model_config_mapping
 from training.training_logger import TrainingLogger, TrainingLoggerConfig
 
@@ -81,78 +82,9 @@ class Training:
         self.hyperparameters = kwargs.get('hyperparameters')
         if self.hyperparameters is None:
             raise ValueError("The 'hyperparameters' argument must be provided and not None.")
+        self.report = kwargs.get('report')
         self.dataloaders = {}  # Initialize dataloaders attribute
         self.display = dc.DisplayColor()
-
-        # Extracting parameters for different categories
-        self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
-        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
-        self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
-        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
-        self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
-
-        # Determine the number of classes
-        try:
-            self.num_classes = int(self.model_params.get('num_classes', 1))
-            self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
-        except ValueError:  # Handle non-integer num_classes
-            text = " hyperparameter : 'num_classes' must be an integer."
-            raise ValueError(text)
-
-        # Loss parameters
-        self.weights = self.param_converter.convert_param(
-            self.loss_params.get('weights', "False"))
-        self.ignore_background = bool(self.param_converter.convert_param(
-            self.loss_params.get('ignore_background', "False")
-        ))
-        if self.ignore_background:
-            self.ignore_index = -1
-        else:
-            self.ignore_index = -100
-
-        # Training parameters
-        try:
-            self.batch_size = int(self.training_params.get('batch_size', 8))
-        except ValueError:  # Handle non-integer batch size
-            text = " hyperparameter : 'batch_size' must be an integer."
-            raise ValueError(text)
-
-        try:
-            self.val_split = float(self.training_params.get('val_split', 0.8))
-        except ValueError:  # Handle non-float val_split
-            text = " hyperparameter : 'val_split' must be a float."
-            raise ValueError(text)
-
-        try:
-            self.epochs = int(self.training_params.get('epochs', 10))
-        except ValueError:  # Handle non-integer epochs
-            text = " hyperparameter : 'epochs' must be an integer."
-            raise ValueError(text)
-
-        # Data parameters
-        try:
-            self.img_res = int(self.data.get('img_res', 560))
-        except ValueError:  # Handle non-integer img_res
-            text = " hyperparameter : 'img_res' must be an integer."
-            raise ValueError(text)
-        try:
-            self.crop_size = int(self.data.get('crop_size', 224))
-        except ValueError:  # Handle non-integer crop_size
-            text = " hyperparameter : 'crop_size' must be an integer."  
-            raise ValueError(text)
-
-        try:
-            self.num_samples = int(self.data.get('num_samples', 500))
-        except ValueError:  # Handle non-integer num_samples
-            text = " hyperparameter : 'num_samples' must be an integer."
-            raise ValueError(text)
-
-        # Extract and parse metrics from the ini file
-        self.metrics_str = self.training_params.get('metrics', '')
-        self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
-        self.model_mapping = model_mapping
-        self.model_config_mapping = model_config_mapping
 
         self.optimizer_mapping = {
             'Adagrad': Adagrad,
@@ -187,8 +119,56 @@ class Training:
             'OneCycleLR': OneCycleLR,
             'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
         }
-
+        
+        # Model parameters
+        self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
+        self.num_classes = self.param_converter._convert_param(self.model_params.get('num_classes', 3))
+        self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
+        self.model_mapping = model_mapping
+        self.model_config_mapping = model_config_mapping
         self.model = self.initialize_model()
+
+        # Optimizer parameters
+        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
+
+        # Scheduler parameters
+        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
+
+        # Loss parameters
+        self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
+        self.weights = self.param_converter._convert_param(self.loss_params.get('weights', "False"))
+        self.ignore_background = self.param_converter._convert_param(self.loss_params.get('ignore_background', "False"))
+        if self.ignore_background:
+            self.ignore_index = -1
+        else:
+            self.ignore_index = -100
+
+        # Training parameters
+        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
+        self.batch_size = self.param_converter._convert_param(self.training_params.get('batch_size', 8))
+        self.val_split = self.param_converter._convert_param(self.training_params.get('val_split', 0.8))
+        self.epochs = self.param_converter._convert_param(self.training_params.get('epochs', 10))
+        self.early_stopping = self.param_converter._convert_param(self.training_params.get('early_stopping', "False"))
+        self.metrics_str = self.param_converter._convert_param(self.training_params.get('metrics', ''))
+        if self.early_stopping:
+            patience = int(self.epochs*0.2)
+            if patience > 1:
+                self.early_stopping_instance = EarlyStopping(patience=patience, verbose=True)
+            else:
+                self.early_stopping=False
+                display = dc.DisplayColor()
+                display.print("Early stopping has been automatically disabled because the patience value is too low.", colors['warning'])
+                display.print("Training will begin as normal.", colors['warning'])       
+
+        # Data parameters
+        self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
+        self.img_res = self.param_converter._convert_param(self.data.get('img_res', 560))
+        self.crop_size = self.param_converter._convert_param(self.data.get('crop_size', 224))
+        self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
+
+        # Extract and parse metrics from the ini file
+        self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
+        
         self.save_directory = self.create_unique_folder()
         self.logger = TrainingLogger(
             TrainingLoggerConfig(save_directory=self.save_directory,
@@ -277,7 +257,8 @@ class Training:
             text =f" - Optimizer '{optimizer_name}' is not supported"
             raise ValueError(text)
 
-        converted_params = {k: self.param_converter.convert_param(v)
+
+        converted_params = {k: self.param_converter._convert_param(v)
                             for k, v in self.optimizer_params.items() if k != 'optimizer'}
 
         return optimizer_class(self.model.parameters(), **converted_params)
@@ -299,7 +280,7 @@ class Training:
             text =f" - Scheduler '{scheduler_name}' is not supported"
             raise ValueError(text)
 
-        converted_params = {k: self.param_converter.convert_param(v)
+        converted_params = {k: self.param_converter._convert_param(v)
                             for k, v in self.scheduler_params.items() if k != 'scheduler'}
 
         if not converted_params:
@@ -326,7 +307,7 @@ class Training:
 
         # Convert static parameters from config
         converted_params = {
-            k: self.param_converter.convert_param(v)
+            k: self.param_converter._convert_param(v)
             for k, v in self.loss_params.items()
             # Exclude unwanted params
             if k not in {'loss', 'ignore_background', 'weights'}
@@ -365,14 +346,16 @@ class Training:
         model_config_class = self.model_config_mapping[model_name]
 
         self.model_params['num_classes'] = self.num_classes
-        self.model_params['img_res'] = self.img_res
+        
+        if model_name == 'DINOv2':
+            self.model_params['img_res'] = self.img_res
 
         required_params = {
-            k: self.param_converter.convert_param(v)
+            k: self.param_converter._convert_param(v)
             for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter.convert_param(v)
+            k: self.param_converter._convert_param(v)
             for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
        }
 
@@ -517,7 +500,8 @@ class Training:
                 crop_size=(self.crop_size, self.crop_size),
                 data_stats=data_stats,
                 img_res=self.img_res,
-                ignore_background=self.ignore_background
+                ignore_background=self.ignore_background,
+                weights=self.weights
             )
         )
 
@@ -530,7 +514,8 @@ class Training:
                 crop_size=(self.crop_size, self.crop_size),
                 data_stats=data_stats,
                 img_res=self.img_res,
-                ignore_background=self.ignore_background
+                ignore_background=self.ignore_background,
+                weights=self.weights
             )
         )
 
@@ -543,7 +528,8 @@ class Training:
                 crop_size=(self.crop_size, self.crop_size),
                 data_stats=data_stats,
                 img_res=self.img_res,
-                ignore_background=self.ignore_background
+                ignore_background=self.ignore_background,
+                weights=self.weights
             )
         )
 
@@ -623,6 +609,7 @@ class Training:
         for epoch in range(1, self.epochs + 1):
 
             ut.print_box(f"Epoch {epoch}/{self.epochs}")
+            epoch_val_loss = None if self.early_stopping else None
 
             for phase in ["train", "val"]:
                 is_training = phase == "train"
@@ -663,6 +650,7 @@ class Training:
                         )
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
+                        batch_weights = torch.clamp(batch_weights, min=1e-6)  # Avoid exact zero values
 
                         with torch.set_grad_enabled(is_training):
                             with torch.autocast(
@@ -681,16 +669,8 @@ class Training:
                                     labels = labels.squeeze().long()
 
                                 # only apply class weights to multiclass segmentation
-                                if self.num_classes > 1:
-                                    if self.weights:
-                                        loss_fn = self.initialize_loss(
-                                            weight=batch_weights)
-                                    else:
-                                        loss_fn = self.initialize_loss()
-                                else:
-                                    loss_fn = self.initialize_loss()
-
-                                loss = loss_fn(outputs, labels)
+                                loss_fn = self.initialize_loss(weight=batch_weights if (self.weights and self.num_classes > 1) else None)
+                                loss = loss_fn(outputs.float(), labels)
 
                             if is_training:
                                 if scaler:
@@ -748,8 +728,8 @@ class Training:
 
                 print(f" {phase.title().ljust(5)} Loss: {epoch_loss: .4f}")
                 print(f" {phase.title().ljust(5)} ", end='')
-                for metric, value in epoch_metrics.items():
 
+                for metric, value in epoch_metrics.items():
                     print(f" {metric}: {value: .4f}", end=" | ")
                 print()
 
@@ -760,6 +740,8 @@ class Training:
                                "model_best_loss.pth"))
 
                 if phase == "val":
+                    if self.early_stopping:
+                        epoch_val_loss = epoch_loss
                     for metric, value in epoch_metrics.items():
                         if value > best_val_metrics[metric]:
                             best_val_metrics[metric] = value
@@ -768,6 +750,12 @@ class Training:
                                 os.path.join(self.save_directory,
                                              f"model_best_{metric}.pth")
                             )
+
+            if self.early_stopping and epoch_val_loss is not None:
+                self.early_stopping_instance(epoch_val_loss, self.model)
+                if self.early_stopping_instance.early_stop:
+                    print("Early stopping triggered")
+                    break
 
         formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
 
