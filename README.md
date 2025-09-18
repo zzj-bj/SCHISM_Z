@@ -142,6 +142,15 @@ data/  <--- Select this folder for normalisation, training, or inference
 - **test/train/val_indices.txt**: Saves the indices of images and masks used for training, validation, and testing. These indices are formatted as `[dataset subfolder][image or mask number in the folder]`. For example, if you have 5,000 image/mask pairs, but `num_samples` is set to 3,000 and `val_split` is 0.8, then 2,400 indices will be recorded in `train_indices.txt`, 600 in `val_indices.txt`, and the remaining 2,000 in `test_indices.txt`.
 
 ---
+## 🐞 Debugging
+
+A constant named `DEBUG_MODE` is defined in `tools/constants.py`.  
+- If `DEBUG_MODE = True`, SCHISM will display the full Python trace when an error occurs.  
+- If `DEBUG_MODE = False`, only a concise error message is shown.  
+
+This allows switching between developer-friendly debugging and cleaner end-user output.
+
+---
 ## :heart_on_fire: Contributions
 Contributions are welcome! Please fork the repository and submit a pull request.
 
