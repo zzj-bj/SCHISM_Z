@@ -109,7 +109,8 @@ data/  <--- Select this folder for normalisation, training, or inference
 ├── dataset_1/
 │   ├── images/       # Grayscale TIFF images (e.g., image0000.tif, image0001.tif, ...)
 │   ├── masks/        # Corresponding TIFF masks (e.g., mask0000.tif for image0000.tif)
-│   └── raw_masks/    # Optional: original, unnormalized masks (renamed during normalisation)
+│   ├── raw_images/   # Optional: original, untreated images (renamed after auto brightness/contrast adjustment)    
+|   └── raw_masks/    # Optional: original, unnormalised masks (renamed after normalisation)    
 ├── dataset_2/
 │   ├── images/
 │   ├── masks/
@@ -156,7 +157,7 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 
 ---
 ## :disappointed: Found a bug? 
-If you spot a bug or have a problem running the code, please open an issue.
+If you encounter a bug or have an issue running the code, please open an issue.
 If you have any questions or need further assistance, don't hesitate to contact Florent Brondolo ([florent.brondolo@akkodis.com](mailto:florent.brondolo@akkodis.com))
 or Samuel Beaussant ([samuel.beaussant@akkodis.com](mailto:samuel.beaussant@akkodis.com)).
 
