@@ -27,7 +27,7 @@ from patchify import unpatchify
 
 # Local application imports
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
-from AI.paramconverter import ParamConverter
+from tools.paramconverter import ParamConverter
 from AI.model_registry import model_mapping, model_config_mapping
 from tools import utils as ut
 from tools import display_color as dc
@@ -105,11 +105,11 @@ class Inference:
         self.model_params['num_classes'] = self.num_classes
 
         required_params = {
-            k: self.param_converter.convert_param(v)
+            k: self.param_converter._convert_param(v)
             for k, v in self.model_params.items() if k in model_class.REQUIRED_PARAMS
         }
         optional_params = {
-            k: self.param_converter.convert_param(v)
+            k: self.param_converter._convert_param(v)
             for k, v in self.model_params.items() if k in model_class.OPTIONAL_PARAMS
         }
 
