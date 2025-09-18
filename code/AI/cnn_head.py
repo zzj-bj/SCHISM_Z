@@ -10,7 +10,7 @@ class CNNHeadConfig:
     img_res: int
     num_classes: int = 3
     n_features: int = 1
-    n_blocks: int = 4
+    n_block: int = 4
     k_size: int = 3
     activation: str = "relu"
     dropout: float = 0.1
@@ -47,18 +47,17 @@ class CNNHead(nn.Module):
     def __init__(self, cfg: CNNHeadConfig) -> None:
         super().__init__()
         self.n_features = cfg.n_features
-        self.n_blocks = cfg.n_blocks
+        self.n_block = cfg.n_block
         self.embedding_size = cfg.embedding_size * self.n_features
         self.num_classes = cfg.num_classes
         self.dropout = cfg.dropout
-        self.k_size = cfg.k_size
         self.channel_reduction = cfg.channel_reduction
         self.img_res = cfg.img_res
         self.activation = cfg.activation.lower()
         self.activation_mixin = ActivationMixin()
 
         channels_list = [self.embedding_size]
-        for i in range(1, self.n_blocks + 1):
+        for i in range(1, self.n_block + 1):
             if self.channel_reduction == "gradual":
                 next_c = max(self.embedding_size // (2 ** i), 8)
             elif self.channel_reduction == "aggressive":
@@ -67,13 +66,11 @@ class CNNHead(nn.Module):
                 next_c = self.embedding_size
             channels_list.append(next_c)
         
-        print(channels_list)
         dinov2_feat_size = self.img_res // 14
-        scale_factors = self.compute_scale_factors(dinov2_feat_size, self.img_res, self.n_blocks)
-        print(scale_factors)
+        scale_factors = self.compute_scale_factors(dinov2_feat_size, self.img_res, self.n_block)
         layers = []
         act_fn = self.activation_mixin._get_activation(self.activation)
-        for i in range(self.n_blocks):
+        for i in range(self.n_block):
             layers.append(
                 ConvBlock(
                     channels_list[i],
@@ -83,7 +80,7 @@ class CNNHead(nn.Module):
                     dropout=self.dropout
                 )
             )
-            if i < self.n_blocks - 1:
+            if i < self.n_block - 1:
                 layers.append(
                     nn.Upsample(scale_factor=scale_factors[i], mode="bilinear", align_corners=False)
                 )
@@ -95,12 +92,12 @@ class CNNHead(nn.Module):
         self.features = nn.Sequential(*layers)
         self.classifier = nn.Conv2d(channels_list[-1], self.num_classes, kernel_size=1)
 
-    def compute_scale_factors(self, input_size, output_size, n_blocks):
+    def compute_scale_factors(self, input_size, output_size, n_block):
         factors = []
         current = input_size
-        for i in range(n_blocks):
+        for i in range(self.n_block):
             remaining = output_size / current
-            blocks_left = n_blocks - i
+            blocks_left = self.n_block - i
             if blocks_left == 1:
                 f = remaining
             else:
@@ -114,7 +111,7 @@ class CNNHead(nn.Module):
             factors.append(float(f))
             current *= f
         cumulative = input_size
-        for i in range(n_blocks - 1):
+        for i in range(self.n_block - 1):
             cumulative *= factors[i]
         factors[-1] = output_size / cumulative
         return factors
@@ -131,7 +128,7 @@ class CNNHead(nn.Module):
         x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_sz, patch_sz)    
         out = x
 
-        for b in range(self.n_blocks):
+        for b in range(self.n_block):
             conv = self.features[2*b]
             up   = self.features[2*b + 1]
             out = conv(out)

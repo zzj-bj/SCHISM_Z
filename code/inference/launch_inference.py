@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 # Local application imports
-from AI.hyperparameters import Hyperparameters
+from tools.hyperparameters import Hyperparameters
 from tools import menu, utils as ut
 from tools.display_color import DisplayColor
 from tools.constants import DISPLAY_COLORS as colors
