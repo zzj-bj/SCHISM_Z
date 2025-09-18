@@ -47,7 +47,7 @@ def _confirm_exit() -> bool:
     Ask user to confirm exit. Returns True if exiting, False otherwise.
     """
     display = dc.DisplayColor()
-    prompt = "Do you really want to leave the program? We'll miss you!"
+    prompt = "Do you want to quit the program? (y/n): "
     if vf.answer_yes_or_no(prompt):
         display.print("Goodbye! \n", colors['babye'])
         # print(ct.LOGO_OUT)

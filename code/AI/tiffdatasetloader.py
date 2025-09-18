@@ -44,6 +44,7 @@ class TiffDatasetLoaderConfig:
     p: float = 0.5
     inference_mode: bool = False
     ignore_background: bool = True
+    weights: bool = False
 
 
 class TiffDatasetLoader(VisionDataset):
@@ -72,7 +73,7 @@ class TiffDatasetLoader(VisionDataset):
         self.inference_mode = tiff_dataset_loader_config.inference_mode
         self.p = tiff_dataset_loader_config.p
         self.ignore_background = tiff_dataset_loader_config.ignore_background
-
+        self.weights = tiff_dataset_loader_config.weights
         self.image_dims = self.get_image_dimensions()
         if not self.inference_mode:
             self.class_values = self._compute_class_values()
@@ -227,18 +228,8 @@ class TiffDatasetLoader(VisionDataset):
         """
         unique_values = set()
 
-        if self.mask_data is None:
-            raise ValueError(
-                    "self.mask_data is None. Cannot retrieve mask path by index.")
-        if self.mask_data is None:
-            raise ValueError(
-                    "self.mask_data is None. Cannot retrieve mask path by index.")
-       
         for dataset_id, sample_id in self.indices[:10]:
 
-            if self.mask_data is None:
-                raise ValueError(
-                    "self.mask_data is None. Cannot retrieve mask path by index.")
             if self.mask_data is None:
                 raise ValueError(
                     "self.mask_data is None. Cannot retrieve mask path by index.")
@@ -383,15 +374,29 @@ class TiffDatasetLoader(VisionDataset):
         img, mask = self.get_valid_crop(img, mask, threshold=0.8, max_attempts=20)
         img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255
 
-        mask_tensor, weights = self._prepare_mask_and_weights(mask)
-
         img_resized = nn_func.interpolate(img_tensor.unsqueeze(0),
                                         size=(self.img_res, self.img_res),
                                         mode="bicubic",
                                         align_corners=False).squeeze()
+        
+        if self.num_classes > 1:
+            mask_tensor = torch.from_numpy(mask).contiguous() / 255
+        else:
+            unique_vals = np.unique(mask)
+            mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())
+            mask = mask.astype(np.int64)
+            mask_tensor = torch.from_numpy(mask).contiguous()
+
+
         mask_resized = nn_func.interpolate(mask_tensor.unsqueeze(0).unsqueeze(0).float(),
                                         size=(self.img_res, self.img_res),
                                         mode="nearest").squeeze()
+
+        if self.num_classes > 1:
+            if self.ignore_background:
+                mask_resized = (mask_resized * self.num_classes).long() - 1
+            else:
+                mask_resized = (mask_resized * (self.num_classes - 1)).long()
 
         if torch.rand(1).item() < self.p:
             img_resized = torchvision.transforms.functional.hflip(img_resized)
@@ -404,31 +409,12 @@ class TiffDatasetLoader(VisionDataset):
             img_resized, mean=m, std=s).float()
 
         if self.num_classes > 1:
-            if self.ignore_background:
-                mask_resized = (mask_resized * self.num_classes).long() - 1
-            else:
-                mask_resized = (mask_resized * (self.num_classes - 1)).long()
+            weights = self._weights_calc(mask)
+        else:
+            weights = torch.zeros(self.num_classes)
 
         return img_normalized, mask_resized, weights
 
-    def _prepare_mask_and_weights(self, mask):
-        """
-        Prepares the mask tensor and class weights based on the number of classes.
-        Args:
-            mask (np.array): The segmentation mask.
-            Returns:
-                tuple: A tuple containing the mask tensor and class weights.
-        """
-        if self.num_classes > 1:
-            mask_tensor = torch.from_numpy(mask).contiguous() / 255
-            weights = self._weights_calc(mask)
-        else:
-            unique_vals = np.unique(mask)
-            mask = (mask - unique_vals.min()) / (unique_vals.max() - unique_vals.min())
-            mask = mask.astype(np.int64)
-            mask_tensor = torch.from_numpy(mask).contiguous()
-            weights = torch.zeros(self.num_classes)
-        return mask_tensor, weights
 
     def _get_mean_std(self, dataset_id):
         """
