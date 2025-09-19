@@ -138,12 +138,11 @@ MENUS = {
 
 # Code colors & prefixes for display
 DISPLAY_COLORS = {
-    'error':   (204,  51,  0, "[X] "), # Red
-    'warning': (204, 204,  0, "[!] "), # Orange
-    'input':   (153, 204, 51, "[?] "), # Light Green
-    'ok':      (51, 153,  0, "[√] "), # Green
-    'babye':   (255, 16, 240, "[<3] "), # Green
-
+    'error':   (204,  51,  0,  "[X] "),   # Red
+    'warning': (204, 204,  0,  "[!] "),   # Orange
+    'input':   (153, 204, 51,  "[?] "),   # Light Green
+    'ok':      ( 51, 153,  0,  "[√] "),   # Green
+    'babye':   (255,  16, 240, "[<3] "),  # Pink
 }
 
 # Default mean and standard deviation for Json generation

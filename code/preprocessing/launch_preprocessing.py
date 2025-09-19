@@ -155,7 +155,7 @@ class LaunchPreprocessing:
             data_dir = Path(data_dir)
 
         # 2) Choose percentage
-        if vf.answer_yes_or_no("Do you want to use all the data to generate data statistics ?"):
+        if vf.answer_yes_or_no("Do you want to use all the data to generate data statistics"):
             percentage_to_process = 1.0
         else:
             prompt = "Please enter a percentage between 1 and 100"
@@ -187,7 +187,7 @@ class LaunchPreprocessing:
 
             if not tif_files:
                 self.display.print(f"No tif files in {sub.name}/images", colors["error"])
-                continue
+                return
 
             valid_subfolders.append(sub.name)
 

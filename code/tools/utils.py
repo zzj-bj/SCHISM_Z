@@ -255,7 +255,7 @@ def load_data_stats(
 
     # 1) File exists?
     if not json_path.is_file():
-        if answer_yes_or_no("data_stats.json not found; generate a new one?"):
+        if answer_yes_or_no("data_stats.json not found; generate a new one"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
@@ -272,7 +272,7 @@ def load_data_stats(
         raw = json.loads(raw_text)
     except json.JSONDecodeError as e:
         display.print(f"JSON parse error: {e}", ct.DISPLAY_COLORS["error"])
-        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json?"):
+        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
@@ -289,7 +289,7 @@ def load_data_stats(
     if errors:
         for err in errors:
             display.print(f"Schema error: {err.message}", ct.DISPLAY_COLORS["error"])
-        if answer_yes_or_no("Schema invalid; regenerate data_stats.json?"):
+        if answer_yes_or_no("Schema invalid; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
@@ -313,9 +313,12 @@ def load_data_stats(
     # 5) Check for missing subfolders — **use data_dir**, not dir!
     subfolders = [d.name for d in Path(data_dir).iterdir() if d.is_dir()]
     missing = [d for d in subfolders if d not in data_stats]
+
     if missing:
-        display.print(f"Datasets without stats: {missing}", ct.DISPLAY_COLORS["warning"])
-        if answer_yes_or_no("Generate updated data_stats.json including them?"):
+        s = 's' if len(missing) > 1 else ''
+        display.print(f"Dataset{s} without stats: {', '.join(missing)}",
+                       ct.DISPLAY_COLORS["warning"])
+        if answer_yes_or_no("Generate updated data_stats.json including them"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
