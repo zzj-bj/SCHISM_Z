@@ -10,6 +10,11 @@
 2. Navigate to the cloned directory via a terminal prompt: ```cd <some path> SCHISM/garvis```
 3. Install the Streamlit library: ```pip install streamlit```
 
+## 🧰 Prerequisites
+1. Python 3.12.10
+2. [Streamlit](https://streamlit.io/) (UI)
+3. OpenAI API Key
+
 ## :question: How to use?
 
 GARVIS offer a web interface to generate an INI file.
@@ -21,3 +26,45 @@ GARVIS offer a web interface to generate an INI file.
 4. Click the "Generate INI" button.
 5. And double-check the generated .ini file on the right-hand side.
 
+
+## 🖼️ Preview
+Here is an example of GARVIS running in Streamlit
+
+![GARVIS UI Screenshot]()
+
+## :scroll: .ini configuration file
+
+Below is an example of an `.ini` configuration file. For detailed explanations of the network settings and the full INI specification, see the [INI file documentation](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
+
+```
+[Model]
+n_block=4
+channels=8
+num_classes=3
+model_type=UnetSegmentor
+k_size=3
+activation=leakyrelu
+ 
+[Optimizer]
+optimizer=Adam
+lr=0.01
+
+[Scheduler]
+scheduler = ConstantLR
+
+[Loss]
+loss= CrossEntropyLoss
+ignore_background=True
+weights=True
+
+[Training]
+batch_size=4
+val_split=0.8
+epochs=50
+metrics=Jaccard, ConfusionMatrix
+ 
+[Data]
+crop_size=128
+img_res=560
+num_samples=7000
+```

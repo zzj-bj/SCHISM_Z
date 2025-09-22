@@ -9,24 +9,24 @@ from utils_gen import estimate_call_cost
 
 def openai_ask_requests(messages, model="gpt-4o", response_format=None):
  
-	url = "https://api.openai.com/v1/chat/completions"
-    #url = f"https://cld.akkodis.com/api/openai/deployments/models-{model}/chat/completions?api-version=2024-12-01-preview"
-	headers = {
-		"Content-Type": "application/json",
-		"Cache-Control": "no-cache",
-		"api-key": f"Bearer {st.session_state.get('API_key')}"
-	}
+    url = f"https://cld.akkodis.com/api/openai/deployments/models-{model}/chat/completions?api-version=2024-12-01-preview"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+        "api-key": f"Bearer {st.session_state.get('API_key')}"
+    }
  
-	data = {
-		"temperature": 0.01,
-		"max_tokens": 10000,
-		"messages": messages
-	}
+    data = {
+        "temperature": 0.01,
+        "max_tokens": 10000,
+        "messages": messages
+    }
  
-	if response_format is not None:
-		data["response_format"] = response_format
-	response = requests.post(url, headers=headers, json=data).json()
-	return response['choices'][0]['message']['content']
+    if response_format is not None:
+        data["response_format"] = response_format
+    response = requests.post(url, headers=headers, json=data).json()
+    return response['choices'][0]['message']['content']
 
 def fetch_and_parse_docs(url):
       # Convert GitHub URL to raw URL if necessary.
