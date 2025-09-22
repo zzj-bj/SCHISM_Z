@@ -16,7 +16,7 @@ GARVIS offer a web interface to generate some INI file in case you don't master 
 
 ###General steps
 1. Recover a OpenAI key to run the program. Be careful, we are also using a custom URL, so don't forget to adapt the code at your purpose to run the app.
-2. Open a terminal prompt inside the repository SCHISM, inside hyperparameterGen folder, and run "streamlit run app_streamlit.py.
+2. Open a terminal prompt inside the repository SCHISM, inside hyperparameterGen folder, and run "streamlit run garvis.py".
 3. Fill all the fields (don't forget OpenAI API key).
 4. Click on "Generate INI" to launch the magic. 
 5. Check the result on the right side.
