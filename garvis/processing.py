@@ -9,11 +9,12 @@ from utils_gen import estimate_call_cost
 
 def openai_ask_requests(messages, model="gpt-4o", response_format=None):
  
-	url = f"https://cld.akkodis.com/api/openai/deployments/models-{model}/chat/completions?api-version=2024-12-01-preview"
+	url = "https://api.openai.com/v1/chat/completions"
+    #url = f"https://cld.akkodis.com/api/openai/deployments/models-{model}/chat/completions?api-version=2024-12-01-preview"
 	headers = {
 		"Content-Type": "application/json",
 		"Cache-Control": "no-cache",
-		"api-key": st.session_state.get('API_key')
+		"api-key": f"Bearer {st.session_state.get('API_key')}"
 	}
  
 	data = {
