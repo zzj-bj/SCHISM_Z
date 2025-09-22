@@ -300,46 +300,58 @@ def determine_component_choice_O_S_L(user_input, available_options, doc_section,
 
 def determine_component_choice_training(user_input, available_options, doc_section, knowledge_base, part):
     """
-    Determines the best matching option for optimizer/scheduler/loss configurations.
-    Uses LLM to infer the best choice, especially when the user is vague or ambiguous.
+    Sets the metrics, epochs, batch_size, and other training parameters.
     """
+    user_metric_preference = user_input.get(part, "").strip()
 
-    # First, select the metrics using the user's training input
-    formatted_options = "\n".join(f"- {opt}" for opt in available_options)
-    user_metric_preference = user_input.get(part, "").strip().lower()
+    # === Step 1 : Direct regex matching for explicit metrics
+    explicit_metrics = []
+    for opt in available_options:
+        if re.search(rf"\b{opt}\b", user_metric_preference, re.IGNORECASE):
+            explicit_metrics.append(opt)
 
-    # Traitement explicite de "all"
-    if any(keyword in user_metric_preference for keyword in ["all", "everything", "all metrics", "use them all"]):
+    if explicit_metrics:
+        selected_metrics = ", ".join(explicit_metrics)
+    elif any(k in user_metric_preference.lower() for k in ["all", "everything", "all metrics", "use them all"]):
         selected_metrics = ", ".join(available_options)
     else:
+        # === Step 2 : LLM-based inference
         prompt_metrics = dedent(f"""
         The user is configuring a training setup for a deep learning model.
 
-        Context:
-          - Problem description: {user_input.get("Problematic", "")}
-          - Dataset details: {user_input.get("Data", "")}
-
         Available metrics:
-        {formatted_options}
+        {chr(10).join(f"- {opt}" for opt in available_options)}
 
-        User's training input for metrics:
+        User's input for metrics:
         "{user_input.get(part, "")}"
 
-        Task:
-          - If the user's input explicitly names one or more metrics, return exactly those (preserving casing).
-          - If the user's input is vague or incomplete, select the full list of available metrics.
-
-        Return only a comma-separated list of metric names.
+        STRICT RULES:
+        - If the input names one or more metrics, return only those (matching available options).
+        - If it names none, return the full list.
+        - Output must be comma-separated metrics, nothing else.
         """).strip()
 
         selected_metrics = query_llm_component_choice(prompt_metrics, available_options)
 
-    # Détection des epochs
+        # === Step 3 : final filtering to ensure validity
+        # Keep only valid metrics from available_options
+        filtered = []
+        for metric in [m.strip() for m in selected_metrics.split(",")]:
+            if metric in available_options:
+                filtered.append(metric)
+        selected_metrics = ", ".join(filtered) if filtered else ", ".join(available_options)
+
+    # Epoch detection
     epoch_match = re.search(r"(\d+)\s*epoch", user_input.get("Training", ""), re.IGNORECASE)
     explicit_epochs = int(epoch_match.group(1)) if epoch_match else None
     epoch_instruction = f"The user explicitly requested {explicit_epochs} epochs." if explicit_epochs else "No specific epoch count was mentioned."
 
-    # Prompt final
+    # Detect of batch_size
+    batch_match = re.search(r"batch\s*size\s*=?\s*(\d+)", user_input.get("Training", ""), re.IGNORECASE)
+    explicit_batch_size = int(batch_match.group(1)) if batch_match else None
+    batch_instruction = f"The user explicitly requested batch_size = {explicit_batch_size}." if explicit_batch_size else "No specific batch_size was mentioned."
+
+    # Final prompt [Training]
     prompt_training_ini = dedent(f"""
     Using the following details, generate a valid [Training] section for an INI file. Base your configuration on the user input and best practices.
 
@@ -348,31 +360,28 @@ def determine_component_choice_training(user_input, available_options, doc_secti
       - Dataset details: {user_input.get("Data", "")}
       - Documentation reference: {doc_section}
       - Epoch instruction: {epoch_instruction}
+      - Batch size instruction: {batch_instruction}
 
     Guidelines:
-      1. Batch Size (batch_size):
-         - Infer the batch_size from the dataset size and hardware constraints.
-         - For large datasets (>= 10000 images), choose a larger batch size (e.g., 64).
-         - If the user provided a specific batch_size, use that value.
-         - Also: set a batch_size considering the GPU ram limitation if provided by the user.
-      2. Validation Split (val_split):
-         - Always use val_split = 0.8 unless the user explicitly provides another value.
-      3. Epochs:
-         - Use the epoch value explicitly provided in the training input if present; otherwise, default to 10.
-      4. Early Stopping (early_stopping):
-         - If the epoch count is less than 15, set early_stopping = False.
-         - If epochs is 15 or more (and not overridden by user input), set early_stopping = True.
-      5. Metrics:
-         - Use the following metrics exactly as determined: {selected_metrics}.
+    1. Batch Size (batch_size):
+        - If the user explicitly requested a batch size, use that value: {explicit_batch_size if explicit_batch_size else "none"}.
+        - Otherwise, infer from dataset size and hardware (default = 16).
+    2. Validation Split (val_split):
+        - Always use val_split = 0.8 unless the user explicitly provides another value.
+    3. Epochs:
+        - Use the epoch value explicitly provided in the training input if present; otherwise, default to 10.
+    4. Early Stopping (early_stopping):
+        - If the epoch count is less than 15, set early_stopping = False.
+        - If epochs is 15 or more (and not overridden by user input), set early_stopping = True.
+    5. Metrics:
+        - Use the following metrics exactly as determined: {selected_metrics}.
 
     Task:
-      Generate the [Training] section in valid INI format. Read the user input carefully and apply these rules.
-
-    Output:
-      Return only the [Training] section in INI format. Do not include any additional text.
+      Return only the [Training] section in INI format.
     """).strip()
 
     return query_llm_section(prompt_training_ini).strip()
+
 
 def determine_component_choice_loss(user_input, available_options, knowledge_base, part):
     """
