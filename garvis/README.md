@@ -30,7 +30,8 @@ GARVIS offer a web interface to generate an INI file.
 ## 🖼️ Preview
 Here is an example of GARVIS running in Streamlit
 
-![GARVIS UI Screenshot]()
+<img width="772" height="1227" alt="image" src="https://github.com/user-attachments/assets/1eb132eb-3b91-474c-a67d-aa2433736b81"/>
+
 
 ## :scroll: .ini configuration file
 
