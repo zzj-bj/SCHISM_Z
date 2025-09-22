@@ -14,7 +14,7 @@ def openai_ask_requests(messages, model="gpt-4o", response_format=None):
     headers = {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache",
-        "api-key": f"Bearer {st.session_state.get('API_key')}"
+        "api-key": st.session_state.get('API_key')
     }
  
     data = {
