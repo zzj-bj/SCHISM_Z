@@ -20,3 +20,42 @@ GARVIS offer a web interface to generate some INI file in case you don't master 
 3. Fill all the fields (don't forget OpenAI API key).
 4. Click on "Generate INI" to launch the magic. 
 5. Check the result on the right side.
+
+## :scroll: .ini configuration file
+
+Below is an example of an `.ini` configuration file. For detailed explanations of the network settings and the full INI specification, see the [INI file documentation](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md).
+
+```
+[Model]
+n_block=4
+channels=8
+num_classes=3
+model_type=UnetSegmentor
+k_size=3
+activation=leakyrelu
+ 
+[Optimizer]
+optimizer=Adam
+lr=0.01
+
+[Scheduler]
+scheduler = ConstantLR
+
+[Loss]
+loss= CrossEntropyLoss
+ignore_background=True
+weights=True
+
+[Training]
+batch_size=4
+val_split=0.8
+epochs=50
+metrics=Jaccard, ConfusionMatrix
+ 
+[Data]
+crop_size=128
+img_res=560
+num_samples=7000
+```
+
+
