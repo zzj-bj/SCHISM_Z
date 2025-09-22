@@ -113,13 +113,11 @@ data/  <--- Select this folder for normalisation, training, or inference
 |   └── raw_masks/    # Optional: original, unnormalised masks (renamed after normalisation)    
 ├── dataset_2/
 │   ├── images/
-│   ├── masks/
-│   └── raw_masks/
+│   └── masks/
 ├── ...
 ├── dataset_n/
 │   ├── images/
-│   ├── masks/
-│   └── raw_masks/
+│   └── masks/
 └── data_stats.json   # Optional, generated during JSON creation
 ```
 
