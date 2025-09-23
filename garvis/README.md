@@ -1,5 +1,4 @@
 [GARVIS] stands for _Generative Assistant for Reliable Variables and INI Setup_. This application automatically generates configuration files (.ini) for training segmentation/classification models by combining:
-- Dynamic retrieval of available parameters from the official documentation (.md files)
 - Interpretation of the user’s natural language prompt (e.g., “I want 20 epochs and metrics: Jaccard & Recall”)
 - Automatic generation of a coherent configuration file based on best practices (batch size, early stopping, etc.)
   
@@ -14,7 +13,7 @@
 2. [Streamlit](https://streamlit.io/) (UI)
 3. OpenAI API Key
 
-## :question: How to use?
+## :question: How to use
 
 GARVIS offer a web interface to generate an INI file.
 
