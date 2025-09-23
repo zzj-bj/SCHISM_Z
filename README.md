@@ -9,10 +9,9 @@
 
 1. Clone this repository to your local machine:
    ``` git clone git@github.com:FloFive/SCHISM.git ```
-
-3. Navigate to the cloned directory:
+2. Navigate to the cloned directory:
    ``` cd <some path> SCHISM ```
-3. Install the library (Python 3.9 mini is required)
+3. Install the library (Python 3.12.10 mini is required)
    ``` pip install -e .```
    
 ---
