@@ -21,9 +21,9 @@ GARVIS offer a web interface to generate an INI file.
 ### General steps
 1. Recover an OpenAI key to run the program. :warning: Be careful, as we are using a custom URL: Don't forget to adapt the code to your purpose to run the app. To adjust the API's URL, please check the `openai_as_requests` function from the `processing.py` file, and assign the right URL to the `url` variable.
 2. Open a terminal prompt and navigate to the `SCHISM/garvis` folder, and run `garvis.py`.
-3. Answer all the questions in lay terms and plain English (and don't forget OpenAI API key!).
-4. Click the "Generate INI" button.
-5. And double-check the generated .ini file on the right-hand side.
+3. Answer all the questions in lay terms and plain English (and don't forget [your OpenAI API key](https://platform.openai.com/api-keys)).
+4. Hit the "Generate INI" button.
+5. Double-check the generated `.ini` file on the right-hand panel.
 
 
 ## 🖼️ Preview
