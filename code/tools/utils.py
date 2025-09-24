@@ -255,7 +255,7 @@ def load_data_stats(
 
     # 1) File exists?
     if not json_path.is_file():
-        if answer_yes_or_no("data_stats.json not found; generate a new one?"):
+        if answer_yes_or_no("data_stats.json not found; generate a new one"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
@@ -263,7 +263,7 @@ def load_data_stats(
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 2) Read & parse JSON
@@ -271,8 +271,8 @@ def load_data_stats(
         raw_text = json_path.read_text(encoding="utf-8")
         raw = json.loads(raw_text)
     except json.JSONDecodeError as e:
-        display.print(f"JSON parse error: {e}", ct.DISPLAY_COLORS["error"])
-        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json?"):
+        display.print(f"JSON parse error: {e}", colors["error"])
+        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
@@ -280,7 +280,7 @@ def load_data_stats(
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 3) Schema validation
@@ -288,16 +288,16 @@ def load_data_stats(
     errors = sorted(validator.iter_errors(raw), key=lambda e: e.path)
     if errors:
         for err in errors:
-            display.print(f"Schema error: {err.message}", ct.DISPLAY_COLORS["error"])
-        if answer_yes_or_no("Schema invalid; regenerate data_stats.json?"):
+            display.print(f"Schema error: {err.message}", colors["error"])
+        if answer_yes_or_no("Schema invalid; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
-                append=True,
+                append=False,
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 4) Convert to numpy
@@ -307,15 +307,17 @@ def load_data_stats(
             for key, vals in raw.items()
         }
     except Exception as e:
-        display.print(f"Error converting stats to arrays: {e}", ct.DISPLAY_COLORS["error"])
+        display.print(f"Error converting stats to arrays: {e}", colors["error"])
         return {"default": neutral_stats}
 
     # 5) Check for missing subfolders — **use data_dir**, not dir!
     subfolders = [d.name for d in Path(data_dir).iterdir() if d.is_dir()]
     missing = [d for d in subfolders if d not in data_stats]
+
     if missing:
-        display.print(f"Datasets without stats: {missing}", ct.DISPLAY_COLORS["warning"])
-        if answer_yes_or_no("Generate updated data_stats.json including them?"):
+        display.print(f"Dataset{'s' if len(missing) > 1 else ''} without stats: {', '.join(missing)}",
+                       colors["warning"])
+        if answer_yes_or_no("Generate updated data_stats.json including them"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
@@ -323,7 +325,7 @@ def load_data_stats(
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 6) Success
