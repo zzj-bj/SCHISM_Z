@@ -40,13 +40,15 @@ class ImageNormalizer:
                  if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
         errors: List[Tuple[str, str]] = []
 
+        folder = self.input_path.split(os.sep)[-2]
+ 
         pbar = tqdm(
             files,
             ncols=ct.TQDM_NCOLS,
             bar_format="{desc}: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%"
         )
         for filename in pbar:
-            pbar.set_description(f"Normalising {filename}")
+            pbar.set_description(f"{folder} : {filename}")
 
             file = os.path.join(self.input_path, filename)
 

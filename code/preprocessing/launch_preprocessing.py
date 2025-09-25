@@ -125,7 +125,7 @@ class LaunchPreprocessing:
 
         # b) Adapt reference image path if needed
         if not ref_img_path is None:
-            ref_img_path = os.path.join(raw_images, ref_img_name)    
+            ref_img_path = os.path.join(raw_images, ref_img_name)
 
         # c) Recreate images directory
         sequence_dir.mkdir(exist_ok=True)
@@ -135,7 +135,8 @@ class LaunchPreprocessing:
             input_path=raw_images,
             output_path=sequence_dir
         )
-        auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode, ref_img_path=ref_img_path)
+        auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode,
+                                                       ref_img_path=ref_img_path)
 
     def launch_json_generation(self,
         data_dir: str | None = None,
