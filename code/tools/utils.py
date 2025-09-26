@@ -8,6 +8,7 @@ Collection of non-specific functions used in the program.
 import json
 import os
 import sys
+import re
 import traceback
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -237,6 +238,35 @@ def print_box(text: str) -> None:
     print(f"╔{'═' * (box_width)}╗")
     print(f"║{text.center(box_width)}║")
     print(f"╚{'═' * (box_width)}╝")
+
+
+def split_string(s):
+    """
+    Splits a string into two parts: letters (and underscores) and digits.
+
+    This function takes a string that contains a sequence of letters (and underscores) 
+    followed by a sequence of digits, and returns a tuple containing the letters (and underscores) 
+    and the digits as separate strings.
+
+    Parameters:
+    s (str): The input string to be split. It should be in the format of letters (and underscores) 
+              followed by digits (e.g., 'abc_def123').
+
+    Returns:
+    tuple: A tuple containing two elements:
+        - The first element is a string of letters (and underscores).
+        - The second element is a string of digits.
+    
+    If the input string does not match the expected format, the function returns None.
+
+    """
+    match = re.match(r'([a-zA-Z_]+)([0-9]+)', s)
+    if match:
+        return match.groups()
+    else:
+        return None
+
+
 
 
 def load_data_stats(

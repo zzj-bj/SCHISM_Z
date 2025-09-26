@@ -19,6 +19,7 @@ from tqdm import tqdm
 # Local application imports
 from tools.constants import IMAGE_EXTENSIONS, TQDM_NCOLS, DISPLAY_COLORS
 from tools import display_color as dc
+from tools import utils as ut
 
 # =============================================================================
 # pylint: disable=too-few-public-methods
@@ -169,7 +170,15 @@ class BrightnessContrastAdjuster:
 
             # Define full input and output paths
             input_image_path = os.path.join(self.input_path, image_name)
-            output_image_path = os.path.join(self.output_path, image_name)
+
+            name, extension = os.path.splitext(image_name)
+            split_name_parts = ut.split_string(name)
+            if split_name_parts:
+                new_name = f"{split_name_parts[0]}_adjusted_{split_name_parts[1]}{extension}"
+            else:
+                new_name = image_name
+            output_image_path = os.path.join(self.output_path, new_name)
+
 
             # If "per_image" mode → compute LUT separately for each image
             if hmin_hmax_mode == "per_image":

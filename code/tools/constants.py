@@ -72,7 +72,7 @@ LOGO_OUT = """
 True  : The full error message is displayed.
 False : The error message is displayed in a concise format.
 """
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 # number of DataLoader workers
 NUM_WORKERS: int = max(1, cpu_count() // 2)
@@ -142,7 +142,7 @@ DISPLAY_COLORS = {
     'warning': (204, 204,  0,  "[!] "),   # Orange
     'input':   (153, 204, 51,  "[?] "),   # Light Green
     'ok':      ( 51, 153,  0,  "[√] "),   # Green
-    'babye':   (255,  16, 240, "[<3] "),  # Pink
+    'babye':   (255,  16, 240, "[<3] "),  # Purple
 }
 
 # Default mean and standard deviation for Json generation

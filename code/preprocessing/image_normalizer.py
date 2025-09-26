@@ -18,6 +18,7 @@ from PIL import Image
 
 # Local application imports
 from tools import display_color as dc
+from tools import utils as ut
 import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
@@ -74,7 +75,14 @@ class ImageNormalizer:
 
                 # Save the normalized image
                 name, ext = os.path.splitext(os.path.basename(file))
-                normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
+                res = ut.split_string(name)
+
+                # Insert _normalized_
+                if res:
+                    new_name = f"{res[0]}_normalized_{res[1]}"
+                else:
+                    new_name = name
+                normalized_image.save(os.path.join(self.output_path,  f"{new_name}{ext}"))
 
             except (IOError, ValueError) as e:
                 # collect the filename and the short reason
