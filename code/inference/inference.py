@@ -229,7 +229,7 @@ class Inference:
                 bar_format="Inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                 unit="Images",
                 position=0,
-                leave=False,
+                leave=True,
                 ncols=ct.TQDM_NCOLS,             
                 dynamic_ncols=False,
           ) as pbar:
