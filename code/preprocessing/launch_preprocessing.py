@@ -141,6 +141,7 @@ class LaunchPreprocessing:
     def launch_json_generation(self,
         data_dir: str | None = None,
         file_name_report: str | None = None,
+        missing_subfolders: str | None = None,
         append: bool = False
     ) -> None:
         """
@@ -196,13 +197,20 @@ class LaunchPreprocessing:
             self.display.print("No valid subfolders found for JSON generation", colors["error"])
             return
 
-        # 5) Launch generation
+
+        # 5) Checking for missing subfolders
+        if missing_subfolders is None:
+            val_subfolders = valid_subfolders
+        else:
+            val_subfolders = missing_subfolders
+
+        # 6) Launch generation
         self.display.print("Starting JSON generation", colors["warning"])
 
         json_generation = json.Json(
             json.JsonConfig(
                 parent_dir=data_dir,
-                subfolders=valid_subfolders,
+                subfolders=val_subfolders,
                 json_file=file_name_report,
                 percentage_to_process=percentage_to_process
             )

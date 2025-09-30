@@ -268,7 +268,6 @@ def split_string(s):
 
 
 
-
 def load_data_stats(
     json_dir: Union[str, Path],
     data_dir: Union[str, Path]
@@ -278,6 +277,7 @@ def load_data_stats(
     2. Check for missing folders
     3. Optionally regenerate JSON
     4. Return data_stats dict (or default)
+    5. Check for missing subfolders
     """
     display = dc.DisplayColor()
     neutral_stats = ct.DEFAULT_MEAN_STD
@@ -289,7 +289,6 @@ def load_data_stats(
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
-                append=False,
             )
             return load_data_stats(json_dir, data_dir)
         else:
@@ -306,7 +305,6 @@ def load_data_stats(
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
-                append=False,
             )
             return load_data_stats(json_dir, data_dir)
         else:
@@ -323,7 +321,6 @@ def load_data_stats(
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
                 file_name_report=str(json_path),
-                append=False,
             )
             return load_data_stats(json_dir, data_dir)
         else:
@@ -350,7 +347,8 @@ def load_data_stats(
         if answer_yes_or_no("Generate updated data_stats.json including them"):
             lp.LaunchPreprocessing().launch_json_generation(
                 data_dir=str(data_dir),
-                file_name_report=str(json_path),
+                file_name_report = str(json_path),
+                missing_subfolders = missing,
                 append=True,
             )
             return load_data_stats(json_dir, data_dir)
