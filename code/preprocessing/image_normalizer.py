@@ -42,7 +42,7 @@ class ImageNormalizer:
         errors: List[Tuple[str, str]] = []
 
         folder = self.input_path.split(os.sep)[-2]
- 
+
         pbar = tqdm(
             files,
             ncols=ct.TQDM_NCOLS,
@@ -90,11 +90,10 @@ class ImageNormalizer:
 
         if errors:
             self.display.print(
-                f"{len(errors)} files failed to normalize. See details below:", 
+                f"{len(errors)} files failed to normalize. See details below:",
                 colors["error"]
             )
             for fname, reason in errors:
                 self.display.print(f"- {fname}: {reason}", colors["error"])
         else:
             self.display.print("All files normalized successfully.", colors["ok"])
-            

@@ -28,8 +28,6 @@ import tools.display_color as dc
 # Initialize colorama
 init(autoreset=True)
 
-display = dc.DisplayColor()
-
 #==============================================================================
 def rgb_to_ansi(rgb: Tuple[int, int, int]) -> str:
     """Convert RGB color to ANSI escape code."""
@@ -54,34 +52,19 @@ def chck_color(color_key: str) -> Tuple[int, int, int]:
     return color
 
 
-def get_path(prompt: str) -> str:
-    """Requests a valid path from the user."""
+def get_path_color(prompt: str, color_key: str = 'input') -> Path:
     display = dc.DisplayColor()
-    while True:
-        path = input(f"[?] {prompt}: ").strip()
-        if os.path.exists(path):
-            return path
-        text = f"Invalid path: {path}. Please try again. {ct.BELL}"
-        display.print(text, colors['error'])
-
-def get_path_color(prompt: str, color_key: str = 'input') -> str:
-    """
-    Requests a valid path from the user.
-    Displays the prompt in the specified color.
-    If the specified color key is invalid, the prompt will be displayed in Light Green.
-    """
-    display = dc.DisplayColor()
-
     color = chck_color(color_key)
     while True:
         # Convert the input color from DISPLAY_COLORS to ANSI
         input_color = rgb_to_ansi(color)
         # Displays the prompt in color
         colored_prompt = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
-        path = input(colored_prompt).strip()
-        if os.path.exists(path):
-            return path
-        text = f"Invalid path: {path}. Please try again."
+        path_input = input(colored_prompt).strip()
+        if os.path.exists(path_input):
+            return Path(path_input)
+
+        text = f"Invalid path: {path_input}. Please try again."
         display.print(text, colors['error'])
 
 def get_file_name_color(prompt: str, color_key: str = 'input') -> str:
@@ -287,7 +270,7 @@ def load_data_stats(
     if not json_path.is_file():
         if answer_yes_or_no("data_stats.json not found; generate a new one"):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report=str(json_path),
             )
             return load_data_stats(json_dir, data_dir)
@@ -303,7 +286,7 @@ def load_data_stats(
         display.print(f"JSON parse error: {e}", colors["error"])
         if answer_yes_or_no("Invalid JSON; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report=str(json_path),
             )
             return load_data_stats(json_dir, data_dir)
@@ -319,7 +302,7 @@ def load_data_stats(
             display.print(f"Schema error: {err.message}", colors["error"])
         if answer_yes_or_no("Schema invalid; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report=str(json_path),
             )
             return load_data_stats(json_dir, data_dir)
@@ -344,9 +327,11 @@ def load_data_stats(
     if missing:
         display.print(f"Dataset{'s' if len(missing) > 1 else ''} without stats: {', '.join(missing)}",
                        colors["warning"])
-        if answer_yes_or_no("Generate updated data_stats.json including them"):
+        plural = "these folders" if len(missing) > 1 else "that folder"
+        prompt = f"Do you want to generate an updated data_stats.json file for {plural}"
+        if answer_yes_or_no(prompt):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report = str(json_path),
                 missing_subfolders = missing,
                 append=True,

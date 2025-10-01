@@ -18,7 +18,7 @@ This module allows for the following operations:
 # Standard library
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 
 # Local application imports
@@ -57,7 +57,7 @@ class LaunchPreprocessing:
                 self.launch_auto_adjust_brightness_contrast()
 
             # **** Json generation ****
-            if choice == 2:
+            elif choice == 2:
                 self.launch_json_generation()
 
             # **** Normalization ****
@@ -118,14 +118,14 @@ class LaunchPreprocessing:
         # a) Rename images → raw_images (only if raw_images doesn’t already exist)
         if os.path.exists(raw_images):
             self.display.print(
-                f"{raw_images} already exists, skipping rename", colors["warning"]
+                f"{raw_images} already exists, using it", colors["warning"]
             )
         else:
             os.rename(sequence_dir, raw_images)
 
         # b) Adapt reference image path if needed
         if not ref_img_path is None:
-            ref_img_path = os.path.join(raw_images, ref_img_name)
+            ref_img_path = os.path.join(str(raw_images), str(ref_img_name))
 
         # c) Recreate images directory
         sequence_dir.mkdir(exist_ok=True)
@@ -133,15 +133,17 @@ class LaunchPreprocessing:
         # 6) Auto brightness/contrast adjustment
         auto_adjuster = brightness_contrast_adjuster.BrightnessContrastAdjuster(
             input_path=raw_images,
-            output_path=sequence_dir
+            output_path=str(sequence_dir)
         )
+        # Ensure ref_img_path is a string
+        ref_img_path_str = str(ref_img_path) if ref_img_path is not None else ""
         auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode,
-                                                       ref_img_path=ref_img_path)
+                                                       ref_img_path=ref_img_path_str)
 
     def launch_json_generation(self,
-        data_dir: str | None = None,
+        data_dir: Optional[Path] = None,
         file_name_report: str | None = None,
-        missing_subfolders: str | None = None,
+        missing_subfolders: Optional[List[str]]  | None = None,
         append: bool = False
     ) -> None:
         """
@@ -165,9 +167,9 @@ class LaunchPreprocessing:
 
         # 3) JSON output path
         if file_name_report is None:
-            file_name_report = data_dir / "data_stats.json"
+            file_name_report = str(data_dir / "data_stats.json")
         else:
-            file_name_report = Path(file_name_report)
+            file_name_report = str(Path(file_name_report))
 
         # 4) Gather subfolder Paths
         subfolders = [p for p in data_dir.iterdir() if p.is_dir()]
@@ -209,7 +211,7 @@ class LaunchPreprocessing:
 
         json_generation = json.Json(
             json.JsonConfig(
-                parent_dir=data_dir,
+                parent_dir=str(data_dir),
                 subfolders=val_subfolders,
                 json_file=file_name_report,
                 percentage_to_process=percentage_to_process
@@ -275,7 +277,7 @@ class LaunchPreprocessing:
             # a) Rename masks → raw_masks (only if raw_masks doesn’t already exist)
             if raw_masks.exists():
                 self.display.print(
-                    f"{sub.name}/raw_masks already exists, skipping rename", colors["warning"]
+                    f"{sub.name}/raw_masks already exists, using it", colors["warning"]
                 )
             else:
                 os.rename(masks_dir, raw_masks)
