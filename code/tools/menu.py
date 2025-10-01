@@ -35,7 +35,9 @@ class Menu :
     """
 
 
-    def __init__(self, selected_menu: str, dynamic_menu: List[str] | None = None, style: str = '') -> None:
+    def __init__(self, selected_menu: str,
+                 dynamic_menu: List[str] | None = None,
+                 style: str = '') -> None:
 
         self.display = dc.DisplayColor()
         self.selected_menu = selected_menu
@@ -46,7 +48,7 @@ class Menu :
         self.unknown_menu = False
         if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
-                text = f" '{self.board[0]}' : Missing menu."
+                text = f" '{self.selected_menu}' : Missing menu."
                 self.display.print(text, colors['error'])
                 sys.exit()
             else:
@@ -104,7 +106,7 @@ class Menu :
         while True:
             try:
                 #  # Convert the input color from DISPLAY_COLORS to ANSI
-                input_color = ut.rgb_to_ansi(color)
+                input_color = ut.rgb_to_ansi(color[:3])
                 # # Displays the prompt in color
                 prompt = "Make your choice"
                 colored_select = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"

@@ -108,7 +108,7 @@ class LaunchTraining:
             if not ok:
                 self.display.print(f"Missing masks for images in {name}: {miss_img}",
                                     colors["error"])
-                self.display.print(f"Missing images for masks in {name}: {miss_msk}", 
+                self.display.print(f"Missing images for masks in {name}: {miss_msk}",
                                    colors["error"])
                 return
 

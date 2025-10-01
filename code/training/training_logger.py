@@ -36,7 +36,7 @@ class TrainingLogger:
     """    
     A class to log training metrics, save hyperparameters, and visualize results.
     """
-    
+
 
     def __init__(self, training_logger_config: TrainingLoggerConfig) -> None:
         self.save_directory = training_logger_config.save_directory
@@ -87,7 +87,7 @@ class TrainingLogger:
         with open(json_file_path, 'w', encoding="utf-8") as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
-        self.display.print(f" Data statistics saved to {json_file_path}", colors['ok'])
+        self.display.print(f"Data statistics saved to {json_file_path}", colors['ok'])
 
     def save_hyperparameters(self) -> None:
         """
@@ -123,7 +123,7 @@ class TrainingLogger:
         with open(ini_file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)
 
-        self.display.print(f" Hyperparameters saved to {ini_file_path}", colors['ok'])
+        self.display.print(f"Hyperparameters saved to {ini_file_path}", colors['ok'])
 
     def save_best_metrics(self,
         loss_dict: Dict[str, Dict[int, float]],
@@ -149,7 +149,7 @@ class TrainingLogger:
                     f.write(f"  - {metric}: {values[epoch - 1]:.4f}\n")
                 f.write("\n" + "-" * 30 + "\n\n")
 
-        self.display.print(f" Validation metrics history saved to {file_path}", colors['ok'])
+        self.display.print(f"Validation metrics history saved to {file_path}", colors['ok'])
 
     def plot_learning_curves(self,
         loss_dict: Dict[str, Dict[int, float]],
@@ -191,7 +191,8 @@ class TrainingLogger:
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
         plt.close()
-        self.display.print(f" Learning curves saved to {self.save_directory}/learning_curves.png", colors['ok'])
+        self.display.print(f"Learning curves saved to {self.save_directory}/learning_curves.png",
+                            colors['ok'])
 
     # pylint: disable=too-many-locals
     def save_confusion_matrix(self,
@@ -258,5 +259,5 @@ class TrainingLogger:
                 os.path.join(self.save_directory, "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            self.display.print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png", colors['ok'])
-    
+            self.display.print(f"Confusion matrix saved to {self.save_directory}/confusion_matrix.png",
+                                colors['ok'])
