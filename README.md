@@ -9,10 +9,9 @@
 
 1. Clone this repository to your local machine:
    ``` git clone git@github.com:FloFive/SCHISM.git ```
-
-3. Navigate to the cloned directory:
+2. Navigate to the cloned directory:
    ``` cd <some path> SCHISM ```
-3. Install the library (Python 3.9 mini is required)
+3. Install the library (Python 3.12.10 mini is required)
    ``` pip install -e .```
    
 ---
@@ -47,8 +46,8 @@ Three available options :
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
     - The dataset directory: Contains one or more datasets. The ordering and sorting of the data are explained [later in this README](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation).
-    - The output folder: This is the workspace where all generated results are stored. After training, it will include the model weights, along with other relevant outputs. Each file within output/ is described in detail [later in this README](https://github.com/FloFive/SCHISM/tree/Pierre_dev?tab=readme-ov-file#-training-output-files). 
-    - The path to the INI file ([described here](https://github.com/FloFive/SCHISM/tree/Pierre_dev?tab=readme-ov-file#scroll-ini-file-setup)).
+    - The output folder: This is the workspace where all generated results are stored. After training, it will include the model weights, along with other relevant outputs. Each file within output/ is described in detail [later in this README](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-training-output-files). 
+    - The path to the INI file ([described here](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#scroll-ini-configuration-file)).
 
 ---
 ### Inference workflow
@@ -113,13 +112,11 @@ data/  <--- Select this folder for normalisation, training, or inference
 |   └── raw_masks/    # Optional: original, unnormalised masks (renamed after normalisation)    
 ├── dataset_2/
 │   ├── images/
-│   ├── masks/
-│   └── raw_masks/
+│   └── masks/
 ├── ...
 ├── dataset_n/
 │   ├── images/
-│   ├── masks/
-│   └── raw_masks/
+│   └── masks/
 └── data_stats.json   # Optional, generated during JSON creation
 ```
 
