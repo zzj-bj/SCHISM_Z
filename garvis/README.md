@@ -38,5 +38,5 @@ The knowledge base provides users with a centralized reference of configurations
 
 On the firlst line of GARVIS, there is a line asking you to enter the path of `Project repository`. You have to enter here the path were there is your knowledge base.
 
-There is also a tool allowing you to generate other random ini files. You can launch the program from terminal with `python generation_multiple.py`. You'll have to choose a path to save new files, then you'll have to run 
+There is also a tool allowing you to generate other random ini files. You can launch the program from terminal with `python generation_multiple.py`. You'll have to choose a path to save new files, then you'll have to choose how much random files you want to create. All files will be generated in a single folder inside choosen path, all named `hyperparameters.ini`. This feature isn't stable for now, feel free to improve this part.
 

@@ -13,6 +13,7 @@ import sys
 import glob
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
+from pathlib import Path
 
 # Third-party
 import numpy as np
@@ -40,7 +41,7 @@ from torchmetrics.classification import (
     BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision,
     BinaryRecall, MulticlassRecall
 )
-from early_stopping_pytorch import EarlyStopping
+from early_stopping_no_save import EarlyStoppingNoSave
 
 # Local application imports
 import tools.utils as ut
@@ -152,7 +153,7 @@ class Training:
         if self.early_stopping:
             patience = int(self.epochs*0.2)
             if patience > 1:
-                self.early_stopping_instance = EarlyStopping(patience=patience, verbose=True, path=Path(self.run_dir))
+                self.early_stopping_instance = EarlyStoppingNoSave(patience=patience, verbose=True)
             else:
                 self.early_stopping=False
                 display = dc.DisplayColor()
