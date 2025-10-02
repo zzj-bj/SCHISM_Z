@@ -32,7 +32,7 @@ optimizer_extra_args = {
               "weight_decay": 0.01, "amsgrad": False, "amsgrad": False},
     "NAdam": {"lr": 0.001, "betas": (0.9, 0.999), "eps": 1e-8,
               "weight_decay": 0.0, "momentum_decay": 0.004},
-    "RAdam": {"lr": 0.001, "betas": (0.9, 0.999), "eps": 1e-8,
+    "RAdam": {"lr": 0.1, "betas": (0.9, 0.999), "eps": 1e-8,
               "weight_decay": 0.0},
 }
 
@@ -48,7 +48,7 @@ scheduler_extra_args = {
                           "cooldown": 2, "min_lr": 1e-6,
                           "eps": 1e-8, "verbose": True},
     "OneCycleLR": {"max_lr": 0.01, "total_steps": 100},
-    "CosineAnnealingWarmRestarts": {"T_0": 10, "T_mult": 2},
+    "CosineAnnealingWarmRestarts": {"T_max": 15},
 }
 
 # Function to force string value
@@ -66,7 +66,7 @@ def answer_yes_or_no(message):
             print(f"incorrect answer !!!")
 
 def ask_int(message, default=None):
-    """Demande un entier avec vérification"""
+    """"Ask for an integer with validation"""
     while True:
         user_input = input(f"[?] {message} : ").strip()
         if not user_input and default is not None:
@@ -82,7 +82,7 @@ def ask_int(message, default=None):
 source_directory = input(f"[?] Enter the directory for hyperparameters files: ").strip()
 nb_batch = ask_int("Enter the number of config file to create", default=5)
 
-# Nom unique basé sur la date/heure
+# Unique name based on date/time
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 final_configs_dir = Path(source_directory) / f"Configs_{timestamp}"
 
@@ -112,10 +112,10 @@ def choose_scheduler(optimizer, epochs):
 def choose_metrics(num_classes):
     all_metrics = ["Accuracy", "F1", "Jaccard", "Precision", "Recall"]
     if num_classes <= 2:
-        # Restreint aux métriques adaptées au binaire
+        # Keep binary metrics
         metrics = ["F1", "Jaccard", "Precision", "Recall"]
     else:
-        # Tous les choix possibles
+        # All possible choices
         metrics = all_metrics
 
     k = random.randint(1, len(metrics))
@@ -129,7 +129,7 @@ def fetch_dynamic_available_opts():
             "DINOv2": "https://raw.githubusercontent.com/FloFive/SCHISM/main/docs/DINOv2.md"
         }
         
-        # === PARAMÈTRES PAR MODÈLE (docs séparées) ===
+        # ===Parameters by model (separate docs)===
         model_params = {}
         for model_name, url in url_map.items():
             try:
@@ -141,7 +141,7 @@ def fetch_dynamic_available_opts():
                     table_text = params_match.group(1)
                     lines = table_text.strip().split('\n')
 
-                    # Extraire uniquement les noms de paramètres de la première colonne
+                    # Extract only parameter names from first column
                     params = []
                     for line in lines:
                         match = re.match(r"\|\s*`([^`]+)`\s*\|", line)
@@ -150,7 +150,7 @@ def fetch_dynamic_available_opts():
 
                     model_params[model_name] = params
             except Exception as e:
-                print(f"[ERREUR] Impossible de charger {model_name} : {e}")
+                print(f"[ERREUR] Unexpected error trying to parse {model_name} : {e}")
         return model_params
 
 def build_model_config(model_type: str, num_classes: int, model_params: dict) -> dict:
@@ -158,13 +158,13 @@ def build_model_config(model_type: str, num_classes: int, model_params: dict) ->
     Construit dynamiquement config["Model"] en fonction des paramètres
     disponibles pour le modèle choisi.
     """
-    # base minimale
+    # minimum required
     config_model = {
         "model_type": model_type,
         "num_classes": str(num_classes),
     }
 
-    # paramètres documentés
+    # documented parameters
     for param in model_params.get(model_type, []):
         if param in config_model:  # déjà défini
             continue
@@ -174,7 +174,7 @@ def build_model_config(model_type: str, num_classes: int, model_params: dict) ->
             "n_block": "4",
             "k_size": "3",
             "activation": "leakyrelu",
-            "channels": "8",
+            "channels": "16",
             "p": "0.5"
         }
         config_model[param] = defaults.get(param, None)  # None si inconnu
@@ -214,8 +214,8 @@ for i in range(1, nb_batch + 1):
     config["Loss"] = {"loss": loss, "ignore_background": "True", "weights": "True"}
 
     config["Training"] = {
-        "batch_size": str(random.choice([4, 8, 16])),
-        "val_split": str(random.choice([0.1, 0.2, 0.3])),
+        "batch_size": "4",
+        "val_split": str(random.choice([0.5, 0.6, 0.7, 0.8, 0.9])),
         "epochs": str(epochs),
         "metrics": ", ".join(metric),
         "early_stopping": "True"

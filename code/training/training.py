@@ -45,6 +45,7 @@ from early_stopping_pytorch import EarlyStopping
 # Local application imports
 import tools.utils as ut
 from tools import display_color as dc
+from tools.constants import DISPLAY_COLORS as colors
 import tools.constants as ct
 from preprocessing import launch_preprocessing as lp
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
@@ -151,12 +152,12 @@ class Training:
         if self.early_stopping:
             patience = int(self.epochs*0.2)
             if patience > 1:
-                self.early_stopping_instance = EarlyStopping(patience=patience, verbose=True)
+                self.early_stopping_instance = EarlyStopping(patience=patience, verbose=True, path=Path(self.run_dir))
             else:
                 self.early_stopping=False
                 display = dc.DisplayColor()
-                display.print("Early stopping has been automatically disabled because the patience value is too low.", ct.colors['warning'])
-                display.print("Training will begin as normal.", ct.colors['warning'])       
+                display.print("Early stopping has been automatically disabled because the patience value is too low.", colors['warning'])
+                display.print("Training will begin as normal.", colors['warning'])       
 
         # Data parameters
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
@@ -383,7 +384,7 @@ class Training:
         except RuntimeError as e:
             dc.DisplayColor().print(
                 f"CUDA error during model initialization: {e}. Falling back to CPU.",
-                ct.colors['warning']
+                colors['warning']
             )
             self.device = 'cpu'
             return model_class(
