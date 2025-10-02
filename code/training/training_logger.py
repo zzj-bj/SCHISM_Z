@@ -17,8 +17,8 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import tools.constants as ct
 from tools import display_color as dc
-from tools.constants import DISPLAY_COLORS as colors
 
 @dataclass
 # pylint: disable=too-many-instance-attributes
@@ -87,43 +87,46 @@ class TrainingLogger:
         with open(json_file_path, 'w', encoding="utf-8") as json_file:
             json.dump(data_stats_serializable, json_file, indent=4)
 
-        self.display.print(f" Data statistics saved to {json_file_path}", colors['ok'])
+        self.display.print(f" Data statistics saved to {json_file_path}", ct.colors['ok'])
 
-    def save_hyperparameters(self) -> None:
+    def save_hyperparameters(
+            self, 
+            loss_dict: Dict[str, Dict[int, float]] = None, 
+            metrics_dict: Dict[str, Dict[str, List[float]]] = None
+            ) -> None:
         """
         Saves hyperparameters to an INI file.
         """
         config = configparser.ConfigParser()
 
-        config.add_section('Model')
-        for key, value in self.model_params.items():
-            config.set('Model', key, str(value))
+        sections = {
+            'Model': self.model_params,
+            'Optimizer': self.optimizer_params,
+            'Scheduler': self.scheduler_params,
+            'Loss': self.loss_params,
+            'Training': self.training_params,
+            'Data': self.data,
+        }
 
-        config.add_section('Optimizer')
-        for key, value in self.optimizer_params.items():
-            config.set('Optimizer', key, str(value))
+        for section, params in sections.items():
+            config.add_section(section)
+            for key, value in params.items():
+                config.set(section, key, str(value))
+        
+        if ct.AUGMENTED_HYPERPARAMETERS and loss_dict and metrics_dict:
+            config.add_section('Results')
+            for metric, values in metrics_dict['val'].items():
+                best_value = max(values)
+                config.set('Results', f'Best_{metric}', f"{best_value:.4f}")
+            lowest_loss = min(loss_dict['val'].values())
+            config.set('Results', 'Lowest_Loss', f"{lowest_loss:.4f}")
 
-        config.add_section('Scheduler')
-        for key, value in self.scheduler_params.items():
-            config.set('Scheduler', key, str(value))
+        ini_file_path = os.path.join(self.save_directory,'augmented_hyperparameters.ini' if ct.AUGMENTED_HYPERPARAMETERS else 'hyperparameters.ini')
 
-        config.add_section('Loss')
-        for key, value in self.loss_params.items():
-            config.set('Loss', key, str(value))
-
-        config.add_section('Training')
-        for key, value in self.training_params.items():
-            config.set('Training', key, str(value))
-
-        config.add_section('Data')
-        for key, value in self.data.items():
-            config.set('Data', key, str(value))
-
-        ini_file_path = os.path.join(self.save_directory, 'hyperparameters.ini')
         with open(ini_file_path, 'w', encoding="utf-8") as configfile:
             config.write(configfile)
 
-        self.display.print(f" Hyperparameters saved to {ini_file_path}", colors['ok'])
+        self.display.print(f" {'augmented_hyperparameters' if ct.AUGMENTED_HYPERPARAMETERS else 'hyperparameters'} saved to {ini_file_path}", ct.colors['ok'])
 
     def save_best_metrics(self,
         loss_dict: Dict[str, Dict[int, float]],
@@ -149,7 +152,7 @@ class TrainingLogger:
                     f.write(f"  - {metric}: {values[epoch - 1]:.4f}\n")
                 f.write("\n" + "-" * 30 + "\n\n")
 
-        self.display.print(f" Validation metrics history saved to {file_path}", colors['ok'])
+        self.display.print(f" Validation metrics history saved to {file_path}", ct.colors['ok'])
 
     def plot_learning_curves(self,
         loss_dict: Dict[str, Dict[int, float]],
@@ -191,7 +194,7 @@ class TrainingLogger:
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
         plt.close()
-        self.display.print(f" Learning curves saved to {self.save_directory}/learning_curves.png", colors['ok'])
+        self.display.print(f" Learning curves saved to {self.save_directory}/learning_curves.png", ct.colors['ok'])
 
     # pylint: disable=too-many-locals
     def save_confusion_matrix(self,
@@ -258,5 +261,5 @@ class TrainingLogger:
                 os.path.join(self.save_directory, "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            self.display.print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png", colors['ok'])
+            self.display.print(f" Confusion matrix saved to {self.save_directory}/confusion_matrix.png", ct.colors['ok'])
     

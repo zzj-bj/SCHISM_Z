@@ -45,8 +45,7 @@ from early_stopping_pytorch import EarlyStopping
 # Local application imports
 import tools.utils as ut
 from tools import display_color as dc
-from tools.constants import DISPLAY_COLORS as colors
-from tools.constants import NUM_WORKERS
+import tools.constants as ct
 from preprocessing import launch_preprocessing as lp
 from AI.tiffdatasetloader import TiffDatasetLoader, TiffDatasetLoaderConfig
 from tools.paramconverter import ParamConverter
@@ -156,8 +155,8 @@ class Training:
             else:
                 self.early_stopping=False
                 display = dc.DisplayColor()
-                display.print("Early stopping has been automatically disabled because the patience value is too low.", colors['warning'])
-                display.print("Training will begin as normal.", colors['warning'])       
+                display.print("Early stopping has been automatically disabled because the patience value is too low.", ct.colors['warning'])
+                display.print("Training will begin as normal.", ct.colors['warning'])       
 
         # Data parameters
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
@@ -384,7 +383,7 @@ class Training:
         except RuntimeError as e:
             dc.DisplayColor().print(
                 f"CUDA error during model initialization: {e}. Falling back to CPU.",
-                colors['warning']
+                ct.colors['warning']
             )
             self.device = 'cpu'
             return model_class(
@@ -541,14 +540,14 @@ class Training:
 
         train_loader = DataLoader(train_dataset, 
                                 batch_size=self.batch_size,
-                                num_workers = NUM_WORKERS, 
+                                num_workers = ct.NUM_WORKERS, 
                                 shuffle = True, 
                                 drop_last = True,
                                 pin_memory = pin_mem)
         val_loader =  DataLoader(val_dataset, 
                                 batch_size = self.batch_size,
                                 shuffle = False, 
-                                num_workers= NUM_WORKERS, 
+                                num_workers= ct.NUM_WORKERS, 
                                 drop_last = True,
                                 pin_memory = pin_mem)
         test_loader =  DataLoader(test_dataset, 
@@ -779,6 +778,8 @@ class Training:
         self.logger.plot_learning_curves(loss_dict=loss_dict,
                                          metrics_dict=metrics_dict)
         self.logger.save_hyperparameters()
+        if ct.AUGMENTED_HYPERPARAMETERS:
+            self.logger.save_hyperparameters(loss_dict=loss_dict, metrics_dict=metrics_dict)
         self.logger.save_data_stats(
             self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:

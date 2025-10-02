@@ -74,6 +74,13 @@ False : The error message is displayed in a concise format.
 """
 DEBUG_MODE = True
 
+# Augmented hyperparameters
+"""
+True  : A new augmented hyperparameters file is generated for each training.
+False : Work as usual
+"""
+AUGMENTED_HYPERPARAMETERS = True
+
 # number of DataLoader workers
 NUM_WORKERS: int = max(1, cpu_count() // 2)
 
