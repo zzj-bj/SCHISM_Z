@@ -82,7 +82,7 @@ class Inference:
         self.data_stats = ut.load_data_stats(self.run_dir, self.data_dir)
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
-               
+
     def initialize_model(self) -> torch.nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
@@ -202,9 +202,9 @@ class Inference:
             pin_mem = torch.cuda.is_available()
         except Exception:
             pin_mem = False
-        
-        return DataLoader(dataset, 
-                          batch_size=1, 
+
+        return DataLoader(dataset,
+                          batch_size=1,
                           num_workers=NUM_WORKERS,
                           shuffle=False,
                           pin_memory=pin_mem)
@@ -218,19 +218,19 @@ class Inference:
         """
 
         try:
-             self.model = self.initialize_model()
+            self.model = self.initialize_model()
         except (ValueError, FileNotFoundError, RuntimeError) as e:
-             self.display.print(str(e), colors["error"])
-             return
+            self.display.print(str(e), colors["error"])
+            return
 
         dataloader = self.load_dataset()
 
-        with tqdm(total=len(dataloader), 
+        with tqdm(total=len(dataloader),
                 bar_format="Inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                 unit="Images",
                 position=0,
                 leave=True,
-                ncols=ct.TQDM_NCOLS,             
+                ncols=ct.TQDM_NCOLS,
                 dynamic_ncols=False,
           ) as pbar:
 

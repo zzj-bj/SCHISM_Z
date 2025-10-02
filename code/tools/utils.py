@@ -327,7 +327,7 @@ def load_data_stats(
     if missing:
         display.print(f"Dataset{'s' if len(missing) > 1 else ''} without stats: {', '.join(missing)}",
                        colors["warning"])
-        plural = "these folders" if len(missing) > 1 else "that folder"
+        plural = "these folders" if len(missing) > 1 else "this folder"
         prompt = f"Do you want to generate an updated data_stats.json file for {plural}"
         if answer_yes_or_no(prompt):
             lp.LaunchPreprocessing().launch_json_generation(

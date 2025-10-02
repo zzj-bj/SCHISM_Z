@@ -83,8 +83,8 @@ class LaunchPreprocessing:
             return
 
         # 2) Select the hmin/hmax calculation mode used in auto brightness/contrast adjustment:
-        # - "ref image": the reference image is used for reference to defines hmin/hmax for all images
-        # - "per image": each image calculates its own hmin/hmax
+        # - ref image: the reference image is used for reference to defines hmin/hmax for all images
+        # - per image: each image calculates its own hmin/hmax
         prompt = "Select the calculation mode of hmin/hmax\n" \
                 " (r)ef image / (p)er image "
         hmin_hmax_calc_mode = vf.get_hmin_hmax_calc_mode(prompt)
@@ -118,7 +118,8 @@ class LaunchPreprocessing:
         # a) Rename images → raw_images (only if raw_images doesn’t already exist)
         if os.path.exists(raw_images):
             self.display.print(
-                f"{raw_images} already exists, using it", colors["warning"]
+                f"Path {raw_images} already exists. Reusing the existing resource",
+                  colors["warning"]
             )
         else:
             os.rename(sequence_dir, raw_images)
@@ -277,7 +278,8 @@ class LaunchPreprocessing:
             # a) Rename masks → raw_masks (only if raw_masks doesn’t already exist)
             if raw_masks.exists():
                 self.display.print(
-                    f"{sub.name}/raw_masks already exists, using it", colors["warning"]
+                    f"{sub.name}/raw_masks already exists. Reusing the existing resource",
+                      colors["warning"]
                 )
             else:
                 os.rename(masks_dir, raw_masks)
