@@ -122,7 +122,11 @@ class Training:
         
         # Model parameters
         self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.num_classes = self.param_converter._convert_param(self.model_params.get('num_classes', 3))
+        num_classes_param = self.param_converter._convert_param(self.model_params.get('num_classes', 3))
+        if isinstance(num_classes_param, (int, float, str)):
+            self.num_classes = int(num_classes_param)
+        else:
+            raise ValueError(f"Invalid type for num_classes: {type(num_classes_param)}. Expected int, float, or str.")
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
@@ -151,11 +155,14 @@ class Training:
         self.early_stopping = self.param_converter._convert_param(self.training_params.get('early_stopping', "False"))
         self.metrics_str = self.param_converter._convert_param(self.training_params.get('metrics', ''))
         if self.early_stopping:
-            patience = int(self.epochs*0.2)
+            if isinstance(self.epochs, (int, float)):
+                patience = int(float(self.epochs) * 0.2)
+            else:
+                raise ValueError(f"'epochs' must be an int or float, got {type(self.epochs)}: {self.epochs}")
             if patience > 1:
                 self.early_stopping_instance = EarlyStopping(patience=patience, verbose=True)
             else:
-                self.early_stopping=False
+                self.early_stopping = False
                 display = dc.DisplayColor()
                 display.print("Early stopping has been automatically disabled because the patience value is too low.", colors['warning'])
                 display.print("Training will begin as normal.", colors['warning'])       
@@ -228,9 +235,14 @@ class Training:
         }
 
         # Parse metrics from string input or use default
-        self.metrics = [metric.strip()
-                        for metric
-                        in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+        if isinstance(self.metrics_str, str):
+            self.metrics = [metric.strip() for metric in self.metrics_str.split(',')]
+        elif isinstance(self.metrics_str, (list, tuple)):
+            self.metrics = [str(metric).strip() for metric in self.metrics_str]
+        elif self.metrics_str:
+            self.metrics = [str(self.metrics_str).strip()]
+        else:
+            self.metrics = ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
@@ -458,6 +470,8 @@ class Training:
         img_data = {}
         mask_data = {}
         num_sample_per_subfolder = {}
+        if self.data_dir is None:
+            raise ValueError("The 'data_dir' attribute must be set to a valid path before loading data stats.")
         data_stats = ut.load_data_stats(self.data_dir, self.data_dir)
 
         if not self.subfolders or not isinstance(self.subfolders, list):
@@ -606,7 +620,7 @@ class Training:
         best_val_loss = float("inf")
         best_val_metrics = {metric: 0.0 for metric in display_metrics}
 
-        for epoch in range(1, self.epochs + 1):
+        for epoch in range(1, int(self.epochs) + 1):
 
             ut.print_box(f"Epoch {epoch}/{self.epochs}")
             epoch_val_loss = None if self.early_stopping else None

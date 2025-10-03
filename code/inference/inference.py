@@ -62,14 +62,22 @@ class Inference:
     def __init__(self, **kwargs: Any) -> None:
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.data_dir = Path(kwargs.get('data_dir'))
-        self.run_dir = Path(kwargs.get('run_dir'))
+        data_dir = kwargs.get('data_dir')
+        if data_dir is None:
+            raise ValueError("The 'data_dir' argument must be provided and not None.")
+        self.data_dir = Path(data_dir)
+        run_dir = kwargs.get('run_dir')
+        if run_dir is None:
+            raise ValueError("The 'run_dir' argument must be provided and not None.")
+        self.run_dir = Path(run_dir)
         self.hyperparameters = kwargs.get('hyperparameters')
         self.metric = kwargs.get('selected_metric')
         self.subfolders = kwargs.get('subfolders')
         self.display = dc.DisplayColor()
 
         # Extract category-wise parameters
+        if self.hyperparameters is None:
+            raise ValueError("The 'hyperparameters' argument must be provided and not None.")
         self.model_params = self.hyperparameters.get_parameters()['Model']
         self.data_params = self.hyperparameters.get_parameters()['Data']
         self.train_params = self.hyperparameters.get_parameters()['Training']

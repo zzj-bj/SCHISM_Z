@@ -191,7 +191,7 @@ class TrainingLogger:
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
         plt.close()
-        self.display.print(f"Learning curves saved to {self.save_directory}/learning_curves.png",
+        self.display.print(f"Learning curves saved to {self.save_directory}\\learning_curves.png",
                             colors['ok'])
 
     # pylint: disable=too-many-locals
@@ -259,5 +259,5 @@ class TrainingLogger:
                 os.path.join(self.save_directory, "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            self.display.print(f"Confusion matrix saved to {self.save_directory}/confusion_matrix.png",
+            self.display.print(f"Confusion matrix saved to {self.save_directory}\\confusion_matrix.png",
                                 colors['ok'])

@@ -118,7 +118,7 @@ class LaunchPreprocessing:
         # a) Rename images → raw_images (only if raw_images doesn’t already exist)
         if os.path.exists(raw_images):
             self.display.print(
-                f"Path {raw_images} already exists. Reusing the existing resource",
+                f"Path {raw_images} already exists, reusing the existing resource",
                   colors["warning"]
             )
         else:
@@ -278,7 +278,7 @@ class LaunchPreprocessing:
             # a) Rename masks → raw_masks (only if raw_masks doesn’t already exist)
             if raw_masks.exists():
                 self.display.print(
-                    f"{sub.name}/raw_masks already exists. Reusing the existing resource",
+                    f"{sub.name}/raw_masks already exists, reusing the existing resource",
                       colors["warning"]
                 )
             else:
