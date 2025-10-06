@@ -108,7 +108,7 @@ class LaunchTraining:
             if not ok:
                 self.display.print(f"Missing masks for images in {name}: {miss_img}",
                                     colors["error"])
-                self.display.print(f"Missing images for masks in {name}: {miss_msk}", 
+                self.display.print(f"Missing images for masks in {name}: {miss_msk}",
                                    colors["error"])
                 return
 
@@ -121,20 +121,21 @@ class LaunchTraining:
         self.display.print("Starting training", colors["warning"])
 
         try:
-
             trainer = Training(
                 data_dir=str(data_dir),
                 subfolders=valid_subfolders,
                 run_dir=str(run_dir),
                 hyperparameters=hyperparameters,
             )
+        except Exception :
+            ut.format_and_display_error('Training Loader')
+            return
 
+        try:
             trainer.load_segmentation_data()
             trainer.train()
-
         except Exception :
             ut.format_and_display_error('Training')
-
             return
 
         self.display.print("Training completed", colors["ok"])

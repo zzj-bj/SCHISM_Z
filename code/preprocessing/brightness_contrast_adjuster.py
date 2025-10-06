@@ -19,6 +19,7 @@ from tqdm import tqdm
 # Local application imports
 from tools.constants import IMAGE_EXTENSIONS, TQDM_NCOLS, DISPLAY_COLORS
 from tools import display_color as dc
+from tools import utils as ut
 
 # =============================================================================
 # pylint: disable=too-few-public-methods
@@ -70,8 +71,7 @@ class BrightnessContrastAdjuster:
         hmin, hmax = self.DEFAULT_HMIN, self.DEFAULT_HMAX
 
         # Find hmin
-        for i in range(len(hist)):
-            count = hist[i]
+        for i, count in enumerate(hist):
             if count > limit:
                 count = 0
             if count > threshold:
@@ -79,7 +79,7 @@ class BrightnessContrastAdjuster:
                 break
 
         # Find hmax
-        for i in range(len(hist) - 1, -1, -1):
+        for i in reversed(range(len(hist))):
             count = hist[i]
             if count > limit:
                 count = 0
@@ -169,7 +169,15 @@ class BrightnessContrastAdjuster:
 
             # Define full input and output paths
             input_image_path = os.path.join(self.input_path, image_name)
-            output_image_path = os.path.join(self.output_path, image_name)
+
+            name, extension = os.path.splitext(image_name)
+            split_name_parts = ut.split_string(name)
+            if split_name_parts:
+                new_name = f"{split_name_parts[0]}_adjusted_{split_name_parts[1]}{extension}"
+            else:
+                new_name = image_name
+            output_image_path = os.path.join(self.output_path, new_name)
+
 
             # If "per_image" mode → compute LUT separately for each image
             if hmin_hmax_mode == "per_image":
@@ -178,6 +186,9 @@ class BrightnessContrastAdjuster:
                     continue
 
             try:
+                if lut is None:
+                    errors.append((image_name, "LUT is None, cannot adjust image"))
+                    continue
                 adjusted_image = self.apply_lut(input_image_path, lut)
                 adjusted_image.save(output_image_path)
             except (IOError, ValueError) as e:

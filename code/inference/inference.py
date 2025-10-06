@@ -33,6 +33,7 @@ from tools import utils as ut
 from tools import display_color as dc
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import NUM_WORKERS
+import tools.constants as ct
 
 # Ensure project root is on the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -61,14 +62,22 @@ class Inference:
     def __init__(self, **kwargs: Any) -> None:
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.data_dir = Path(kwargs.get('data_dir'))
-        self.run_dir = Path(kwargs.get('run_dir'))
+        data_dir = kwargs.get('data_dir')
+        if data_dir is None:
+            raise ValueError("The 'data_dir' argument must be provided and not None.")
+        self.data_dir = Path(data_dir)
+        run_dir = kwargs.get('run_dir')
+        if run_dir is None:
+            raise ValueError("The 'run_dir' argument must be provided and not None.")
+        self.run_dir = Path(run_dir)
         self.hyperparameters = kwargs.get('hyperparameters')
         self.metric = kwargs.get('selected_metric')
         self.subfolders = kwargs.get('subfolders')
         self.display = dc.DisplayColor()
 
         # Extract category-wise parameters
+        if self.hyperparameters is None:
+            raise ValueError("The 'hyperparameters' argument must be provided and not None.")
         self.model_params = self.hyperparameters.get_parameters()['Model']
         self.data_params = self.hyperparameters.get_parameters()['Data']
         self.train_params = self.hyperparameters.get_parameters()['Training']
@@ -81,7 +90,7 @@ class Inference:
         self.data_stats = ut.load_data_stats(self.run_dir, self.data_dir)
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
-               
+
     def initialize_model(self) -> torch.nn.Module:
         """
         Initializes the model based on the specified model type and loads the pre-trained weights.
@@ -201,9 +210,9 @@ class Inference:
             pin_mem = torch.cuda.is_available()
         except Exception:
             pin_mem = False
-        
-        return DataLoader(dataset, 
-                          batch_size=1, 
+
+        return DataLoader(dataset,
+                          batch_size=1,
                           num_workers=NUM_WORKERS,
                           shuffle=False,
                           pin_memory=pin_mem)
@@ -217,20 +226,20 @@ class Inference:
         """
 
         try:
-             self.model = self.initialize_model()
+            self.model = self.initialize_model()
         except (ValueError, FileNotFoundError, RuntimeError) as e:
-             self.display.print(str(e), colors["error"])
-             return
+            self.display.print(str(e), colors["error"])
+            return
 
         dataloader = self.load_dataset()
 
-        with tqdm(total=len(dataloader), 
+        with tqdm(total=len(dataloader),
                 bar_format="Inference : {n_fmt}/{total_fmt} |{bar}| {percentage:6.2f}%",
                 unit="Images",
                 position=0,
-                leave=False,
-                ncols=70,              
-                dynamic_ncols=False, 
+                leave=True,
+                ncols=ct.TQDM_NCOLS,
+                dynamic_ncols=False,
           ) as pbar:
 
             for _, (img, _, img_path) in enumerate(dataloader):

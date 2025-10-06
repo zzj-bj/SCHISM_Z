@@ -8,6 +8,7 @@ Collection of non-specific functions used in the program.
 import json
 import os
 import sys
+import re
 import traceback
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -26,8 +27,6 @@ import tools.display_color as dc
 
 # Initialize colorama
 init(autoreset=True)
-
-display = dc.DisplayColor()
 
 #==============================================================================
 def rgb_to_ansi(rgb: Tuple[int, int, int]) -> str:
@@ -53,34 +52,24 @@ def chck_color(color_key: str) -> Tuple[int, int, int]:
     return color
 
 
-def get_path(prompt: str) -> str:
-    """Requests a valid path from the user."""
-    display = dc.DisplayColor()
-    while True:
-        path = input(f"[?] {prompt}: ").strip()
-        if os.path.exists(path):
-            return path
-        text = f"Invalid path: {path}. Please try again. {ct.BELL}"
-        display.print(text, colors['error'])
-
-def get_path_color(prompt: str, color_key: str = 'input') -> str:
+def get_path_color(prompt: str, color_key: str = 'input') -> Path:
     """
     Requests a valid path from the user.
     Displays the prompt in the specified color.
     If the specified color key is invalid, the prompt will be displayed in Light Green.
     """
     display = dc.DisplayColor()
-
     color = chck_color(color_key)
     while True:
         # Convert the input color from DISPLAY_COLORS to ANSI
         input_color = rgb_to_ansi(color)
         # Displays the prompt in color
         colored_prompt = f"{input_color}[?] {prompt}: {Style.RESET_ALL}"
-        path = input(colored_prompt).strip()
-        if os.path.exists(path):
-            return path
-        text = f"Invalid path: {path}. Please try again."
+        path_input = input(colored_prompt).strip()
+        if os.path.exists(path_input):
+            return Path(path_input)
+
+        text = f"Invalid path: {path_input}. Please try again."
         display.print(text, colors['error'])
 
 def get_file_name_color(prompt: str, color_key: str = 'input') -> str:
@@ -167,8 +156,6 @@ def get_hmin_hmax_calc_mode(message: str, color_key: str = 'input') -> str :
 
 
 
-
-
 def format_and_display_error(texte : str) -> None  :
     """
     Handles errors based on the specified level of detail.   
@@ -178,9 +165,8 @@ def format_and_display_error(texte : str) -> None  :
 
     # Retrieve the type, value, and traceback of the most recent exception
     exc_type, exc_value, exc_traceback = sys.exc_info()
-
+    last_line = str(exc_value).splitlines()[-1]
     tb = traceback.format_exception(exc_type, exc_value, exc_traceback)
-    tb_type = traceback.format_exception_only(exc_type, exc_value)
 
     # Display the error message
     if ct.DEBUG_MODE:
@@ -188,7 +174,7 @@ def format_and_display_error(texte : str) -> None  :
         prompt =  f"{texte} :\n {''.join(tb)}"
     else:
         # Display the type of exception only
-        prompt = f"{texte} :\n {''.join(tb_type)}"
+        prompt = f"{texte} :\n {''.join(last_line)}"
 
     display.print(prompt, colors['error'])
 
@@ -199,7 +185,7 @@ def input_percentage(message: str, color_key: str = 'input') -> float:
     This function returns a real number between 0 and 1
     that corresponds to a percentage.
     """
-    #TODO
+
     display = dc.DisplayColor()
 
     color = chck_color(color_key)
@@ -211,7 +197,6 @@ def input_percentage(message: str, color_key: str = 'input') -> float:
         colored_prompt = f"{input_color}[?] {message} : {Style.RESET_ALL}"
 
         try:
-            # enter = input(colored_prompt).strip()
             value = float(input(colored_prompt).strip())
             if 1 <= value <= 100:
                 return value / 100
@@ -243,6 +228,34 @@ def print_box(text: str) -> None:
     print(f"╚{'═' * (box_width)}╝")
 
 
+def split_string(s):
+    """
+    Splits a string into two parts: letters (and underscores) and digits.
+
+    This function takes a string that contains a sequence of letters (and underscores) 
+    followed by a sequence of digits, and returns a tuple containing the letters (and underscores) 
+    and the digits as separate strings.
+
+    Parameters:
+    s (str): The input string to be split. It should be in the format of letters (and underscores) 
+              followed by digits (e.g., 'abc_def123').
+
+    Returns:
+    tuple: A tuple containing two elements:
+        - The first element is a string of letters (and underscores).
+        - The second element is a string of digits.
+    
+    If the input string does not match the expected format, the function returns None.
+
+    """
+    match = re.match(r'([a-zA-Z_]+)([0-9]+)', s)
+    if match:
+        return match.groups()
+    else:
+        return None
+
+
+
 def load_data_stats(
     json_dir: Union[str, Path],
     data_dir: Union[str, Path]
@@ -252,6 +265,7 @@ def load_data_stats(
     2. Check for missing folders
     3. Optionally regenerate JSON
     4. Return data_stats dict (or default)
+    5. Check for missing subfolders
     """
     display = dc.DisplayColor()
     neutral_stats = ct.DEFAULT_MEAN_STD
@@ -259,15 +273,14 @@ def load_data_stats(
 
     # 1) File exists?
     if not json_path.is_file():
-        if answer_yes_or_no("data_stats.json not found; generate a new one?"):
+        if answer_yes_or_no("data_stats.json not found; generate a new one"):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report=str(json_path),
-                append=False,
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 2) Read & parse JSON
@@ -275,16 +288,15 @@ def load_data_stats(
         raw_text = json_path.read_text(encoding="utf-8")
         raw = json.loads(raw_text)
     except json.JSONDecodeError as e:
-        display.print(f"JSON parse error: {e}", ct.DISPLAY_COLORS["error"])
-        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json?"):
+        display.print(f"JSON parse error: {e}", colors["error"])
+        if answer_yes_or_no("Invalid JSON; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report=str(json_path),
-                append=False,
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 3) Schema validation
@@ -292,16 +304,15 @@ def load_data_stats(
     errors = sorted(validator.iter_errors(raw), key=lambda e: e.path)
     if errors:
         for err in errors:
-            display.print(f"Schema error: {err.message}", ct.DISPLAY_COLORS["error"])
-        if answer_yes_or_no("Schema invalid; regenerate data_stats.json?"):
+            display.print(f"Schema error: {err.message}", colors["error"])
+        if answer_yes_or_no("Schema invalid; regenerate data_stats.json"):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
+                data_dir=Path(data_dir),
                 file_name_report=str(json_path),
-                append=True,
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 4) Convert to numpy
@@ -311,23 +322,28 @@ def load_data_stats(
             for key, vals in raw.items()
         }
     except Exception as e:
-        display.print(f"Error converting stats to arrays: {e}", ct.DISPLAY_COLORS["error"])
+        display.print(f"Error converting stats to arrays: {e}", colors["error"])
         return {"default": neutral_stats}
 
     # 5) Check for missing subfolders — **use data_dir**, not dir!
     subfolders = [d.name for d in Path(data_dir).iterdir() if d.is_dir()]
     missing = [d for d in subfolders if d not in data_stats]
+
     if missing:
-        display.print(f"Datasets without stats: {missing}", ct.DISPLAY_COLORS["warning"])
-        if answer_yes_or_no("Generate updated data_stats.json including them?"):
+        display.print(f"Dataset{'s' if len(missing) > 1 else ''} without stats: {', '.join(missing)}",
+                       colors["warning"])
+        plural = "these folders" if len(missing) > 1 else "this folder"
+        prompt = f"Do you want to generate an updated data_stats.json file for {plural}"
+        if answer_yes_or_no(prompt):
             lp.LaunchPreprocessing().launch_json_generation(
-                data_dir=str(data_dir),
-                file_name_report=str(json_path),
+                data_dir=Path(data_dir),
+                file_name_report = str(json_path),
+                missing_subfolders = missing,
                 append=True,
             )
             return load_data_stats(json_dir, data_dir)
         else:
-            display.print("Using default normalization stats.", ct.DISPLAY_COLORS["warning"])
+            display.print("Using default normalization stats.", colors["warning"])
             return {"default": neutral_stats}
 
     # 6) Success

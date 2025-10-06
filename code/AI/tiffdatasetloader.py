@@ -63,6 +63,7 @@ class TiffDatasetLoader(VisionDataset):
                 all necessary parameters for the dataset loader.
         """
         super().__init__(transforms=None)
+
         self.data_stats = tiff_dataset_loader_config.data_stats
         self.img_data = tiff_dataset_loader_config.img_data
         self.mask_data = tiff_dataset_loader_config.mask_data
@@ -86,19 +87,22 @@ class TiffDatasetLoader(VisionDataset):
         Returns:
             tuple: A tuple containing the height and width of the image.
         """
-        if self.indices is None or len(self.indices) == 0:
-            raise ValueError(
-                "self.indices is None or empty. Cannot determine image dimensions.")
+        try:
+            if self.indices is None or len(self.indices) == 0:
+                raise ValueError(
+                    "self.indices is None or empty. Cannot determine image dimensions.")
 
-        dataset_id, sample_id = self.indices[0]
+            dataset_id, sample_id = self.indices[0]
 
-        if self.img_data is None:
-            raise ValueError(
-                "self.img_data is None. Cannot determine image dimensions.")
+            if self.img_data is None:
+                raise ValueError(
+                    "self.img_data is None. Cannot determine image dimensions.")
 
-        img_path = self.img_data[dataset_id][sample_id]
-        with Image.open(img_path) as img:
-            return img.size[::-1]
+            img_path = self.img_data[dataset_id][sample_id]
+            with Image.open(img_path) as img:
+                return img.size[::-1]
+        except Exception as e:
+            raise RuntimeError(e)
 
     def get_random_crop_params(self):
         """
@@ -111,12 +115,13 @@ class TiffDatasetLoader(VisionDataset):
         Raises:
             ValueError: If the required crop size is larger than the input image size.
         """
+
         h, w = self.image_dims
         th, tw = self.crop_size
 
         if h < th or w < tw:
-            raise ValueError(f"Required crop size {(th, tw)}"
-                             f" is larger than input image size {(h, w)}")
+            prompt = f"Required crop size {(th, tw)} is larger than input image size {(h, w)}"
+            raise ValueError(prompt)
 
         if w == tw and h == th:
             return 0, 0, h, w

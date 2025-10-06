@@ -18,6 +18,8 @@ from PIL import Image
 
 # Local application imports
 from tools import display_color as dc
+from tools import utils as ut
+import tools.constants as ct
 from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
 
@@ -39,13 +41,15 @@ class ImageNormalizer:
                  if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
         errors: List[Tuple[str, str]] = []
 
+        folder = self.input_path.split(os.sep)[-2]
+
         pbar = tqdm(
             files,
-            ncols=70,
+            ncols=ct.TQDM_NCOLS,
             bar_format="{desc}: {n_fmt}/{total_fmt} |{bar}| {percentage:5.1f}%"
         )
         for filename in pbar:
-            pbar.set_description(f"Normalising {filename}")
+            pbar.set_description(f"{folder} : {filename}")
 
             file = os.path.join(self.input_path, filename)
 
@@ -71,7 +75,14 @@ class ImageNormalizer:
 
                 # Save the normalized image
                 name, ext = os.path.splitext(os.path.basename(file))
-                normalized_image.save(os.path.join(self.output_path,  f"{name}{ext}"))
+                res = ut.split_string(name)
+
+                # Insert _normalized_
+                if res:
+                    new_name = f"{res[0]}_normalized_{res[1]}"
+                else:
+                    new_name = name
+                normalized_image.save(os.path.join(self.output_path,  f"{new_name}{ext}"))
 
             except (IOError, ValueError) as e:
                 # collect the filename and the short reason
@@ -79,11 +90,10 @@ class ImageNormalizer:
 
         if errors:
             self.display.print(
-                f"{len(errors)} files failed to normalize. See details below:", 
+                f"{len(errors)} files failed to normalize. See details below:",
                 colors["error"]
             )
             for fname, reason in errors:
                 self.display.print(f"- {fname}: {reason}", colors["error"])
         else:
             self.display.print("All files normalized successfully.", colors["ok"])
-            

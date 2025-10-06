@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 Launches the preprocessing operations for datasets.
 This script provides functionalities for preprocessing datasets,
@@ -17,7 +18,7 @@ This module allows for the following operations:
 # Standard library
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 
 # Local application imports
@@ -56,7 +57,7 @@ class LaunchPreprocessing:
                 self.launch_auto_adjust_brightness_contrast()
 
             # **** Json generation ****
-            if choice == 2:
+            elif choice == 2:
                 self.launch_json_generation()
 
             # **** Normalization ****
@@ -82,8 +83,8 @@ class LaunchPreprocessing:
             return
 
         # 2) Select the hmin/hmax calculation mode used in auto brightness/contrast adjustment:
-        # - "ref image": the reference image is used for reference to defines hmin/hmax for all images
-        # - "per image": each image calculates its own hmin/hmax
+        # - ref image: the reference image is used for reference to defines hmin/hmax for all images
+        # - per image: each image calculates its own hmin/hmax
         prompt = "Select the calculation mode of hmin/hmax\n" \
                 " (r)ef image / (p)er image "
         hmin_hmax_calc_mode = vf.get_hmin_hmax_calc_mode(prompt)
@@ -103,11 +104,12 @@ class LaunchPreprocessing:
         ref_img_path = None
         if hmin_hmax_calc_mode == "ref_image":
             ref_img_name = Path(vf.get_file_name_color("Enter the reference image name"))
-            ref_img_path = Path(sequence_dir) / ref_img_name
+            ref_img_path = Path.joinpath(sequence_dir, ref_img_name)
+
             if not ref_img_path.is_file():
                 self.display.print(f"Invalid reference image: {ref_img_name}", colors["error"])
                 return
-        
+
         # 5) Proceed with auto brightness/contrast adjustment
         self.display.print("Starting auto brightness/contrast adjustment", colors["warning"])
         raw_folder_name = "raw_" + os.path.basename(sequence_dir)
@@ -116,24 +118,33 @@ class LaunchPreprocessing:
         # a) Rename images → raw_images (only if raw_images doesn’t already exist)
         if os.path.exists(raw_images):
             self.display.print(
-                f"{raw_images} already exists, skipping rename", colors["warning"]
+                f"Path {raw_images} already exists, reusing the existing resource",
+                  colors["warning"]
             )
         else:
             os.rename(sequence_dir, raw_images)
 
-        # b) Recreate images directory
+        # b) Adapt reference image path if needed
+        if not ref_img_path is None:
+            ref_img_path = os.path.join(str(raw_images), str(ref_img_name))
+
+        # c) Recreate images directory
         sequence_dir.mkdir(exist_ok=True)
 
         # 6) Auto brightness/contrast adjustment
         auto_adjuster = brightness_contrast_adjuster.BrightnessContrastAdjuster(
             input_path=raw_images,
-            output_path=sequence_dir
+            output_path=str(sequence_dir)
         )
-        auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode, ref_img_path=ref_img_path)
+        # Ensure ref_img_path is a string
+        ref_img_path_str = str(ref_img_path) if ref_img_path is not None else ""
+        auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode,
+                                                       ref_img_path=ref_img_path_str)
 
     def launch_json_generation(self,
-        data_dir: str | None = None,
+        data_dir: Optional[Path] = None,
         file_name_report: str | None = None,
+        missing_subfolders: Optional[List[str]]  | None = None,
         append: bool = False
     ) -> None:
         """
@@ -149,7 +160,7 @@ class LaunchPreprocessing:
             data_dir = Path(data_dir)
 
         # 2) Choose percentage
-        if vf.answer_yes_or_no("Do you want to use all the data to generate data statistics ?"):
+        if vf.answer_yes_or_no("Do you want to use all the data to generate data statistics"):
             percentage_to_process = 1.0
         else:
             prompt = "Please enter a percentage between 1 and 100"
@@ -157,9 +168,9 @@ class LaunchPreprocessing:
 
         # 3) JSON output path
         if file_name_report is None:
-            file_name_report = data_dir / "data_stats.json"
+            file_name_report = str(data_dir / "data_stats.json")
         else:
-            file_name_report = Path(file_name_report)
+            file_name_report = str(Path(file_name_report))
 
         # 4) Gather subfolder Paths
         subfolders = [p for p in data_dir.iterdir() if p.is_dir()]
@@ -181,7 +192,7 @@ class LaunchPreprocessing:
 
             if not tif_files:
                 self.display.print(f"No tif files in {sub.name}/images", colors["error"])
-                continue
+                return
 
             valid_subfolders.append(sub.name)
 
@@ -189,18 +200,27 @@ class LaunchPreprocessing:
             self.display.print("No valid subfolders found for JSON generation", colors["error"])
             return
 
-        # 5) Launch generation
+
+        # 5) Checking for missing subfolders
+        if missing_subfolders is None:
+            val_subfolders = valid_subfolders
+        else:
+            val_subfolders = missing_subfolders
+
+        # 6) Launch generation
         self.display.print("Starting JSON generation", colors["warning"])
 
         json_generation = json.Json(
             json.JsonConfig(
-                parent_dir=data_dir,
-                subfolders=valid_subfolders,
+                parent_dir=str(data_dir),
+                subfolders=val_subfolders,
                 json_file=file_name_report,
                 percentage_to_process=percentage_to_process
             )
         )
         json_generation.process_datasets(append=append)
+
+        self.display.print("JSON generation complete", colors["ok"])
 
 
     def launch_normalisation(self)-> None:
@@ -258,7 +278,8 @@ class LaunchPreprocessing:
             # a) Rename masks → raw_masks (only if raw_masks doesn’t already exist)
             if raw_masks.exists():
                 self.display.print(
-                    f"{sub.name}/raw_masks already exists, skipping rename", colors["warning"]
+                    f"{sub.name}/raw_masks already exists, reusing the existing resource",
+                      colors["warning"]
                 )
             else:
                 os.rename(masks_dir, raw_masks)

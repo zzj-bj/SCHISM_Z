@@ -83,6 +83,7 @@ class Training:
         self.hyperparameters = kwargs.get('hyperparameters')
         if self.hyperparameters is None:
             raise ValueError("The 'hyperparameters' argument must be provided and not None.")
+        self.report = kwargs.get('report')
         self.dataloaders = {}  # Initialize dataloaders attribute
         self.display = dc.DisplayColor()
 
@@ -119,20 +120,29 @@ class Training:
             'OneCycleLR': OneCycleLR,
             'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
         }
-        
+
         # Model parameters
-        self.model_params = {k: v for k, v in self.hyperparameters.get_parameters()['Model'].items()}
-        self.num_classes = self.param_converter._convert_param(self.model_params.get('num_classes', 3))
+        self.model_params = {k: v for k,
+                              v in self.hyperparameters.get_parameters()['Model'].items()}
+        num_classes_param = self.param_converter._convert_param(self.model_params.get('num_classes', 3))
+        if isinstance(num_classes_param, (int, float, str)):
+            self.num_classes = int(num_classes_param)
+        else:
+            prompt = (f"Invalid type for num_classes: {type(num_classes_param)}."
+            "Expected int, float, or str.")
+            raise ValueError(prompt)
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
         self.model = self.initialize_model()
 
         # Optimizer parameters
-        self.optimizer_params = {k: v for k, v in self.hyperparameters.get_parameters()['Optimizer'].items()}
+        self.optimizer_params = {k: v for k,
+                                 v in self.hyperparameters.get_parameters()['Optimizer'].items()}
 
         # Scheduler parameters
-        self.scheduler_params = {k: v for k, v in self.hyperparameters.get_parameters()['Scheduler'].items()}
+        self.scheduler_params = {k: v for k,
+                                  v in self.hyperparameters.get_parameters()['Scheduler'].items()}
 
         # Loss parameters
         self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
@@ -144,21 +154,25 @@ class Training:
             self.ignore_index = -100
 
         # Training parameters
-        self.training_params = {k: v for k, v in self.hyperparameters.get_parameters()['Training'].items()}
+        self.training_params = {k: v for k,
+                                 v in self.hyperparameters.get_parameters()['Training'].items()}
         self.batch_size = self.param_converter._convert_param(self.training_params.get('batch_size', 8))
         self.val_split = self.param_converter._convert_param(self.training_params.get('val_split', 0.8))
         self.epochs = self.param_converter._convert_param(self.training_params.get('epochs', 10))
         self.early_stopping = self.param_converter._convert_param(self.training_params.get('early_stopping', "False"))
         self.metrics_str = self.param_converter._convert_param(self.training_params.get('metrics', ''))
         if self.early_stopping:
-            patience = int(self.epochs*0.2)
+            if isinstance(self.epochs, (int, float)):
+                patience = int(float(self.epochs) * 0.2)
+            else:
+                raise ValueError(f"'epochs' must be an int or float, got {type(self.epochs)}: {self.epochs}")
             if patience > 1:
                 self.early_stopping_instance = EarlyStoppingNoSave(patience=patience, verbose=True)
             else:
-                self.early_stopping=False
+                self.early_stopping = False
                 display = dc.DisplayColor()
                 display.print("Early stopping has been automatically disabled because the patience value is too low.", colors['warning'])
-                display.print("Training will begin as normal.", colors['warning'])       
+                display.print("Training will begin as normal.", colors['warning'])
 
         # Data parameters
         self.data = {k: v for k, v in self.hyperparameters.get_parameters()['Data'].items()}
@@ -168,7 +182,7 @@ class Training:
 
         # Extract and parse metrics from the ini file
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
-        
+
         self.save_directory = self.create_unique_folder()
         self.logger = TrainingLogger(
             TrainingLoggerConfig(save_directory=self.save_directory,
@@ -228,9 +242,14 @@ class Training:
         }
 
         # Parse metrics from string input or use default
-        self.metrics = [metric.strip()
-                        for metric
-                        in self.metrics_str.split(',')] if self.metrics_str else ["Jaccard"]
+        if isinstance(self.metrics_str, str):
+            self.metrics = [metric.strip() for metric in self.metrics_str.split(',')]
+        elif isinstance(self.metrics_str, (list, tuple)):
+            self.metrics = [str(metric).strip() for metric in self.metrics_str]
+        elif self.metrics_str:
+            self.metrics = [str(self.metrics_str).strip()]
+        else:
+            self.metrics = ["Jaccard"]
 
         # Retrieve metric instances
         selected_metrics = []
@@ -302,9 +321,8 @@ class Training:
         loss_class = self.loss_mapping.get(loss_name)
 
         if not loss_class:
-            text = f" - Loss '{loss_name}' is not supported"
-            raise ValueError(
-                f"Loss '{loss_name}' is not supported. Check your 'loss_mapping'.")
+            text = f" - Loss '{loss_name}' is not supported. Check your 'loss_mapping'."
+            raise ValueError(text)
 
         # Convert static parameters from config
         converted_params = {
@@ -340,15 +358,14 @@ class Training:
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
         if model_name not in self.model_mapping:
-            text = f" - Model '{model_name}' is not supported"
-            raise ValueError(
-                f"Model '{model_name}' is not supported. Check your 'model_mapping'.")
+            text = f" - Model '{model_name}' is not supported. Check your 'model_mapping'."
+            raise ValueError(text)
 
         model_class = self.model_mapping[model_name]
         model_config_class = self.model_config_mapping[model_name]
 
         self.model_params['num_classes'] = self.num_classes
-        
+
         if model_name == 'DINOv2':
             self.model_params['img_res'] = self.img_res
 
@@ -376,7 +393,7 @@ class Training:
             }
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
-            raise ValueError(e)
+            raise ValueError(text)
 
         try:
             return model_class(
@@ -460,8 +477,12 @@ class Training:
         img_data = {}
         mask_data = {}
         num_sample_per_subfolder = {}
+        if self.data_dir is None:
+            prompt = ("The 'data_dir' attribute must be set to a valid path"
+                    " before loading data stats.")
+            raise ValueError(prompt)
         data_stats = ut.load_data_stats(self.data_dir, self.data_dir)
-        
+
         if not self.subfolders or not isinstance(self.subfolders, list):
             text = "The 'subfolders' attribute must be a non-empty list before loading data."
             raise ValueError(text)
@@ -499,11 +520,12 @@ class Training:
                 img_data=img_data,
                 mask_data=mask_data,
                 num_classes=self.num_classes,
-                crop_size=(self.crop_size, self.crop_size),
+                crop_size=(int(self.crop_size), int(self.crop_size)),
                 data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background,
-                weights=self.weights
+                img_res=int(self.img_res) if isinstance(self.img_res,
+                                        (int, float, str)) and not isinstance(self.img_res, bool) else 224,
+                ignore_background=bool(self.ignore_background),
+                weights=bool(self.weights)
             )
         )
 
@@ -515,9 +537,10 @@ class Training:
                 num_classes=self.num_classes,
                 crop_size=(self.crop_size, self.crop_size),
                 data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background,
-                weights=self.weights
+                img_res=int(self.img_res) if isinstance(self.img_res,
+                                        (int, float, str)) and not isinstance(self.img_res, bool) else 224,
+                ignore_background=bool(self.ignore_background),
+                weights=bool(self.weights)
             )
         )
 
@@ -529,33 +552,36 @@ class Training:
                 num_classes=self.num_classes,
                 crop_size=(self.crop_size, self.crop_size),
                 data_stats=data_stats,
-                img_res=self.img_res,
-                ignore_background=self.ignore_background,
-                weights=self.weights
+                img_res=int(self.img_res) if isinstance(self.img_res,
+                                        (int, float, str)) and not isinstance(self.img_res, bool) else 224,
+                ignore_background=bool(self.ignore_background),
+                weights=bool(self.weights)
             )
         )
 
         try:
             pin_mem = torch.cuda.is_available()
-        except Exception:
+        except Exception as e:
             pin_mem = False
+            raise e
 
-        train_loader = DataLoader(train_dataset, 
+
+        train_loader = DataLoader(train_dataset,
                                 batch_size=self.batch_size,
                                 num_workers = ct.NUM_WORKERS, 
                                 shuffle = True, 
                                 drop_last = True,
                                 pin_memory = pin_mem)
-        val_loader =  DataLoader(val_dataset, 
+        val_loader =  DataLoader(val_dataset,
                                 batch_size = self.batch_size,
                                 shuffle = False, 
                                 num_workers= ct.NUM_WORKERS, 
                                 drop_last = True,
                                 pin_memory = pin_mem)
-        test_loader =  DataLoader(test_dataset, 
-                                batch_size=1, 
+        test_loader =  DataLoader(test_dataset,
+                                batch_size=1,
                                 shuffle = False,
-                                num_workers = 2, 
+                                num_workers = 2,
                                 drop_last = True,
                                 pin_memory = pin_mem)
 
@@ -591,7 +617,7 @@ class Training:
         else:
             # disable scaling on CPU
             scaler = GradScaler(enabled=False)
-        
+
         # Initialize metric instances and losses
         # This list includes your ConfusionMatrix instance if enabled
         metrics = self.initialize_metrics()
@@ -606,7 +632,7 @@ class Training:
         best_val_loss = float("inf")
         best_val_metrics = {metric: 0.0 for metric in display_metrics}
 
-        for epoch in range(1, self.epochs + 1):
+        for epoch in range(1, int(self.epochs) + 1):
 
             ut.print_box(f"Epoch {epoch}/{self.epochs}")
             epoch_val_loss = None if self.early_stopping else None
@@ -629,15 +655,15 @@ class Training:
                     unit="batch",
                     position=0,
                     leave=False,
-                    ncols=70,              
-                    dynamic_ncols=False, 
+                    ncols=ct.TQDM_NCOLS,
+                    dynamic_ncols=False,
                 ) as pbar, tqdm(
                     total=0,
                     desc="",
                     position=1,
                     bar_format="{desc}",
                     leave=False,
-                    ncols=70,
+                    ncols=ct.TQDM_NCOLS,
                     dynamic_ncols=False
                 ) as mbar:
 
@@ -650,7 +676,7 @@ class Training:
                         )
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
-                        batch_weights = torch.clamp(batch_weights, min=1e-6)  # Avoid exact zero values
+                        batch_weights = torch.clamp(batch_weights, min=1e-6)
 
                         with torch.set_grad_enabled(is_training):
                             with torch.autocast(
@@ -669,7 +695,8 @@ class Training:
                                     labels = labels.squeeze().long()
 
                                 # only apply class weights to multiclass segmentation
-                                loss_fn = self.initialize_loss(weight=batch_weights if (self.weights and self.num_classes > 1) else None)
+                                loss_fn = self.initialize_loss(weight=batch_weights
+                                                                if (self.weights and self.num_classes > 1) else None)
                                 loss = loss_fn(outputs.float(), labels)
 
                             if is_training:
@@ -716,7 +743,7 @@ class Training:
                         )
                         # overwrite the empty desc of the second bar
                         mbar.set_description(metrics_str)
-                        
+
                 epoch_loss = running_loss / len(self.dataloaders[phase])
                 epoch_metrics = {metric: running_metrics[metric] /
                                  len(self.dataloaders[phase])
@@ -758,7 +785,7 @@ class Training:
                     break
 
         formatted_metrics = {metric: f"{value:.4f}" for metric, value in best_val_metrics.items()}
-        
+
         print("Best validation metrics:")
         for metric, value in formatted_metrics.items():
             print(f"  {metric:<10}: {value}")

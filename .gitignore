@@ -9,3 +9,7 @@ data
 runs
 data2
 code/sc.bat
+code/Test.py
+code/upgrade_lib_python.py
+code/test_cuda.py
+code/checkpoint.pt

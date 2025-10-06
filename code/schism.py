@@ -18,14 +18,21 @@ from inference import launch_inference as li
 #=======================================================================
 
 def main() -> None:
-    """Displays the CLI menu and handles user choices."""
+
     display = dc.DisplayColor()
+
+    # Displays the CLI menu and handles user choices.
+
     print(ct.LOGO_IN)
 
-    if torch.cuda.is_available():
-        display.print("CUDA is available! Running on GPU.\n", colors['ok'])
-    else:
-        display.print("CUDA is not available! Running on CPU.\n", colors['warning'])
+    display.print(f"Debug mode {'ON' if ct.DEBUG_MODE else 'OFF'}.", colors['warning'])
+
+    prompt = (
+        f"CUDA{'' if torch.cuda.is_available() else 'not'} available"
+        f" - Running on {'GPU' if torch.cuda.is_available() else 'CPU'}.\n"
+    )
+    display.print(prompt, colors['warning'])
+
 
     main_menu = menu.Menu('MAIN')
     while True:
@@ -47,7 +54,7 @@ def _confirm_exit() -> bool:
     Ask user to confirm exit. Returns True if exiting, False otherwise.
     """
     display = dc.DisplayColor()
-    prompt = "Do you want to quit the program?"
+    prompt = "Do you want to quit the program"
     if vf.answer_yes_or_no(prompt):
         display.print("Goodbye! \n", colors['babye'])
         # print(ct.LOGO_OUT)

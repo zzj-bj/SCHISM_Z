@@ -7,6 +7,7 @@ from tools.hyperparameters import Hyperparameters
 from tools import menu, utils as ut
 from tools.display_color import DisplayColor
 from tools.constants import DISPLAY_COLORS as colors
+from tools.constants import IMAGE_EXTENSIONS
 from inference.inference import Inference
 
 class LaunchInference:
@@ -48,6 +49,26 @@ class LaunchInference:
                 self.display.print(e, colors["error"])
             return
 
+        # Gather subfolder Paths and collect tif files
+        tif_files = []
+        for sub in data_dir.iterdir():
+            if not sub.is_dir():
+                continue
+            name = sub.name
+            images_dir = sub / "images"
+            if not images_dir.is_dir():
+                self.display.print(f"{name}/images not found", colors["error"])
+                return
+            for ext in IMAGE_EXTENSIONS:
+                tif_files.extend(images_dir.glob(f"*{ext}"))
+
+        tif_files = sorted(tif_files)
+
+        if not tif_files:
+            self.display.print(f"No tif files found in any subfolder's images directory", colors["error"])
+            return
+
+
         # load hyperparameters and extract metrics
         hyper = Hyperparameters(str(hyper_path))
         params = hyper.get_parameters().get("Training", {})
@@ -70,7 +91,7 @@ class LaunchInference:
             selected_metric = metrics[choice - 1]
         else:
             selected_metric = metrics[0]
-        
+
         expected_ckpt = run_dir / f"model_best_{selected_metric}.pth"
         if not expected_ckpt.exists():
             self.display.print(
@@ -78,17 +99,23 @@ class LaunchInference:
                 colors["error"]
             )
             return
-        
+
         self.display.print(f"Starting inference using {selected_metric}", colors["warning"])
 
+
         # run inference
-        inf = Inference(
-            data_dir=str(data_dir),
-            subfolders=subfolders,
-            run_dir=str(run_dir),
-            selected_metric=selected_metric,
-            hyperparameters=hyper,
-        )
-        inf.predict()
+        try:
+            inf = Inference(
+                data_dir=str(data_dir),
+                subfolders=subfolders,
+                run_dir=str(run_dir),
+                selected_metric=selected_metric,
+                hyperparameters=hyper,
+            )
+            inf.predict()
+        except Exception :
+            ut.format_and_display_error('Training Loader')
+            return
+
         #TODO
         self.display.print(f"Inference completed using {selected_metric}", colors["ok"])

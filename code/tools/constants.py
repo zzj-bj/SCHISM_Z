@@ -72,7 +72,7 @@ LOGO_OUT = """
 True  : The full error message is displayed.
 False : The error message is displayed in a concise format.
 """
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # Augmented hyperparameters
 """
@@ -88,7 +88,7 @@ NUM_WORKERS: int = max(1, cpu_count() // 2)
 IMAGE_EXTENSIONS = [".tif", ".tiff"]
 
 # progress bar width
-TQDM_NCOLS = 70
+TQDM_NCOLS = 90
 
 # Sound system for Error.
 BELL = "\a"
@@ -145,12 +145,11 @@ MENUS = {
 
 # Code colors & prefixes for display
 DISPLAY_COLORS = {
-    'error':   (204,  51,  0, "[X] "), # Red
-    'warning': (204, 204,  0, "[!] "), # Orange
-    'input':   (153, 204, 51, "[?] "), # Light Green
-    'ok':      (51, 153,  0, "[√] "), # Green
-    'babye':   (255, 16, 240, "[<3] "), # Green
-
+    'error':   (204,  51,  0,  "[X] "),   # Red
+    'warning': (204, 204,  0,  "[!] "),   # Orange
+    'input':   (153, 204, 51,  "[?] "),   # Light Green
+    'ok':      ( 51, 153,  0,  "[√] "),   # Green
+    'babye':   (255,  16, 240, "[<3] "),  # Purple
 }
 
 # Default mean and standard deviation for Json generation
