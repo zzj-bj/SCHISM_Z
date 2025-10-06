@@ -109,25 +109,61 @@ class TrainingLogger:
             'Data': self.data,
         }
 
-        for section, params in sections.items():
-            config.add_section(section)
-            for key, value in params.items():
-                config.set(section, key, str(value))
+        # for section, params in sections.items():
+        #     config.add_section(section)
+        #     for key, value in params.items():
+        #         config.set(section, key, str(value))
         
+        # ini_file_path = os.path.join(self.save_directory,'hyperparameters.ini')
+
+        # with open(ini_file_path, 'w', encoding="utf-8") as configfile:
+        #     config.write(configfile)
+
+        # self.display.print(f" {'hyperparameters'} saved to {ini_file_path}", colors['ok'])
+
+        # if ct.AUGMENTED_HYPERPARAMETERS and loss_dict != None and metrics_dict != None:
+        #     config.add_section('Results')
+        #     for metric, values in metrics_dict['val'].items():
+        #         best_value = max(values)
+        #         config.set('Results', f'Best_{metric}', f"{best_value:.4f}")
+        #     lowest_loss = min(loss_dict['val'].values())
+        #     config.set('Results', 'Lowest_Loss', f"{lowest_loss:.4f}")
+
+        #     ini_file_path_aug = os.path.join(self.save_directory,'augmented_hyperparameters.ini')
+
+        #     with open(ini_file_path_aug, 'w', encoding="utf-8") as configfile:
+        #         config.write(configfile)
+
+        #     self.display.print(f" {'augmented_hyperparameters'} saved to {ini_file_path}", colors['ok'])
+
+        save_ini_file(self, config, sections, 'hyperparameters.ini', self.display, colors, 'hyperparameters')
+
         if ct.AUGMENTED_HYPERPARAMETERS and loss_dict and metrics_dict:
-            config.add_section('Results')
-            for metric, values in metrics_dict['val'].items():
-                best_value = max(values)
-                config.set('Results', f'Best_{metric}', f"{best_value:.4f}")
-            lowest_loss = min(loss_dict['val'].values())
-            config.set('Results', 'Lowest_Loss', f"{lowest_loss:.4f}")
+            results = {
+                'Results': {
+                    **{f'Best_{metric}': f"{max(values):.4f}" for metric, values in metrics_dict['val'].items()},
+                    'Lowest_Loss': f"{min(loss_dict['val'].values()):.4f}"
+                }
+            }
 
-        ini_file_path = os.path.join(self.save_directory,'augmented_hyperparameters.ini' if ct.AUGMENTED_HYPERPARAMETERS else 'hyperparameters.ini')
+            save_ini_file(config, results, 'augmented_hyperparameters.ini', self.display, colors, 'augmented_hyperparameters')
 
-        with open(ini_file_path, 'w', encoding="utf-8") as configfile:
-            config.write(configfile)
+        def save_ini_file(self, config, sections, file_name, display, colors, message):
+            """Helper function to write sections to an INI file and display a message."""
+            for section, params in sections.items():
+                if not config.has_section(section):
+                    config.add_section(section)
+                for key, value in params.items():
+                    config.set(section, key, str(value))
 
-        self.display.print(f" {'augmented_hyperparameters' if ct.AUGMENTED_HYPERPARAMETERS else 'hyperparameters'} saved to {ini_file_path}", colors['ok'])
+            file_path = os.path.join(self.save_directory, file_name)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                config.write(f)
+
+            display.print(f" {message} saved to {file_path}", colors['ok'])
+            return file_path
+
+    
 
     def save_best_metrics(self,
         loss_dict: Dict[str, Dict[int, float]],

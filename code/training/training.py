@@ -41,7 +41,7 @@ from torchmetrics.classification import (
     BinaryConfusionMatrix, MulticlassConfusionMatrix, BinaryPrecision, MulticlassPrecision,
     BinaryRecall, MulticlassRecall
 )
-from early_stopping_no_save import EarlyStoppingNoSave
+from training.early_stopping_no_save import EarlyStoppingNoSave
 
 # Local application imports
 import tools.utils as ut

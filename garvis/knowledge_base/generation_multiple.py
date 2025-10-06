@@ -215,7 +215,7 @@ for i in range(1, nb_batch + 1):
 
     config["Training"] = {
         "batch_size": "4",
-        "val_split": str(random.choice([0.5, 0.6, 0.7, 0.8, 0.9])),
+        "val_split": str(random.choice([0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9])),
         "epochs": str(epochs),
         "metrics": ", ".join(metric),
         "early_stopping": "True"
