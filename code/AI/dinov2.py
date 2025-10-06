@@ -56,7 +56,6 @@ class DinoV2Segmentor(nn.Module):
 	}
 
     OPTIONAL_PARAMS = {
-		'channels': int,
 		'linear_head': bool,
 		'k_size': int,
 		'activation': str,
@@ -68,8 +67,11 @@ class DinoV2Segmentor(nn.Module):
 		'lora_alpha': int,
 		'lora_dropout': float,
 		'inference_mode': bool,
-        'n_blocks' : int,
-        'img_res' : int
+        'n_block' : int,
+        'img_res' : int,
+        'channel_reduction' : str,
+        'dropout' : float
+
 	}
 
     emb_size = {
@@ -97,9 +99,10 @@ class DinoV2Segmentor(nn.Module):
         self.r = dinov2_segmentor_config.r
         self.lora_alpha = dinov2_segmentor_config.lora_alpha
         self.lora_dropout = dinov2_segmentor_config.lora_dropout
-        self.n_blocks= dinov2_segmentor_config.n_blocks
+        self.n_block= dinov2_segmentor_config.n_block
         self.img_res = dinov2_segmentor_config.img_res
-
+        self.channel_reduction = dinov2_segmentor_config.channel_reduction
+        self.dropout = dinov2_segmentor_config.dropout
 
         if self.quantize :
             self.quantization_config = BitsAndBytesConfig(
@@ -134,10 +137,12 @@ class DinoV2Segmentor(nn.Module):
                 embedding_size=self.embedding_size,
                 img_res = self.img_res,
                 num_classes=self.num_classes,
-                n_blocks= self.n_blocks,
+                n_block= self.n_block,
                 k_size=self.k_size,
                 n_features=self.n_features,
-                activation=self.activation))
+                activation=self.activation,
+                dropout=self.dropout,
+                channel_reduction=self.channel_reduction))
 
         print(
             f"Number of parameters:{sum(p.numel() for p in self.parameters() if p.requires_grad)}"

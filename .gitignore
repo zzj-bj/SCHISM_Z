@@ -4,6 +4,7 @@ code/tools/__pycache__
 code/training/__pycache__
 code/AI/__pycache__
 code/__pycache__
+HyperparameterGen/__pycache__
 data
 runs
 data2

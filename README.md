@@ -9,10 +9,9 @@
 
 1. Clone this repository to your local machine:
    ``` git clone git@github.com:FloFive/SCHISM.git ```
-
-3. Navigate to the cloned directory:
+2. Navigate to the cloned directory:
    ``` cd <some path> SCHISM ```
-3. Install the library (Python 3.9 mini is required)
+3. Install the library (Python 3.12.10 mini is required)
    ``` pip install -e .```
    
 ---
@@ -47,8 +46,8 @@ Three available options :
 2. Create an INI file: Define training parameters such as learning rate, batch size, and model architecture in the INI file (presented below).
 3. Run the training command: Launch the training process, then select the training option and specify:
     - The dataset directory: Contains one or more datasets. The ordering and sorting of the data are explained [later in this README](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-data-preparation).
-    - The output folder: This is the workspace where all generated results are stored. After training, it will include the model weights, along with other relevant outputs. Each file within output/ is described in detail [later in this README](https://github.com/FloFive/SCHISM/tree/Pierre_dev?tab=readme-ov-file#-training-output-files). 
-    - The path to the INI file ([described here](https://github.com/FloFive/SCHISM/tree/Pierre_dev?tab=readme-ov-file#scroll-ini-file-setup)).
+    - The output folder: This is the workspace where all generated results are stored. After training, it will include the model weights, along with other relevant outputs. Each file within output/ is described in detail [later in this README](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#-training-output-files). 
+    - The path to the INI file ([described here](https://github.com/FloFive/SCHISM/tree/main?tab=readme-ov-file#scroll-ini-configuration-file)).
 
 ---
 ### Inference workflow
@@ -109,16 +108,15 @@ data/  <--- Select this folder for normalisation, training, or inference
 ├── dataset_1/
 │   ├── images/       # Grayscale TIFF images (e.g., image0000.tif, image0001.tif, ...)
 │   ├── masks/        # Corresponding TIFF masks (e.g., mask0000.tif for image0000.tif)
-│   └── raw_masks/    # Optional: original, unnormalized masks (renamed during normalisation)
+│   ├── raw_images/   # Optional: original, untreated images (renamed after auto brightness/contrast adjustment)    
+|   └── raw_masks/    # Optional: original, unnormalised masks (renamed after normalisation)    
 ├── dataset_2/
 │   ├── images/
-│   ├── masks/
-│   └── raw_masks/
+│   └── masks/
 ├── ...
 ├── dataset_n/
 │   ├── images/
-│   ├── masks/
-│   └── raw_masks/
+│   └── masks/
 └── data_stats.json   # Optional, generated during JSON creation
 ```
 
@@ -142,12 +140,21 @@ data/  <--- Select this folder for normalisation, training, or inference
 - **test/train/val_indices.txt**: Saves the indices of images and masks used for training, validation, and testing. These indices are formatted as `[dataset subfolder][image or mask number in the folder]`. For example, if you have 5,000 image/mask pairs, but `num_samples` is set to 3,000 and `val_split` is 0.8, then 2,400 indices will be recorded in `train_indices.txt`, 600 in `val_indices.txt`, and the remaining 2,000 in `test_indices.txt`.
 
 ---
+## 🐞 Debugging
+
+A constant named `DEBUG_MODE` is defined in `tools/constants.py`.  
+- If `DEBUG_MODE = True`, SCHISM will display the full Python trace when an error occurs.  
+- If `DEBUG_MODE = False`, only a concise error message is shown.  
+
+This allows switching between developer-friendly debugging and cleaner end-user output.
+
+---
 ## :heart_on_fire: Contributions
 Contributions are welcome! Please fork the repository and submit a pull request.
 
 ---
 ## :disappointed: Found a bug? 
-If you spot a bug or have a problem running the code, please open an issue.
+If you encounter a bug or have an issue running the code, please open an issue.
 If you have any questions or need further assistance, don't hesitate to contact Florent Brondolo ([florent.brondolo@akkodis.com](mailto:florent.brondolo@akkodis.com))
 or Samuel Beaussant ([samuel.beaussant@akkodis.com](mailto:samuel.beaussant@akkodis.com)).
 
