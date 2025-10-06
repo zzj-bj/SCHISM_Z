@@ -23,6 +23,7 @@ from tools.constants import DISPLAY_COLORS as colors
 @dataclass
 # pylint: disable=too-many-instance-attributes
 class TrainingLoggerConfig:
+    """Configuration for the TrainingLogger."""
     save_directory: str
     num_classes: int
     model_params: Dict[str, Any]
@@ -70,7 +71,7 @@ class TrainingLogger:
                     f.write(f"{subfolder_name}, {sample_idx}\n")
 
 
-    def save_data_stats(self, data_stats: Dict[str, List[List[float]]]) -> None:
+    def save_data_stats(self, data_stats: Dict[str, Tuple[np.ndarray, np.ndarray]]) -> None:
         """
         Saves dataset statistics to a JSON file.
 
@@ -259,5 +260,5 @@ class TrainingLogger:
                 os.path.join(self.save_directory, "confusion_matrix.png"),
                 dpi=300)
             plt.close()
-            self.display.print(f"Confusion matrix saved to {self.save_directory}\\confusion_matrix.png",
-                                colors['ok'])
+            prompt = f"Confusion matrix saved to {self.save_directory}\\confusion_matrix.png"
+            self.display.print(prompt, colors['ok'])

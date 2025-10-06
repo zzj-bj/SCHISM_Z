@@ -53,6 +53,11 @@ def chck_color(color_key: str) -> Tuple[int, int, int]:
 
 
 def get_path_color(prompt: str, color_key: str = 'input') -> Path:
+    """
+    Requests a valid path from the user.
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+    """
     display = dc.DisplayColor()
     color = chck_color(color_key)
     while True:
