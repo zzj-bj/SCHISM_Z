@@ -63,7 +63,7 @@ Predictions on the user's data will be saved in a directory named after the metr
 ---
 ## :scroll: .ini configuration file
 
-Below is an example of an `.ini` configuration file. For detailed explanations of the network settings and the full INI specification, see the [INI file documentation](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md). You can set the parameters manually, or use our [LLM-powered solution](https://github.com/FloFive/SCHISM/tree/Mehdi_Dev/garvis) to automatically generate `.ini` files.
+Below is an example of an `.ini` configuration file. For detailed explanations of the network settings and the full INI specification, see the [INI file documentation](https://github.com/FloFive/SCHISM/blob/main/docs/ini.md). You can set the parameters manually, or use our [LLM-powered solution](https://github.com/FloFive/SCHISM/blob/main/garvis/README.md) to automatically generate `.ini` files.
 
 ```
 [Model]
