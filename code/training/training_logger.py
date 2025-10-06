@@ -98,6 +98,22 @@ class TrainingLogger:
         """
         Saves hyperparameters to an INI file.
         """
+
+        def save_ini_file(self, config, sections, colors, title):
+            """Helper function to write sections to an INI file and display a message."""
+            for section, params in sections.items():
+                if not config.has_section(section):
+                    config.add_section(section)
+                for key, value in params.items():
+                    config.set(section, key, str(value))
+
+            file_path = os.path.join(self.save_directory, f"{title}.ini")
+            with open(file_path, 'w', encoding='utf-8') as f:
+                config.write(f)
+
+            self.display.print(f" {title} saved to {file_path}", colors['ok'])
+            return file_path
+
         config = configparser.ConfigParser()
 
         sections = {
@@ -136,7 +152,7 @@ class TrainingLogger:
 
         #     self.display.print(f" {'augmented_hyperparameters'} saved to {ini_file_path}", colors['ok'])
 
-        save_ini_file(self, config, sections, 'hyperparameters.ini', self.display, colors, 'hyperparameters')
+        save_ini_file(self, config, sections, colors, 'hyperparameters')
 
         if ct.AUGMENTED_HYPERPARAMETERS and loss_dict and metrics_dict:
             results = {
@@ -146,24 +162,7 @@ class TrainingLogger:
                 }
             }
 
-            save_ini_file(config, results, 'augmented_hyperparameters.ini', self.display, colors, 'augmented_hyperparameters')
-
-        def save_ini_file(self, config, sections, file_name, display, colors, message):
-            """Helper function to write sections to an INI file and display a message."""
-            for section, params in sections.items():
-                if not config.has_section(section):
-                    config.add_section(section)
-                for key, value in params.items():
-                    config.set(section, key, str(value))
-
-            file_path = os.path.join(self.save_directory, file_name)
-            with open(file_path, 'w', encoding='utf-8') as f:
-                config.write(f)
-
-            display.print(f" {message} saved to {file_path}", colors['ok'])
-            return file_path
-
-    
+            save_ini_file(self, config, results, colors, 'augmented_hyperparameters')
 
     def save_best_metrics(self,
         loss_dict: Dict[str, Dict[int, float]],
