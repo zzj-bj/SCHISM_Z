@@ -49,7 +49,8 @@ class LaunchInference:
                 self.display.print(e, colors["error"])
             return
 
-        # Gather subfolder Paths
+        # Gather subfolder Paths and collect tif files
+        tif_files = []
         for sub in data_dir.iterdir():
             if not sub.is_dir():
                 continue
@@ -58,14 +59,13 @@ class LaunchInference:
             if not images_dir.is_dir():
                 self.display.print(f"{name}/images not found", colors["error"])
                 return
+            for ext in IMAGE_EXTENSIONS:
+                tif_files.extend(images_dir.glob(f"*{ext}"))
 
-        tif_files = []
-        for ext in IMAGE_EXTENSIONS:
-            tif_files.extend(images_dir.glob(f"*{ext}"))
         tif_files = sorted(tif_files)
 
         if not tif_files:
-            self.display.print(f"No tif files in {sub.name}/images", colors["error"])
+            self.display.print(f"No tif files found in any subfolder's images directory", colors["error"])
             return
 
 

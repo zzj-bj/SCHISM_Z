@@ -53,6 +53,11 @@ def chck_color(color_key: str) -> Tuple[int, int, int]:
 
 
 def get_path_color(prompt: str, color_key: str = 'input') -> Path:
+    """
+    Requests a valid path from the user.
+    Displays the prompt in the specified color.
+    If the specified color key is invalid, the prompt will be displayed in Light Green.
+    """
     display = dc.DisplayColor()
     color = chck_color(color_key)
     while True:
@@ -327,7 +332,7 @@ def load_data_stats(
     if missing:
         display.print(f"Dataset{'s' if len(missing) > 1 else ''} without stats: {', '.join(missing)}",
                        colors["warning"])
-        plural = "these folders" if len(missing) > 1 else "that folder"
+        plural = "these folders" if len(missing) > 1 else "this folder"
         prompt = f"Do you want to generate an updated data_stats.json file for {plural}"
         if answer_yes_or_no(prompt):
             lp.LaunchPreprocessing().launch_json_generation(

@@ -72,7 +72,7 @@ LOGO_OUT = """
 True  : The full error message is displayed.
 False : The error message is displayed in a concise format.
 """
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # number of DataLoader workers
 NUM_WORKERS: int = max(1, cpu_count() // 2)
