@@ -126,33 +126,6 @@ class TrainingLogger:
             'Data': self.data,
         }
 
-        # for section, params in sections.items():
-        #     config.add_section(section)
-        #     for key, value in params.items():
-        #         config.set(section, key, str(value))
-        
-        # ini_file_path = os.path.join(self.save_directory,'hyperparameters.ini')
-
-        # with open(ini_file_path, 'w', encoding="utf-8") as configfile:
-        #     config.write(configfile)
-
-        # self.display.print(f" {'hyperparameters'} saved to {ini_file_path}", colors['ok'])
-
-        # if ct.AUGMENTED_HYPERPARAMETERS and loss_dict != None and metrics_dict != None:
-        #     config.add_section('Results')
-        #     for metric, values in metrics_dict['val'].items():
-        #         best_value = max(values)
-        #         config.set('Results', f'Best_{metric}', f"{best_value:.4f}")
-        #     lowest_loss = min(loss_dict['val'].values())
-        #     config.set('Results', 'Lowest_Loss', f"{lowest_loss:.4f}")
-
-        #     ini_file_path_aug = os.path.join(self.save_directory,'augmented_hyperparameters.ini')
-
-        #     with open(ini_file_path_aug, 'w', encoding="utf-8") as configfile:
-        #         config.write(configfile)
-
-        #     self.display.print(f" {'augmented_hyperparameters'} saved to {ini_file_path}", colors['ok'])
-
         save_ini_file(self, config, sections, colors, 'hyperparameters')
 
         if ct.AUGMENTED_HYPERPARAMETERS and loss_dict and metrics_dict:

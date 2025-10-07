@@ -231,22 +231,3 @@ for i in range(1, nb_batch + 1):
         config.write(f)
 
 print("Configuration files created successfully.\n")
-
-#==============================================================================
-
-# select = answer_yes_or_no("Creating a batch file for training")
-
-# if select:
-#     data_source = input(f"[?] Enter the data directory: ").strip()
-#     output_file = final_configs_dir / 'batch_multi.txt'
-
-#     with open(output_file, 'w', encoding="utf-8") as f:
-#         for i in range(1, nb_batch + 1):
-#             config_number = f"{i:03}"
-#             f.write("2\n")
-#             f.write(f"{data_source}\n")
-#             config_path = final_configs_dir / f"config_{config_number}"
-#             f.write(f"{config_path}\n")
-#         f.write("4\ny\n")
-
-#     print(f"\nThe file '{output_file}' created successfully.")
