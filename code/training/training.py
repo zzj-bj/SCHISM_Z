@@ -134,7 +134,6 @@ class Training:
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
-        self.model = self.initialize_model()
 
         # Optimizer parameters
         self.optimizer_params = {k: v for k,
@@ -197,6 +196,8 @@ class Training:
 
         self.metrics = []  # Initialize metrics attribute
         self.metrics_mapping = {}  # Initialize metrics_mapping attribute
+
+        self.model = self.initialize_model()
 
     def create_metric(self,
         binary_metric: Any,

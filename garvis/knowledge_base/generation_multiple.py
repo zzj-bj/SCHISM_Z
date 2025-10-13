@@ -38,17 +38,78 @@ optimizer_extra_args = {
 
 # Dynamic parameter depending of the possible choice inside scheduler
 scheduler_extra_args = {
-    "StepLR": {"step_size": 10, "gamma": 0.1},
-    "MultiStepLR": {"milestones": "[30, 80]", "gamma": 0.1},
-    "ExponentialLR": {"gamma": 0.9},
-    "PolynomialLR": {"total_iters": 100, "power": 2.0},
-    "CosineAnnealingLR": {"T_max": 50, "eta_min": 0},
-    "ReduceLROnPlateau": {"mode": "min", "factor": 0.5, "patience": 5,
-                          "threshold": 1e-4, "threshold_mode": "rel",
-                          "cooldown": 2, "min_lr": 1e-6,
-                          "eps": 1e-8, "verbose": True},
-    "OneCycleLR": {"max_lr": 0.01, "total_steps": 100},
-    "CosineAnnealingWarmRestarts": {"T_max": 15},
+
+    "StepLR": {
+        "step_size": 10,
+        "gamma": 0.1,
+        "verbose": False
+    },
+
+    "MultiStepLR": {
+        "milestones": [30, 80],  # liste, pas string
+        "gamma": 0.1,
+        "verbose": False
+    },
+
+    "ExponentialLR": {
+        "gamma": 0.9,
+        "verbose": False
+    },
+
+    "PolynomialLR": {
+        "total_iters": 100,
+        "power": 2.0,
+        "verbose": False
+    },
+
+    "CosineAnnealingLR": {
+        "T_max": 50,
+        "eta_min": 0,
+        "verbose": False
+    },
+
+    "ReduceLROnPlateau": {
+        "mode": "min",
+        "factor": 0.5,
+        "patience": 5,
+        "threshold": 1e-4,
+        "threshold_mode": "rel",
+        "cooldown": 2,
+        "min_lr": 1e-6,
+        "eps": 1e-8,
+        "verbose": True
+    },
+
+    "OneCycleLR": {
+        "max_lr": 0.01,
+        "total_steps": 100,
+        "anneal_strategy": "cos",
+        "div_factor": 25.0,
+        "final_div_factor": 1e4,
+        "pct_start": 0.3,
+        "verbose": False
+    },
+
+    "CosineAnnealingWarmRestarts": {
+        "T_0": 15,
+        "T_mult": 1,
+        "eta_min": 0,
+        "verbose": False
+    }
+}
+
+OPTIONAL_PARAMS = {
+    "DINOv2": [
+        "dropout",
+        "channel_reduction",
+        "linear_head",
+        "quantize",
+        "peft",
+        "size",
+        "r",
+        "lora_alpha",
+        "lora_dropout"
+    ]
 }
 
 # Function to force string value
@@ -164,22 +225,40 @@ def build_model_config(model_type: str, num_classes: int, model_params: dict) ->
         "num_classes": str(num_classes),
     }
 
+    defaults_common = {
+        "n_block": "4",
+        "k_size": "3",
+        "activation": "leakyrelu",
+        "channels": "16",
+        "p": "0.5",
+    }
+
+    defaults_by_model = {
+        "UnetVanilla": {
+            "linear_head": "True"
+        },
+        "UnetSegmentor": {
+            "linear_head": "True"
+        },
+        "DINOv2": {
+            "n_features": f"{random.choice([4,8])}",
+            "channel_reduction" : f"{random.choice([32,64,128])}"
+        }
+    }
+
+    defaults_model = {**defaults_common, **defaults_by_model.get(model_type, {})}
+
     # documented parameters
     for param in model_params.get(model_type, []):
-        if param in config_model:  # déjà défini
-            continue
-
-        # valeurs par défaut simples
-        defaults = {
-            "n_block": "4",
-            "k_size": "3",
-            "activation": "leakyrelu",
-            "channels": "16",
-            "p": "0.5"
-        }
-        config_model[param] = defaults.get(param, None)  # None si inconnu
+        if param not in config_model:
+            config_model[param] = defaults_model.get(param, "")  # None si inconnu
 
     return config_model
+
+def clean_optional_fields(config_section: dict, model_type: str):
+    for param in OPTIONAL_PARAMS.get(model_type, []):
+        if config_section.get(param, "").strip() == "":
+            config_section.pop(param, None)
 #==============================================================================
 
 for i in range(1, nb_batch + 1):
@@ -188,6 +267,7 @@ for i in range(1, nb_batch + 1):
     hyper_file = sub_f / "hyperparameters.ini"
 
     config = configparser.ConfigParser()
+    config.optionxform = str  # make keys case-sensitive
 
     model_params = fetch_dynamic_available_opts()
     model_type = random.choice(model_types)
@@ -204,9 +284,10 @@ for i in range(1, nb_batch + 1):
     crop_size = random.choice([128, 192, 224]) if img_res == 256 else random.choice([224, 384, 448])
 
     config["Model"] = stringify_dict(build_model_config(model_type, num_classes, model_params))
+    clean_optional_fields(config["Model"], model_type)
 
     config["Optimizer"] = {"optimizer": optimizer}
-    config["Optimizer"].update(stringify_dict(optimizer_extra_args.get(optimizer, {"lr": 0.001})))
+    config["Optimizer"].update(stringify_dict(optimizer_extra_args.get(optimizer, {})))
 
     config["Scheduler"] = {"scheduler": scheduler}
     config["Scheduler"].update(stringify_dict(scheduler_extra_args.get(scheduler, {})))

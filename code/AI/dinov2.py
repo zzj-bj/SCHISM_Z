@@ -44,7 +44,10 @@ class DinoV2SegmentorConfig:
     lora_alpha: int = 32
     lora_dropout: float = 0.1
     inference_mode: bool = False
-    n_blocks: int = 4
+    n_block: int = 4
+    img_res: int = 224
+    channel_reduction: str = '2'
+    dropout: float = 0.1
 
 
 class DinoV2Segmentor(nn.Module):
