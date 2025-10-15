@@ -27,7 +27,7 @@ def main() -> None:
 
     display.print(f"Debug mode {'ON' if ct.DEBUG_MODE else 'OFF'}.", colors['warning'])
 
-    prompt = f"Data augmentation {'ON' if ct.DATA_AUGMENTATION else 'OFF'}."
+    prompt = f"Augmented hyperparmeters {'ON' if ct.AUGMENTED_HYPERPARAMETERS else 'OFF'}."
     display.print(prompt, colors['warning'])
 
     prompt = (
