@@ -27,8 +27,11 @@ def main() -> None:
 
     display.print(f"Debug mode {'ON' if ct.DEBUG_MODE else 'OFF'}.", colors['warning'])
 
+    prompt = f"Augmented hyperparmeters {'ON' if ct.AUGMENTED_HYPERPARAMETERS else 'OFF'}."
+    display.print(prompt, colors['warning'])
+
     prompt = (
-        f"CUDA{'' if torch.cuda.is_available() else 'not'} available"
+        f"CUDA{'' if torch.cuda.is_available() else ' not'} available"
         f" - Running on {'GPU' if torch.cuda.is_available() else 'CPU'}.\n"
     )
     display.print(prompt, colors['warning'])
