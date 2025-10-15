@@ -29,7 +29,7 @@ optimizer_extra_args = {
     "Adagrad": {"lr": 0.01, "lr_decay": 0, "weight_decay": 0.0,
                 "initial_accumulator_value": 0.0, "eps": 1e-10},
     "AdamW": {"lr": 0.001, "betas": (0.9, 0.999), "eps": 1e-8,
-              "weight_decay": 0.01, "amsgrad": False, "amsgrad": False},
+              "weight_decay": 0.01, "amsgrad": False},
     "NAdam": {"lr": 0.001, "betas": (0.9, 0.999), "eps": 1e-8,
               "weight_decay": 0.0, "momentum_decay": 0.004},
     "RAdam": {"lr": 0.1, "betas": (0.9, 0.999), "eps": 1e-8,
@@ -41,31 +41,26 @@ scheduler_extra_args = {
 
     "StepLR": {
         "step_size": 10,
-        "gamma": 0.1,
-        "verbose": False
+        "gamma": 0.1
     },
 
     "MultiStepLR": {
         "milestones": [30, 80],  # liste, pas string
-        "gamma": 0.1,
-        "verbose": False
+        "gamma": 0.1
     },
 
     "ExponentialLR": {
-        "gamma": 0.9,
-        "verbose": False
+        "gamma": 0.9
     },
 
     "PolynomialLR": {
         "total_iters": 100,
-        "power": 2.0,
-        "verbose": False
+        "power": 2.0
     },
 
     "CosineAnnealingLR": {
         "T_max": 50,
-        "eta_min": 0,
-        "verbose": False
+        "eta_min": 0
     },
 
     "ReduceLROnPlateau": {
@@ -76,8 +71,7 @@ scheduler_extra_args = {
         "threshold_mode": "rel",
         "cooldown": 2,
         "min_lr": 1e-6,
-        "eps": 1e-8,
-        "verbose": True
+        "eps": 1e-8
     },
 
     "OneCycleLR": {
@@ -86,15 +80,13 @@ scheduler_extra_args = {
         "anneal_strategy": "cos",
         "div_factor": 25.0,
         "final_div_factor": 1e4,
-        "pct_start": 0.3,
-        "verbose": False
+        "pct_start": 0.3
     },
 
     "CosineAnnealingWarmRestarts": {
         "T_0": 15,
         "T_mult": 1,
-        "eta_min": 0,
-        "verbose": False
+        "eta_min": 0
     }
 }
 
