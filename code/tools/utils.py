@@ -156,7 +156,7 @@ def get_hmin_hmax_calc_mode(message: str, color_key: str = 'input') -> str :
 
 
 
-def format_and_display_error(texte : str, rep= "") -> None  :
+def format_and_display_error(texte : str) -> None  :
     """
     Handles errors based on the specified level of detail.   
     """
@@ -177,13 +177,6 @@ def format_and_display_error(texte : str, rep= "") -> None  :
         prompt = f"{texte} :\n {''.join(last_line)}"
 
     display.print(prompt, colors['error'])
-
-    report = f"{rep}\\fault.txt"
-    print(f"\n\n  {report}  \n\n")
-
-    with open(report, "a", encoding="utf-8") as f:
-        f.write(f"{texte} :\n {''.join(last_line)}\n")
-        f.write(f"{texte} :\n {''.join(tb)}\n")
 
 
 

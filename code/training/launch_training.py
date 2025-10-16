@@ -128,14 +128,14 @@ class LaunchTraining:
                 hyperparameters=hyperparameters,
             )
         except Exception :
-            ut.format_and_display_error('Training Loader', rep = str(hyper_dir))
+            ut.format_and_display_error('Training Loader')
             return
 
         try:
             trainer.load_segmentation_data()
             trainer.train()
         except Exception :
-            ut.format_and_display_error('Training', rep = str(hyper_dir))
+            ut.format_and_display_error('Training')
             return
 
         self.display.print("Training completed", colors["ok"])

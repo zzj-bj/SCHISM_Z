@@ -10,11 +10,7 @@ from datetime import datetime
 # Define possible choice
 model_types = ['UnetVanilla', 'UnetSegmentor', 'DINOv2']
 optimizers = ['Adagrad', 'Adam', 'AdamW', 'NAdam', 'RMSprop', 'RAdam', 'SGD']
-schedulers = ['StepLR', 'MultiStepLR', 'ExponentialLR', 'PolynomialLR',
-              'CosineAnnealingLR', 'ReduceLROnPlateau', 'OneCycleLR',
-              'CosineAnnealingWarmRestarts']
-losses = ['CrossEntropyLoss', 'BCEWithLogitsLoss', 'NLLLoss']
-activations = ['relu', 'LeakyReLU', 'sigmoid', 'tanh']
+activations = ['relu', 'leakyrelu', 'sigmoid', 'tanh']
 
 # Dynamic parameter depending of the possible choice inside optimizer
 optimizer_extra_args = {
@@ -220,7 +216,7 @@ def build_model_config(model_type: str, num_classes: int, model_params: dict) ->
     defaults_common = {
         "n_block": "4",
         "k_size": "3",
-        "activation": "leakyrelu",
+        "activation": random.choice(activations),
         "channels": "16",
         "p": "0.5",
     }
@@ -265,6 +261,8 @@ for i in range(1, nb_batch + 1):
     model_type = random.choice(model_types)
     optimizer = random.choice(optimizers)
     epochs = 15
+    num_samples = 500
+    batch_size = random.choice([4, 8])
     num_classes = random.choice([2, 3])
     activation = random.choice(activations)
 
@@ -282,12 +280,19 @@ for i in range(1, nb_batch + 1):
     config["Optimizer"].update(stringify_dict(optimizer_extra_args.get(optimizer, {})))
 
     config["Scheduler"] = {"scheduler": scheduler}
-    config["Scheduler"].update(stringify_dict(scheduler_extra_args.get(scheduler, {})))
+    sched_args = scheduler_extra_args.get(scheduler, {}).copy()
+    if scheduler == "OneCycleLR":
+        print("Test")
+        # Calculate total_steps based on epochs, num_samples, and batch_size
+        step_per_epoch = -(-num_samples // batch_size)
+        total_steps = epochs * step_per_epoch
+        sched_args["total_steps"] = total_steps
+    config["Scheduler"].update(stringify_dict(sched_args))
 
     config["Loss"] = {"loss": loss, "ignore_background": "True", "weights": "True"}
 
     config["Training"] = {
-        "batch_size": "4",
+        "batch_size": str(batch_size),
         "val_split": str(random.choice([0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9])),
         "epochs": str(epochs),
         "metrics": ", ".join(metric),
@@ -297,7 +302,7 @@ for i in range(1, nb_batch + 1):
     config["Data"] = {
         "crop_size": str(crop_size),
         "img_res": str(img_res),
-        "num_samples": "500"
+        "num_samples": str(num_samples)
     }
 
     with open(hyper_file, "w", encoding="utf-8") as f:
