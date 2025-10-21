@@ -69,6 +69,7 @@ class LaunchTraining:
 
         valid_subfolders: List[str] = []
 
+        total_images = 0
         for sub in data_dir.iterdir():
             if not sub.is_dir():
                 continue
@@ -112,8 +113,18 @@ class LaunchTraining:
                                    colors["error"])
                 return
 
+            total_images += len(img_files)                              
             valid_subfolders.append(name)
 
+        # Verify num_samples in hyperparameters
+        num_samples = ut.read_num_samples(hyper_file)
+        if num_samples > total_images:
+            self.display.print(
+                f"num_samples ({num_samples}) in hyperparameters.ini exceeds total images ({total_images})",
+                colors["error"]
+            )
+            return
+        
         if not valid_subfolders:
             self.display.print("No valid subfolders to train on", colors["error"])
             return

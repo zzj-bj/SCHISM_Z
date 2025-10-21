@@ -178,6 +178,14 @@ def format_and_display_error(texte : str) -> None  :
 
     display.print(prompt, colors['error'])
 
+def read_num_samples(file):
+    motif = re.compile(r"^\s*num_samples\s*=\s*(\d+)")
+    with open(file, "r") as f:
+        for ligne in f:
+            if match := motif.match(ligne):
+                return int(match.group(1))
+    return ct.BIG_INT  # Return a large number if not found
+                                                 
 
 
 def input_percentage(message: str, color_key: str = 'input') -> float:
