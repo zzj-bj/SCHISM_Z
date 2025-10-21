@@ -178,6 +178,14 @@ class Training:
         self.img_res = self.param_converter._convert_param(self.data.get('img_res', 560))
         self.crop_size = self.param_converter._convert_param(self.data.get('crop_size', 224))
         self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
+        check =  self.num_samples * (1 - self.val_split) 
+        if check < self.batch_size : 
+            prompt = (
+                f"'batch_size' ({self.batch_size}) may be too large for this 'val_split' "
+                f"({self.val_split}) & num_samples ({self.num_samples}) combination." 
+                f" Please adjust these parameters accordingly."
+            )
+            raise ValueError(prompt)
 
         # Extract and parse metrics from the ini file
         self.training_time = datetime.now().strftime("%d-%m-%y-%H-%M-%S")
@@ -744,8 +752,9 @@ class Training:
                         )
                         # overwrite the empty desc of the second bar
                         mbar.set_description(metrics_str)
-
+                
                 epoch_loss = running_loss / len(self.dataloaders[phase])
+      
                 epoch_metrics = {metric: running_metrics[metric] /
                                  len(self.dataloaders[phase])
                                  for metric in display_metrics}
