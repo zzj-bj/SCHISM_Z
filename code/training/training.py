@@ -180,7 +180,7 @@ class Training:
         self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
         
         # check that batch size is compatible with val_split and num_samples
-        if float(self.num_samples) * (1 - self.val_split) < float(self.batch_size):
+        if int(self.num_samples * (1 - self.val_split)) < float(self.batch_size):
             prompt = (
                 f"'batch_size' ({self.batch_size}) may be too large for this 'val_split' "
                 f"({self.val_split}) & num_samples ({self.num_samples}) combination." 

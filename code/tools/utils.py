@@ -154,8 +154,6 @@ def get_hmin_hmax_calc_mode(message: str, color_key: str = 'input') -> str :
         text = f"Please provide a valid answer (r/p) {ct.BELL}"
         display.print(text, colors['error'])
 
-
-
 def format_and_display_error(texte : str) -> None  :
     """
     Handles errors based on the specified level of detail.   
@@ -178,7 +176,7 @@ def format_and_display_error(texte : str) -> None  :
 
     display.print(prompt, colors['error'])
 
-def read_num_samples(file):
+def read_num_samples(file : str) -> int:
     motif = re.compile(r"^\s*num_samples\s*=\s*(\d+)")
     with open(file, "r") as f:
         for ligne in f:
