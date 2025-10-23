@@ -154,6 +154,3 @@ DISPLAY_COLORS = {
 
 # Default mean and standard deviation for Json generation
 DEFAULT_MEAN_STD = [np.array([0.5] * 3), np.array([0.5] * 3)]
-
-# Default big integer value for padding
-BIG_INT = 10**10

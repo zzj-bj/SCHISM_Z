@@ -17,11 +17,13 @@ from tools.constants import DISPLAY_COLORS as colors
 from tools.constants import IMAGE_EXTENSIONS
 from tools.hyperparameters import Hyperparameters
 from training.training import Training
-
+from tools.paramconverter import ParamConverter
 
 class LaunchTraining:
     def __init__(self) -> None:
         self.display = DisplayColor()
+        self.param_converter = ParamConverter()
+        self.data: Dict[str, Any] = {}     
 
     def compare_number(
         self,
@@ -42,6 +44,53 @@ class LaunchTraining:
         if nums1 == nums2:
             return True, [], []
         return False, sorted(nums1 - nums2), sorted(nums2 - nums1)
+
+    def check_data_integrity(self, total_images: int, hyperp: Hyperparameters) -> None:
+        """Check consistency between hyperparameters and available data."""
+
+        # Store hyperparameters reference
+        self.hyperp = hyperp
+        params = hyperp.get_parameters()
+
+        # Safely extract relevant parameter groups
+        self.training_params = params.get('Training', {})
+        self.data = params.get('Data', {})
+
+        # Convert and initialize values with defaults if missing
+        self.batch_size = self.param_converter._convert_param(self.training_params.get('batch_size', 8))
+        self.val_split = self.param_converter._convert_param(self.training_params.get('val_split', 0.8))
+        self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
+
+        # --- Integrity check #1: num_samples vs total_images ---
+        if self.num_samples > total_images:
+            # Adjust num_samples if it exceeds available data
+            new_num_samples = int(total_images * self.val_split)
+
+            self.display.print(
+                f"num_samples ({self.num_samples}) exceeds total images ({total_images}). "
+                f"Setting num_samples to {new_num_samples}.",
+                colors["warning"]
+            )
+            self.display.print(
+                "Consider using 'total_images * val_split' as a better choice for num_samples.",
+                colors["warning"]
+            )
+
+            # Update internal values and hyperparameters
+            self.num_samples = new_num_samples
+            self.data['num_samples'] = new_num_samples
+            params.setdefault('Data', {})['num_samples'] = new_num_samples
+
+        # --- Integrity check #2: batch_size vs val_split and num_samples ---
+        train_size = int(self.num_samples * (1 - self.val_split))
+        if train_size < self.batch_size:
+            raise ValueError(
+                f"'batch_size' ({self.batch_size}) may be too large for "
+                f"val_split={self.val_split} and num_samples={self.num_samples}. "
+                f"Please reduce 'batch_size' or adjust 'val_split'/'num_samples'."
+            )
+
+
 
     def train_model(self) -> None:
         ut.print_box("Training")
@@ -117,14 +166,13 @@ class LaunchTraining:
             valid_subfolders.append(name)
 
         # Verify num_samples in hyperparameters
-        num_samples = ut.read_num_samples(hyper_file)
-        if num_samples > total_images:
-            self.display.print(
-                f"num_samples ({num_samples}) in hyperparameters.ini exceeds total images ({total_images})",
-                colors["error"]
-            )
+        try:
+            self.check_data_integrity(total_images, hyperparameters)
+        except Exception:
+            ut.format_and_display_error('Data Integrity Check')
             return
-        
+
+
         if not valid_subfolders:
             self.display.print("No valid subfolders to train on", colors["error"])
             return
