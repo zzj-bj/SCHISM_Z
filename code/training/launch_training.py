@@ -45,8 +45,11 @@ class LaunchTraining:
             return True, [], []
         return False, sorted(nums1 - nums2), sorted(nums2 - nums1)
 
-    def check_data_integrity(self, total_images: int, hyperp: Hyperparameters) -> None:
+    def check_data_integrity(self, total_images: int, hyperp: Hyperparameters) -> bool:
         """Check consistency between hyperparameters and available data."""
+
+        # Initialize integrity flag 
+        check_data_integrity = True
 
         # Store hyperparameters reference
         self.hyperp = hyperp
@@ -82,13 +85,19 @@ class LaunchTraining:
             params.setdefault('Data', {})['num_samples'] = new_num_samples
 
         # --- Integrity check #2: batch_size vs val_split and num_samples ---
-        train_size = int(self.num_samples * (1 - self.val_split))
-        if train_size < self.batch_size:
-            raise ValueError(
-                f"'batch_size' ({self.batch_size}) may be too large for "
-                f"val_split={self.val_split} and num_samples={self.num_samples}. "
-                f"Please reduce 'batch_size' or adjust 'val_split'/'num_samples'."
-            )
+        val_min_size = int(self.batch_size /(1 - self.val_split))
+        if self.num_samples < val_min_size:
+
+            self.display.print(
+                f"'The 'num_samples' value ({self.num_samples}) is too small."
+                f" The minimum required value must be greater than:\n"
+                f" - 'batch_size' / (1 - 'val_split') : "
+                f"{self.batch_size} / (1 - {self.val_split}) = {val_min_size}\n",
+                colors["error"]
+                )
+            check_data_integrity = False
+
+        return check_data_integrity
 
 
 
@@ -110,14 +119,15 @@ class LaunchTraining:
             self.display.print(f"Missing hyperparameters.ini at {hyper_file}", colors["error"])
             return
 
+        # Check the Hyperparameters file  
         try:
             hyperparameters = Hyperparameters(str(hyper_file))
         except Exception:
             ut.format_and_display_error('Hyperparameters')
             return
-
+       
+        # Validate each subfolder in the data directory
         valid_subfolders: List[str] = []
-
         total_images = 0
         for sub in data_dir.iterdir():
             if not sub.is_dir():
@@ -165,17 +175,15 @@ class LaunchTraining:
             total_images += len(img_files)                              
             valid_subfolders.append(name)
 
-        # Verify num_samples in hyperparameters
-        try:
-            self.check_data_integrity(total_images, hyperparameters)
-        except Exception:
-            ut.format_and_display_error('Data Integrity Check')
+        # Check data integrity before proceeding
+        if not self.check_data_integrity(total_images, hyperparameters):
             return
 
-
+        # Ensure there are valid subfolders to train on
         if not valid_subfolders:
             self.display.print("No valid subfolders to train on", colors["error"])
             return
+
 
         self.display.print("Starting training", colors["warning"])
 
