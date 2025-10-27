@@ -65,9 +65,9 @@ class LaunchTraining:
         self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
 
         # --- Integrity check #1: num_samples vs total_images ---
-        if self.num_samples > total_images:
+        if self.num_samples >= total_images:
             # Adjust num_samples if it exceeds available data
-            new_num_samples = int(total_images * self.val_split)
+            new_num_samples = int(total_images) - 1
 
             self.display.print(
                 f"num_samples ({self.num_samples}) exceeds total images ({total_images}). "
@@ -75,7 +75,7 @@ class LaunchTraining:
                 colors["warning"]
             )
             self.display.print(
-                "Consider using 'total_images * val_split' as a better choice for num_samples.",
+                "Consider using 'total_images - 1' as a better choice for num_samples.",
                 colors["warning"]
             )
 
@@ -93,9 +93,19 @@ class LaunchTraining:
                 f" The minimum required value must be greater than:\n"
                 f" - 'batch_size' / (1 - 'val_split') : "
                 f"{self.batch_size} / (1 - {self.val_split}) = {val_min_size}\n",
-                colors["error"]
+                colors["warning"]
                 )
-            check_data_integrity = False
+            self.display.print(
+                "Consider using this value as a better choice for num_samples.",
+                colors["warning"]
+            )
+            
+            # Update internal values and hyperparameters
+            self.num_samples = val_min_size
+            self.data['num_samples'] = val_min_size
+            params.setdefault('Data', {})['num_samples'] = val_min_size
+
+            # check_data_integrity = False
 
         return check_data_integrity
 
