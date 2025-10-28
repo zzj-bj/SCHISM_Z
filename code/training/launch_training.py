@@ -56,15 +56,53 @@ class LaunchTraining:
         params = hyperp.get_parameters()
 
         # Safely extract relevant parameter groups
-        self.training_params = params.get('Training', {})
-        self.data = params.get('Data', {})
+        self.model_params     = params.get('Model', {})
+        self.optimizer_params = params.get('Optimizer', {})
+        self.scheduler_params = params.get('Scheduler', {})
+        self.loss_params      = params.get('Loss', {})
+        
+        self.training_params  = params.get('Training', {})
+        self.data             = params.get('Data', {})
 
         # Convert and initialize values with defaults if missing
         self.batch_size = self.param_converter._convert_param(self.training_params.get('batch_size', 8))
         self.val_split = self.param_converter._convert_param(self.training_params.get('val_split', 0.8))
         self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
 
-        # --- Integrity check #1: num_samples vs total_images ---
+        # --- Integrity check #1: optimizer ---
+        if self.model_params.get('model_type', '') == "":
+            self.display.print(
+                "Model not specified in hyperparameters. Check your configuration.",
+                colors["error"]
+            )
+            check_data_integrity = False
+
+        # --- Integrity check #2: optimizer ---
+        if self.optimizer_params.get('optimizer', '') == "":
+            self.display.print(
+                "Optimizer not specified in hyperparameters. Check your configuration.",
+                colors["error"]
+            )
+            check_data_integrity = False
+
+        # --- Integrity check #3: scheduler ---
+        if self.scheduler_params.get('scheduler', '') == "":
+            self.display.print(
+                "Scheduler not specified in hyperparameters. Check your configuration.",
+                colors["error"]
+            )
+            check_data_integrity = False
+
+        # --- Integrity check #4: loss function ---
+        if self.loss_params.get('loss', '') == "":
+            self.display.print(
+                "Loss function not specified in hyperparameters. Check your configuration.",
+                colors["error"]
+            )
+            check_data_integrity = False
+
+
+        # --- Integrity check #5: num_samples vs total_images ---
         if self.num_samples >= total_images:
             # Adjust num_samples if it exceeds available data
             new_num_samples = int(total_images) - 1
@@ -84,7 +122,7 @@ class LaunchTraining:
             self.data['num_samples'] = new_num_samples
             params.setdefault('Data', {})['num_samples'] = new_num_samples
 
-        # --- Integrity check #2: batch_size vs val_split and num_samples ---
+        # --- Integrity check #5: batch_size vs val_split and num_samples ---
         val_min_size = int(self.batch_size /(1 - self.val_split))
         if self.num_samples < val_min_size:
 
@@ -104,8 +142,6 @@ class LaunchTraining:
             self.num_samples = val_min_size
             self.data['num_samples'] = val_min_size
             params.setdefault('Data', {})['num_samples'] = val_min_size
-
-            # check_data_integrity = False
 
         return check_data_integrity
 
