@@ -202,7 +202,7 @@ class TrainingLogger:
         ax1.set_xlabel('Epochs')
         ax1.set_ylabel('Metric Values')
         ax1.legend()
-        ax0.xaxis.set_major_locator(MaxNLocator(integer=True))  # labels entiers sur x
+        ax1.xaxis.set_major_locator(MaxNLocator(integer=True))  # labels entiers sur x
 
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_directory, 'learning_curves.png'), dpi=300)
