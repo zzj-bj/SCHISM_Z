@@ -83,6 +83,33 @@ scheduler_extra_args = {
         "T_0": 15,
         "T_mult": 1,
         "eta_min": 0
+    },
+
+    "LRScheduler": {},
+
+    "LambdaLR": {
+        "lr_lambda": lambda epoch: 1.0
+    },
+
+    "MultiplicativeLR": {
+        "lr_lambda": lambda epoch: 0.95
+    },
+
+    "ConstantLR": {
+        "factor": 0.5,
+        "total_iters": 5
+    },
+
+    "LinearLR": {
+        "start_factor": 0.1,
+        "total_iters": 5
+    },
+
+    "CyclicLR": {
+        "base_lr": 1e-4,
+        "max_lr": 1e-2,
+        "step_size_up": 2000,
+        "mode": "triangular"
     }
 }
 
@@ -150,12 +177,52 @@ def choose_loss(num_classes):
         return random.choice(["CrossEntropyLoss", "NLLLoss"])
 
 def choose_scheduler(optimizer, epochs):
-    if optimizer in ["SGD", "Adam"]:
-        possible = ["StepLR", "MultiStepLR", "OneCycleLR", "CosineAnnealingLR"]
-    else:
-        possible = ["ExponentialLR", "ReduceLROnPlateau", "CosineAnnealingWarmRestarts"]
-    if epochs < 10 and "CosineAnnealingWarmRestarts" in possible:
-        possible.remove("CosineAnnealingWarmRestarts")
+        # Generic schedulers, compatible with almost any optimizer
+    universal = [
+        "StepLR", "MultiStepLR", "ExponentialLR",
+        "PolynomialLR", "CosineAnnealingLR",
+        "ReduceLROnPlateau", "CosineAnnealingWarmRestarts"
+    ]
+
+    # Batch-based schedulers → not always ideal with AdamW
+    batch_based = ["CyclicLR", "OneCycleLR"]
+
+    # Very specific schedulers → offered less frequently by default
+    advanced = ["LambdaLR", "MultiplicativeLR", "ConstantLR", "LinearLR", "SequentialLR"]
+
+    # Starting point: broad selection
+    possible = universal.copy()
+
+    # Filter based on optimizer type
+    if optimizer in ["SGD"]:
+        possible += batch_based
+    if optimizer in ["Adam", "AdamW"]:
+        # OneCycleLR works with Adam but tends to be less efficient without momentum
+        possible += ["CyclicLR"]
+
+    # Restrictions based on training duration
+    if epochs < 10:
+        safe_remove = [
+            "CosineAnnealingWarmRestarts",
+            "MultiStepLR",
+            "PolynomialLR",
+        ]
+        for s in safe_remove:
+            if s in possible:
+                possible.remove(s)
+
+    # Avoid ReduceLROnPlateau when training is too short
+    if epochs < 5 and "ReduceLROnPlateau" in possible:
+        possible.remove("ReduceLROnPlateau")
+
+    # Allow advanced schedulers only when training is long enough
+    if epochs > 50:
+        possible += advanced
+
+    # Fallback if nothing left after filtering
+    if not possible:
+        possible = universal
+
     return random.choice(possible)
 
 def choose_metrics(num_classes):
@@ -282,7 +349,6 @@ for i in range(1, nb_batch + 1):
     config["Scheduler"] = {"scheduler": scheduler}
     sched_args = scheduler_extra_args.get(scheduler, {}).copy()
     if scheduler == "OneCycleLR":
-        print("Test")
         # Calculate total_steps based on epochs, num_samples, and batch_size
         step_per_epoch = -(-num_samples // batch_size)
         total_steps = epochs * step_per_epoch
