@@ -67,56 +67,30 @@ class LaunchTraining:
         # Convert and initialize values with defaults if missing
         self.batch_size = self.param_converter._convert_param(self.training_params.get('batch_size', 8))
         self.val_split = self.param_converter._convert_param(self.training_params.get('val_split', 0.8))
-        self.num_samples = self.param_converter._convert_param(self.data.get('num_samples', 500))
+        self.num_samples = self.param_converter._convert_param(self.data.get('num_samples'))
 
-        # --- Integrity check #1: optimizer ---
-        if self.model_params.get('model_type', '') == "":
-            self.display.print(
-                "Model not specified in hyperparameters. Check your configuration.",
-                colors["error"]
-            )
-            check_data_integrity = False
-            return check_data_integrity
+       
+        # Generalized integrity checks
+        checks = [
+            ("model_type", self.model_params, "Model not specified in hyperparameters."),
+            ("optimizer", self.optimizer_params, "Optimizer not specified in hyperparameters."),
+            ("scheduler", self.scheduler_params, "Scheduler not specified in hyperparameters."),
+            ("loss", self.loss_params, "Loss function not specified in hyperparameters.")
+        ]
 
-        # --- Integrity check #2: optimizer ---
-        if self.optimizer_params.get('optimizer', '') == "":
-            self.display.print(
-                "Optimizer not specified in hyperparameters. Check your configuration.",
-                colors["error"]
-            )
-            check_data_integrity = False
-            return check_data_integrity
+        for key, params, message in checks:
+            if not params.get(key, ""):
+                self.display.print(f"{message} Check your configuration.", colors["error"])
+                return False
 
-        # --- Integrity check #3: scheduler ---
-        if self.scheduler_params.get('scheduler', '') == "":
-            self.display.print(
-                "Scheduler not specified in hyperparameters. Check your configuration.",
-                colors["error"]
-            )
-            check_data_integrity = False
-            return check_data_integrity
-
-        # --- Integrity check #4: loss function ---
-        if self.loss_params.get('loss', '') == "":
-            self.display.print(
-                "Loss function not specified in hyperparameters. Check your configuration.",
-                colors["error"]
-            )
-            check_data_integrity = False
-            return check_data_integrity
-
-
-        # --- Integrity check #5: num_samples vs total_images ---
+        # --- check #2: num_samples vs total_images ---
         if self.num_samples >= total_images:
             # Adjust num_samples if it exceeds available data
             new_num_samples = int(total_images) - 1
 
             self.display.print(
-                f"num_samples ({self.num_samples}) exceeds total images ({total_images}). "
-                f"Setting num_samples to {new_num_samples}.",
-                colors["warning"]
-            )
-            self.display.print(
+                f"The 'num_samples' value ({self.num_samples}) exceeds total images ({total_images}). "
+                f"Setting num_samples to {new_num_samples}.\n"
                 "Consider using 'total_images - 1' as a better choice for num_samples.",
                 colors["warning"]
             )
@@ -126,18 +100,14 @@ class LaunchTraining:
             self.data['num_samples'] = new_num_samples
             params.setdefault('Data', {})['num_samples'] = new_num_samples
 
-        # --- Integrity check #5: batch_size vs val_split and num_samples ---
+        # --- check #3: batch_size vs val_split and num_samples ---
         val_min_size = int(self.batch_size /(1 - self.val_split))
         if self.num_samples < val_min_size:
 
             self.display.print(
                 f"'The 'num_samples' value ({self.num_samples}) is too small."
-                f" The minimum required value must be greater than:\n"
-                f"  'batch_size' / (1 - 'val_split')",
-                colors["warning"]
-                )
-            self.display.print(
-                "Consider using this value as a better choice for num_samples.",
+                f"Setting num_samples to {val_min_size}.\n"
+                "Consider using 'batch_size / (1 - val_split) as a better choice for num_samples.",
                 colors["warning"]
             )
             
