@@ -48,9 +48,6 @@ class LaunchTraining:
     def check_data_integrity(self, total_images: int, hyperp: Hyperparameters) -> bool:
         """Check consistency between hyperparameters and available data."""
 
-        # Initialize integrity flag 
-        check_data_integrity = True
-
         # Store hyperparameters reference
         self.hyperp = hyperp
         params = hyperp.get_parameters()
@@ -116,7 +113,7 @@ class LaunchTraining:
             self.data['num_samples'] = val_min_size
             params.setdefault('Data', {})['num_samples'] = val_min_size
 
-        return check_data_integrity
+        return True
 
 
     def train_model(self) -> None:
