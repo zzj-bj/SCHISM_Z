@@ -154,25 +154,25 @@ def get_hmin_hmax_calc_mode(message: str, color_key: str = 'input') -> str :
         text = f"Please provide a valid answer (r/p) {ct.BELL}"
         display.print(text, colors['error'])
 
-def format_and_display_error(texte : str) -> None  :
+def format_and_display_error(texte: str) -> None:
     """
-    Handles errors based on the specified level of detail.   
+    Handles errors based on the specified level of detail.
     """
 
     display = dc.DisplayColor()
 
     # Retrieve the type, value, and traceback of the most recent exception
     exc_type, exc_value, exc_traceback = sys.exc_info()
-    last_line = str(exc_value).splitlines()[-1]
-    tb = traceback.format_exception(exc_type, exc_value, exc_traceback)
 
-    # Display the error message
+    # --- Full mode (DEBUG) ---
     if ct.DEBUG_MODE:
-        # Display the complete traceback
-        prompt =  f"{texte} :\n {''.join(tb)}"
+        tb = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        prompt = f"{texte} :\n{tb}"
+
+    # --- Simplified mode (without traceback) ---
     else:
-        # Display the type of exception only
-        prompt = f"{texte} :\n {''.join(last_line)}"
+        # Only display the exception type and value
+        prompt = f"{texte} :\n{exc_type.__name__}: {exc_value}"
 
     display.print(prompt, colors['error'])
 

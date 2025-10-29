@@ -20,7 +20,7 @@ class DisplayColor:
         Args:
             text: The message to display.
             color_spec: 4-tuple (r, g, b, prefix), where:
-                - r, g, b are ints 0–255
+                - r, g, b are ints 0-255
                 - prefix is a short string (e.g. "[X] ")
             bold: If True, render message in bold.
 

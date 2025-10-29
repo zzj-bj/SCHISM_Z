@@ -76,6 +76,7 @@ class LaunchTraining:
                 colors["error"]
             )
             check_data_integrity = False
+            return check_data_integrity
 
         # --- Integrity check #2: optimizer ---
         if self.optimizer_params.get('optimizer', '') == "":
@@ -84,6 +85,7 @@ class LaunchTraining:
                 colors["error"]
             )
             check_data_integrity = False
+            return check_data_integrity
 
         # --- Integrity check #3: scheduler ---
         if self.scheduler_params.get('scheduler', '') == "":
@@ -92,6 +94,7 @@ class LaunchTraining:
                 colors["error"]
             )
             check_data_integrity = False
+            return check_data_integrity
 
         # --- Integrity check #4: loss function ---
         if self.loss_params.get('loss', '') == "":
@@ -100,6 +103,7 @@ class LaunchTraining:
                 colors["error"]
             )
             check_data_integrity = False
+            return check_data_integrity
 
 
         # --- Integrity check #5: num_samples vs total_images ---
@@ -129,8 +133,7 @@ class LaunchTraining:
             self.display.print(
                 f"'The 'num_samples' value ({self.num_samples}) is too small."
                 f" The minimum required value must be greater than:\n"
-                f" - 'batch_size' / (1 - 'val_split') : "
-                f"{self.batch_size} / (1 - {self.val_split}) = {val_min_size}\n",
+                f"  'batch_size' / (1 - 'val_split')",
                 colors["warning"]
                 )
             self.display.print(
@@ -144,7 +147,6 @@ class LaunchTraining:
             params.setdefault('Data', {})['num_samples'] = val_min_size
 
         return check_data_integrity
-
 
 
     def train_model(self) -> None:
