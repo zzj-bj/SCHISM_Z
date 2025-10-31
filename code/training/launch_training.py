@@ -88,7 +88,7 @@ class LaunchTraining:
             self.display.print(
                 f"The 'num_samples' value ({self.num_samples}) exceeds total images ({total_images}). "
                 f"Setting num_samples to {new_num_samples}.\n"
-                "Consider using 'total_images - 1' as a better choice for num_samples.",
+                "   Consider using 'total_images - 1' as a better choice for num_samples.",
                 colors["warning"]
             )
 
@@ -102,9 +102,9 @@ class LaunchTraining:
         if self.num_samples < val_min_size:
 
             self.display.print(
-                f"'The 'num_samples' value ({self.num_samples}) is too small."
+                f"'The 'num_samples' value ({self.num_samples}) is too small. "
                 f"Setting num_samples to {val_min_size}.\n"
-                "Consider using 'batch_size / (1 - val_split) as a better choice for num_samples.",
+                "   Consider using 'batch_size / (1 - val_split) as a better choice for num_samples.",
                 colors["warning"]
             )
             
