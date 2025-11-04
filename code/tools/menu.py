@@ -20,6 +20,7 @@ from tools import utils as ut
 from tools import display_color as dc
 
 # Initialize colorama
+# Z: autoreset colors after each print to prevent color bleeding
 init(autoreset=True)
 
 #============================================================================
@@ -34,11 +35,10 @@ class Menu :
     The default style is 'double'.
     """
 
-
     def __init__(self, selected_menu: str,
                  dynamic_menu: List[str] | None = None,
                  style: str = '') -> None:
-
+        # Z: Instantiate color display tool
         self.display = dc.DisplayColor()
         self.selected_menu = selected_menu
         self.dynamic_menu = dynamic_menu
@@ -49,6 +49,7 @@ class Menu :
         if self.selected_menu == 'Dynamic':
             if self.dynamic_menu is None :
                 text = f" '{self.selected_menu}' : Missing menu."
+                # Z: Print error message in color and exit
                 self.display.print(text, colors['error'])
                 sys.exit()
             else:
@@ -64,6 +65,7 @@ class Menu :
             'double' : ct.PATTERN['double'],
             'rounds': ct.PATTERN['rounds'],
         }
+        # Z: if style not recognized, default to 'double'
         self.frame = style_mapping.get(self.style, ct.PATTERN['double'])
 
         self.ligne = 0

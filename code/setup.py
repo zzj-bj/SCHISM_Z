@@ -63,14 +63,16 @@ from setuptools import find_packages, setup
 ▒██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░▒▒▒▒▒▒▒▓▒▒▓▓▓▓▓▓▓▓▓▒▓█▓▓▓▓▓▓▓███▓▓████████████████████████████▓██▓▓▓▓███████▓   
 """
 
-
+# Z: setup(): declares project metadata, executed when calling "python setup.py install"
 setup(
     name="SCHISM",
     version="1.0.5",
     author="Florent Brondolo",
     author_email="florent.brondolo@akkodis.com",
     description="Simple framework for computer vision",
+# Z: packages_dir: specifies root directory for packages, here "classes" folder
     packages_dir={"": "classes"},
+# Z: find_packages: scans "classes" folder for packages to include
     packages=find_packages(where="classes"),
     install_requires=[
         "torchmetrics>=1.7.1",

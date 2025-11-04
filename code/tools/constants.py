@@ -111,7 +111,7 @@ PATTERN ={
             "─", "│"
            ],
     }
-
+# Z: JSON schema for data stats validation
 DATA_STATS_SCHEMA = {
     "type": "object",
     "patternProperties": {
@@ -153,4 +153,5 @@ DISPLAY_COLORS = {
 }
 
 # Default mean and standard deviation for Json generation
+# Z: if no stats available use these values to prevent errors
 DEFAULT_MEAN_STD = [np.array([0.5] * 3), np.array([0.5] * 3)]

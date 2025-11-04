@@ -26,11 +26,13 @@ from tools.constants import IMAGE_EXTENSIONS
 import tools.display_color as dc
 
 # Initialize colorama
+# Z: autoreset colors after each print to prevent color bleeding
 init(autoreset=True)
 
 #==============================================================================
 def rgb_to_ansi(rgb: Tuple[int, int, int]) -> str:
-    """Convert RGB color to ANSI escape code."""
+    """Convert RGB color to ANSI escape code.
+    Z: used for colored input prompts."""
     return f"\033[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m"
 
 def chck_color(color_key: str) -> Tuple[int, int, int]:
@@ -269,6 +271,7 @@ def load_data_stats(
     json_path = Path(json_dir) / "data_stats.json"
 
     # 1) File exists?
+    # Z: if not, prompt to generate, else use default stats
     if not json_path.is_file():
         if answer_yes_or_no("data_stats.json not found; generate a new one"):
             lp.LaunchPreprocessing().launch_json_generation(
@@ -281,6 +284,7 @@ def load_data_stats(
             return {"default": neutral_stats}
 
     # 2) Read & parse JSON
+    # Z: if can't, prompt to generate, else use default stats
     try:
         raw_text = json_path.read_text(encoding="utf-8")
         raw = json.loads(raw_text)
@@ -297,6 +301,7 @@ def load_data_stats(
             return {"default": neutral_stats}
 
     # 3) Schema validation
+    # Z: if not, prompt to generate, else use default stats
     validator = Draft7Validator(ct.DATA_STATS_SCHEMA)
     errors = sorted(validator.iter_errors(raw), key=lambda e: e.path)
     if errors:
@@ -313,6 +318,7 @@ def load_data_stats(
             return {"default": neutral_stats}
 
     # 4) Convert to numpy
+    # Z: if can't, use default stats
     try:
         data_stats = {
             key: [np.array(vals[0], float), np.array(vals[1], float)]
@@ -323,6 +329,7 @@ def load_data_stats(
         return {"default": neutral_stats}
 
     # 5) Check for missing subfolders — **use data_dir**, not dir!
+    # Z: if missing, prompt to generate missing, else use default stats
     subfolders = [d.name for d in Path(data_dir).iterdir() if d.is_dir()]
     missing = [d for d in subfolders if d not in data_stats]
 
