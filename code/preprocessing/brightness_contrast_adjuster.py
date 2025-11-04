@@ -28,9 +28,13 @@ from tools import utils as ut
 class BrightnessContrastAdjuster:
     """
     This class allows automatic brightness and contrast adjustment for a group of images.
+    Z: Core idea: ignore large background and noise with few pixels, compute hmin/hmax from either a
+    reference image or per-image histogram, build a linear LUT from that range, apply it to each image,
+    and save the adjusted copy with an "_adjusted_" suffix.
     """
 
     # Factor controlling how aggressively extreme histogram values are ignored
+    # Z: total pixel count / AUTO_THRESHOLD = threshold to ignore, > keep, < ignore
     AUTO_THRESHOLD = 5000
 
     # This range must be a float to ensure float division.
@@ -45,6 +49,7 @@ class BrightnessContrastAdjuster:
     DEFAULT_HMAX = 255
 
     # Fraction of total pixels used to define histogram limit
+    # Z: used to ignore large background
     LIMIT_FRACTION = 10.0
 
     def __init__(self, input_path: str, output_path: str) -> None:
@@ -53,9 +58,12 @@ class BrightnessContrastAdjuster:
         self.display = dc.DisplayColor()
 
     def calculate_hmin_hmax(self, image_path: str) -> Tuple[int, int]:
-        """Calculate and return hmin and hmax for the given image."""
+        """Calculate and return hmin and hmax for the given image.
+        Z: will ignore large background and noise with few pixels
+        """
 
         image = Image.open(image_path)
+        # Z: convert to grayscale if not already
         if image.mode != 'L':
             image = image.convert('L')
 
@@ -63,9 +71,11 @@ class BrightnessContrastAdjuster:
         pixel_count = image.width * image.height
 
         # Ignore very high bins in the histogram (limit = 10% of total pixels)
+        # Z: equivalent to ignoring large background
         limit = pixel_count / self.LIMIT_FRACTION
 
         # Threshold to ignore extreme histogram bins with very few pixels
+        # Z: equivalent to ignoring noise with few pixels
         threshold = pixel_count / self.AUTO_THRESHOLD
 
         hmin, hmax = self.DEFAULT_HMIN, self.DEFAULT_HMAX
@@ -86,7 +96,7 @@ class BrightnessContrastAdjuster:
             if count > threshold:
                 hmax = i
                 break
-
+        # Z: hmin and hmax are indices in histogram
         return hmin, hmax
 
     def build_lut(self, hmin: int, hmax: int) -> List[int]:
@@ -98,10 +108,12 @@ class BrightnessContrastAdjuster:
             elif i > hmax:
                 lut.append(self.LUT_MAX_VAL)
             else:
+                # Z: scale linearly the intermediate values between hmin and hmax
                 scaled_lut = int(
                     ((i - hmin) * self.IMAGE_RANGE / (hmax - hmin))
                 )
                 lut.append(min(scaled_lut, self.LUT_MAX_VAL))
+        # Z: lut is a list of 256 values mapping input pixel values to adjusted pixel values
         return lut
 
     def apply_lut(self, image_path: str, lut: List[int]) -> Image.Image:
@@ -112,6 +124,7 @@ class BrightnessContrastAdjuster:
             image = image.convert('L')
 
         # Apply the LUT
+        # Z: replace each pixel value with corresponding value from LUT
         adjusted_image = image.point(lut)
 
         return adjusted_image
@@ -170,6 +183,7 @@ class BrightnessContrastAdjuster:
             # Define full input and output paths
             input_image_path = os.path.join(self.input_path, image_name)
 
+            # Z: define output image path with _adjusted_ suffix
             name, extension = os.path.splitext(image_name)
             split_name_parts = ut.split_string(name)
             if split_name_parts:
