@@ -32,7 +32,7 @@ from tools.constants import IMAGE_EXTENSIONS
 
 @dataclass
 class JsonConfig:
-
+# Z: use a decorator to define __ini__, __repr__, __eq__.
     parent_dir: str
     subfolders: List[str]
     json_file: str
@@ -142,6 +142,7 @@ class Json:
                 continue
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
+            # Z: [sum of pixels of R, of G, of B]
             pixel_sum += np.sum(image, axis=(0, 1))
             pixel_sum_squared += np.sum(image ** 2, axis=(0, 1))
             pixel_count += image.shape[0] * image.shape[1]
