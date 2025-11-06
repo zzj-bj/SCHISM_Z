@@ -40,7 +40,7 @@ class ImageNormalizer:
         files = [f for f in os.listdir(self.input_path)
                  if any(f.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)]
         errors: List[Tuple[str, str]] = []
-
+        # Z: obtain the folder name for display purposes
         folder = self.input_path.split(os.sep)[-2]
 
         pbar = tqdm(
@@ -58,16 +58,21 @@ class ImageNormalizer:
                 masks = np.array(Image.open(file).convert('L'))
 
                 # Retrieve the unique classes in the image
+                # Z: use np.unique to find unique pixel values
                 unique_classes = np.unique(masks)
 
                 # Create a mapping dictionary
+                # Z: 0,1,2 --> 0,127,255 for 3 unique classes
                 class_mapping = {value: int(np.linspace(0, 255, len(unique_classes))[i]) for i,
                                  value in enumerate(unique_classes)}
 
                 # Apply the mapping using vectorization
+                # Z: create a numpy of length max pixel value +1
                 lut = np.zeros(masks.max()+1, dtype=np.uint8)
+                # Z: fill the lut with scaled values
                 for v, scaled in class_mapping.items():
                     lut[v] = scaled
+                # Z: map the original masks to the scaled values
                 compliant_masks = lut[masks]
 
                 # Create a new image from the compliant masks
