@@ -808,9 +808,8 @@ class Training:
                                       metrics_dict=metrics_dict)
         self.logger.plot_learning_curves(loss_dict=loss_dict,
                                          metrics_dict=metrics_dict)
-        self.logger.save_hyperparameters(loss_dict=loss_dict, metrics_dict=metrics_dict)
-        # if ct.AUGMENTED_HYPERPARAMETERS:
-        #     self.logger.save_hyperparameters(loss_dict=loss_dict, metrics_dict=metrics_dict)
+        self.logger.save_hyperparameters(loss_dict=loss_dict,
+                                         metrics_dict=metrics_dict)
         self.logger.save_data_stats(
             self.dataloaders["train"].dataset.data_stats)
         if "ConfusionMatrix" in self.metrics:
