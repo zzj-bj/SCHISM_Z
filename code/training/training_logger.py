@@ -113,7 +113,7 @@ class TrainingLogger:
             with open(file_path, 'w', encoding='utf-8') as f:
                 config.write(f)
 
-            self.display.print(f" {title} saved to {file_path}", colors['ok'])
+            self.display.print(f"{title} saved to {file_path}", colors['ok'])
             return file_path
 
         config = configparser.ConfigParser()
@@ -127,9 +127,9 @@ class TrainingLogger:
             'Data': self.data,
         }
 
-        save_ini_file(self, config, sections, colors, 'hyperparameters')
+        save_ini_file(self, config, sections, colors, 'Hyperparameters')
 
-        if ct.AUGMENTED_HYPERPARAMETERS and loss_dict and metrics_dict:
+        if ct.AUGMENTED_HYPERPARAMETERS:
             results = {
                 'Results': {
                     **{f'Best_{metric}': f"{max(values):.4f}" for metric, values in metrics_dict['val'].items()},
@@ -137,7 +137,7 @@ class TrainingLogger:
                 }
             }
 
-            save_ini_file(self, config, results, colors, 'augmented_hyperparameters')
+            save_ini_file(self, config, results, colors, 'Augmented_hyperparameters')
 
     def save_best_metrics(self,
         loss_dict: Dict[str, Dict[int, float]],
