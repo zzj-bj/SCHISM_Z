@@ -137,6 +137,7 @@ class LaunchPreprocessing:
             output_path=str(sequence_dir)
         )
         # Ensure ref_img_path is a string
+        # Z: deals with the two modes
         ref_img_path_str = str(ref_img_path) if ref_img_path is not None else ""
         auto_adjuster.auto_adjust_brightness_contrast(hmin_hmax_mode=hmin_hmax_calc_mode,
                                                        ref_img_path=ref_img_path_str)
@@ -173,6 +174,11 @@ class LaunchPreprocessing:
             file_name_report = str(Path(file_name_report))
 
         # 4) Gather subfolder Paths
+        # Z: Must be a subdirectory of data_dir.
+        # Z: The subdirectory must contain an 'images/' folder.
+        # Z: The 'images/' folder must have at least one image file
+        # with an extension in IMAGE_EXTENSIONS.
+
         subfolders = [p for p in data_dir.iterdir() if p.is_dir()]
         if not subfolders:
             self.display.print("The data directory is empty", colors["error"])
