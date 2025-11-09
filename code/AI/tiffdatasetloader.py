@@ -62,6 +62,7 @@ class TiffDatasetLoader(VisionDataset):
             tiff_dataset_loader_config (TiffDatasetLoaderConfig): Configuration object containing
                 all necessary parameters for the dataset loader.
         """
+        # Z: No transforms from father class are applied at the dataset level
         super().__init__(transforms=None)
 
         self.data_stats = tiff_dataset_loader_config.data_stats
@@ -76,6 +77,7 @@ class TiffDatasetLoader(VisionDataset):
         self.ignore_background = tiff_dataset_loader_config.ignore_background
         self.weights = tiff_dataset_loader_config.weights
         self.image_dims = self.get_image_dimensions()
+        # Z: Precompute class values for weight calculation if not in inference mode
         if not self.inference_mode:
             self.class_values = self._compute_class_values()
 
@@ -99,7 +101,9 @@ class TiffDatasetLoader(VisionDataset):
                     "self.img_data is None. Cannot determine image dimensions.")
 
             img_path = self.img_data[dataset_id][sample_id]
+            # Z: opens image get width and height
             with Image.open(img_path) as img:
+                # Z: returns size as (height, width)
                 return img.size[::-1]
         except Exception as e:
             raise RuntimeError(e)
@@ -125,10 +129,10 @@ class TiffDatasetLoader(VisionDataset):
 
         if w == tw and h == th:
             return 0, 0, h, w
-
+        # Z: generates randomly in the range of possible top-left corners
         i = torch.randint(0, h - th + 1, size=(1,)).item()
         j = torch.randint(0, w - tw + 1, size=(1,)).item()
-
+        # Z: return coodinates of left top corner and size of crop
         return i, j, th, tw
 
     def get_valid_crop(self, img, mask, threshold=0.8, max_attempts=10):
@@ -220,7 +224,9 @@ class TiffDatasetLoader(VisionDataset):
 
         # Transpose back to [C, H, W] after padding
         img_np = np.transpose(img_np, (2, 0, 1)).squeeze()
+        # Z: Crop image by non-overlapping patches
         patches = patchify(img_np, (img_np.shape[0], patch_h, patch_h), step=patch_h)
+        # Z: Reshape to (num_patches, C, patch_h, patch_w)
         patches = patches.reshape(-1, img_np.shape[0], patch_h, patch_w)
         return patches
 
@@ -282,13 +288,14 @@ class TiffDatasetLoader(VisionDataset):
         RuntimeError: If NaN values are detected in the weights calculation.
         """
         mask = mask.astype(np.int64)
+        # Z: Count pixels per class
         counts = np.bincount(mask.ravel(), minlength=self.num_classes)[self.class_values]
 
         class_ratio = counts / (np.sum(counts) + 1e-8)  # Avoid divide by zero
         u_weights = 1 / (class_ratio + 1e-8)  # Avoid division by zero
-
+        # Z: Divide weights by temperature and apply softmax
         weights = nn_func.softmax(torch.from_numpy(u_weights).float() / temperature, dim=-1)
-
+        # Z: If any NaN raise error
         if torch.any(torch.isnan(weights)):
             print(weights)
             print(class_ratio)
@@ -335,10 +342,12 @@ class TiffDatasetLoader(VisionDataset):
         m, s = self._get_mean_std(dataset_id)
         img = np.array(Image.open(img_path).convert("RGB"))
         img_tensor = torch.from_numpy(img).float()
+        # Z: [C, H, W] and normalize to [0, 1]
         img_tensor = img_tensor.permute(2, 0, 1).contiguous() / 255
         img_normalized = torchvision.transforms.functional.normalize(img_tensor, mean=m, std=s)
         patches = self.extract_patches(img_normalized)
         processed_patches = []
+        # Z: patches.shape[0] is number of patches
         for i in range(patches.shape[0]):
             patch = patches[i]
             patch_tensor = torch.tensor(patch).unsqueeze(0)
@@ -377,6 +386,7 @@ class TiffDatasetLoader(VisionDataset):
             f"Mismatch in dimensions: Image {img.shape} vs Mask {mask.shape} for {img_path}"
         )
         img, mask = self.get_valid_crop(img, mask, threshold=0.8, max_attempts=20)
+        # Z: [C, H, W] and normalize to [0, 1]
         img_tensor = torch.from_numpy(img.transpose((2, 0, 1))).contiguous() / 255
 
         img_resized = nn_func.interpolate(img_tensor.unsqueeze(0),
@@ -399,8 +409,10 @@ class TiffDatasetLoader(VisionDataset):
 
         if self.num_classes > 1:
             if self.ignore_background:
+                # Z: Scale mask to [0, num_classes] then subtract 1 to ignore background
                 mask_resized = (mask_resized * self.num_classes).long() - 1
             else:
+                # Z: Scale mask to [0, num_classes - 1], 0 = background
                 mask_resized = (mask_resized * (self.num_classes - 1)).long()
 
         if torch.rand(1).item() < self.p:
