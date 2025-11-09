@@ -181,7 +181,7 @@ class TiffDatasetLoader(VisionDataset):
     This function takes an image in the format [C, H, W] (channels, height, width)
     and extracts non-overlapping patches of a specified size. If the image
     dimensions are not multiples of the patch size, the function pads the image
-    with zeros to ensure that the resulting patches are  correctly sized.
+    with zeros to ensure that the resulting patches are correctly sized.
 
     Parameters:
     - img_np (numpy.ndarray): The input image as a NumPy array with shape [C, H, W],
