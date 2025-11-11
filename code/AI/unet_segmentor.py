@@ -65,8 +65,9 @@ class UnetSegmentor(nn.Module,ActivationMixin):
         self.encoder_convs = nn.ModuleList([
                                 self._create_encoder_conv_block(
                                     channels= self.channels * 2 ** i)
+                                    # Z: n_block - 1 because the last block is the bridge
                                     for i in range(0, self.n_block - 1)])
-
+        # Z: Bridge layer
         self.mid_conv = self._create_encoder_conv_block(
             channels=self.channels*2**(self.n_block - 1))
 
@@ -144,19 +145,24 @@ class UnetSegmentor(nn.Module,ActivationMixin):
         feature_list = []
         x = self.input_conv(x)
         feature_list.append(x)
+        # Z: size/2
         x = nn_func.max_pool2d(x, kernel_size=2)
         x = nn_func.dropout(x, p=self.p)
         for i in range(self.n_block - 1):
+            # Z: channels*2 for each block
             x = self.encoder_convs[i](x)
             feature_list.append(x)
+            # Z: size/2 for each block
             x = nn_func.max_pool2d(x, kernel_size=2)
             x = nn_func.dropout(x, p=self.p)
 
         x = self.mid_conv(x)
 
         for i in range(self.n_block):
+            # Z: size*2, channels/2 for each block
             x = self.decoder_deconvs[i](x)
             x = nn_func.dropout(x, p=self.p)
+            # Z: element-wise addition with corresponding encoder feature map then decoder conv
             x = self.decoder_convs[i](x + feature_list[::-1][i])
 
         return self.seg_conv(x)
