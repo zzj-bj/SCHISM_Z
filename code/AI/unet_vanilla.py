@@ -62,7 +62,7 @@ class UnetVanilla(nn.Module):
         self.encoder_blocks = nn.ModuleList()
         self.max_pools = nn.ModuleList()
 
-        # Z: Define down sampling path
+        # Z: Define down sampling path, channels*2 size/2 for each block
         for i in range(self.n_block):
             self.encoder_blocks.append(self.encoder_block(self.channels * (2 ** i)))
             self.max_pools.append(nn.MaxPool2d(kernel_size=2, ceil_mode=True))
@@ -71,7 +71,7 @@ class UnetVanilla(nn.Module):
         self.decoder_blocks = nn.ModuleList()
         self.up_convs = nn.ModuleList()
 
-        # Z: Reverse order for decoder, from deepest to shallowest 0
+        # Z: Reverse order for decoder, from deepest to shallowest 0, channels/2 size*2 for each block
         for i in range(self.n_block, -1, -1):
             if i > 0:
                 self.decoder_blocks.append(self.decoder_block(self.channels * (2 ** i)))
@@ -114,6 +114,7 @@ class UnetVanilla(nn.Module):
                 in_channels,
                 out_channels,
                 kernel_size=self.k_size,
+                # Z: equivalent to padding='same' for odd k_size
                 padding=self.k_size // 2),
                 self.activation_mixin._get_activation(self.activation
             )
