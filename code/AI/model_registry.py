@@ -10,6 +10,7 @@ from AI.unet_segmentor import UnetSegmentorConfig
 from AI.dinov2 import DinoV2Segmentor
 from AI.dinov2 import DinoV2SegmentorConfig
 
+# Z: This modeule is used by code/training/training.py and code/inference/inference.py
 model_mapping = {
     'UnetVanilla': UnetVanilla,
     'UnetSegmentor': UnetSegmentor,
