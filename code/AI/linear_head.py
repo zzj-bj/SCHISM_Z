@@ -22,6 +22,7 @@ class LinearHeadConfig:
     It includes parameters such as embedding size, number of features,
     and number of classes.
     """
+    # Z: embedding_size: number of channels of 1 Transformer layer output
     embedding_size: int = 512
     n_features: int = 1
     num_classes: int = 3
@@ -35,6 +36,7 @@ class LinearHead(nn.Module):
                  linear_head_config : LinearHeadConfig
                  ):
         super().__init__()
+        # Z: n_features: number of transformer layers used for feature aggregation
         self.n_features = linear_head_config.n_features
         self.embedding_size = linear_head_config.embedding_size * self.n_features
         self.num_classes = linear_head_config.num_classes
@@ -58,11 +60,14 @@ class LinearHead(nn.Module):
         patch_feature_size = img_shape // 14
         
         if isinstance(feats, list):
+            # Z: remove the CLS token at position 0 along the sequence dimension, then concatenate features by channels
+            # Z: tensor shape: [batch, sequence_length, embedding_dim]
             feats = torch.cat([f[:, 1:, :] for f in feats], dim=-1)
         else:
             feats = feats[:, 1:, :]
         
         B, S, D = feats.shape
+        # Z: permute to [batch, embedding_dim, sequence_length] and reshape to [batch, embedding_dim, height, width]
         x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_feature_size, patch_feature_size)
 
         logits = self.head(x)
