@@ -6,9 +6,11 @@ import math
 
 @dataclass
 class CNNHeadConfig:
+    # Z: embedding_size: single feature embedding size = number of channels of 1 Transformer layer output
     embedding_size: int
     img_res: int
     num_classes: int = 3
+    # Z: n_features: number of transformer layers used for feature aggregation
     n_features: int = 1
     n_block: int = 4
     k_size: int = 3
@@ -50,6 +52,7 @@ class CNNHead(nn.Module):
         super().__init__()
         self.n_features = cfg.n_features
         self.n_block = cfg.n_block
+        # Z: total embedding size after concatenating features from multiple layers
         self.embedding_size = cfg.embedding_size * self.n_features
         self.num_classes = cfg.num_classes
         self.dropout = cfg.dropout
