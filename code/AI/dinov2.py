@@ -12,7 +12,9 @@ from dataclasses import dataclass
 
 import torch
 from torch import nn
+# Z: AutoModel is imported to load the pre-trained DinoV2 model
 from transformers import AutoModel
+# Z: For 4-bit quantization support
 from transformers.utils.quantization_config import BitsAndBytesConfig 
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from AI.linear_head import LinearHead
@@ -109,13 +111,18 @@ class DinoV2Segmentor(nn.Module):
 
         if self.quantize :
             self.quantization_config = BitsAndBytesConfig(
+                # Z: load the model weights using 4-bit quantization
 				load_in_4bit=True,
+                # Z: use NormalFloat4, better than int4 for model quality
 				bnb_4bit_quant_type="nf4",
+                # Z: enable double quantization to further compress quantization parameters and save memory
 				bnb_4bit_use_double_quant=True,
+                # Z: perform computation in bfloat16 for better numerical stability
 				bnb_4bit_compute_dtype=torch.bfloat16,
 			)
             self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.size}',
                                                       quantization_config=self.quantization_config)
+            # Z: prepare the model for k-bit training (e.g., 4-bit)
             self.backbone = prepare_model_for_kbit_training(self.backbone)
         else:
             self.backbone = AutoModel.from_pretrained(f'facebook/dinov2-{self.size}')
@@ -125,8 +132,9 @@ class DinoV2Segmentor(nn.Module):
                                      r=self.r,
                                      lora_alpha=self.lora_alpha,
                                      lora_dropout=self.lora_dropout,
+                                     # Z: apply to all linear layers
                                      target_modules="all-linear",use_rslora=True)
-
+            # Z: freeze the model weights except for LoRA layers
             self.backbone = get_peft_model(self.backbone, peft_config)
             self.backbone.print_trainable_parameters()
 
@@ -152,10 +160,16 @@ class DinoV2Segmentor(nn.Module):
         )
 
     def forward(self, x):
+        # Z: enable gradient computation only if PEFT is used and the model is in training mode
         with torch.set_grad_enabled(self.peft and self.training):
             if self.n_features == 1:
+                # Z: run a forward pass through DINOv2 to encode the image into patch tokens
+                # Z: and output the semantic feature sequence for each patch
+                # Z: features.shape = (batch_size, seq_len, embedding_size)
                 features = self.backbone(pixel_values=x).last_hidden_state
             else:
+                # Z: extract the last N hidden states from the DINOv2 backbone 
+                # Z: to use as multi-layer patch features for the segmentation head
                 features = list(self.backbone(pixel_values=x, output_hidden_states=True)['hidden_states'])[-self.n_features:]
         inputs = {"features" : features, "image" : x}
         return self.seg_head(inputs)
