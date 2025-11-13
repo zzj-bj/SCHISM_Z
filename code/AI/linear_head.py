@@ -61,6 +61,7 @@ class LinearHead(nn.Module):
         # Z: In ViT one image is diveded into 14*14 patches
         patch_feature_size = img_shape // 14
         
+        # Z: if multiple outputs from different transformer layers are provided
         if isinstance(feats, list):
             # Z: remove the CLS token at position 0 along the sequence dimension, only keep patch tokens
             # Z: then concatenate features by channels/embeddings
@@ -70,7 +71,7 @@ class LinearHead(nn.Module):
             feats = feats[:, 1:, :]
         
         B, S, D = feats.shape
-        # Z: permute to [batch, embedding_dim, sequence_length] and reshape to [batch, embedding_dim, height, width]
+        # Z: permute to [batch, embedding_dim, sequence_length] and reshape to [batch, embedding_dim, patch height, patch width]
         x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_feature_size, patch_feature_size)
 
         logits = self.head(x)
