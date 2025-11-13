@@ -60,7 +60,7 @@ class CNNHead(nn.Module):
         self.img_res = cfg.img_res
         self.activation = cfg.activation.lower()
         self.activation_mixin = ActivationMixin()
-
+        # Z: first element is input channels, others are output channels for each block
         channels_list = [self.embedding_size]
         for i in range(1, self.n_block + 1):
             if self.channel_reduction == "gradual":
@@ -91,6 +91,7 @@ class CNNHead(nn.Module):
             # Z: if not the last block
             if i < self.n_block - 1:
                 layers.append(
+                    # Z: upsample by the computed scale factor
                     nn.Upsample(scale_factor=scale_factors[i], mode="bilinear", align_corners=False)
                 )
             else:
