@@ -164,7 +164,7 @@ class DinoV2Segmentor(nn.Module):
         with torch.set_grad_enabled(self.peft and self.training):
             if self.n_features == 1:
                 # Z: run a forward pass through DINOv2 to encode the image into patch tokens
-                # Z: and output the semantic feature sequence for each patch
+                # Z: and output the semantic feature sequence for each patch from the last hidden layer
                 # Z: features.shape = (batch_size, seq_len, embedding_size)
                 features = self.backbone(pixel_values=x).last_hidden_state
             else:
