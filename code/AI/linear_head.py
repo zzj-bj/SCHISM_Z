@@ -22,7 +22,7 @@ class LinearHeadConfig:
     It includes parameters such as embedding size, number of features,
     and number of classes.
     """
-    # Z: embedding_size: number of channels of 1 Transformer layer output
+    # Z: embedding_size: single feature embedding size = number of channels of 1 Transformer layer output
     embedding_size: int = 512
     n_features: int = 1
     num_classes: int = 3
@@ -38,6 +38,7 @@ class LinearHead(nn.Module):
         super().__init__()
         # Z: n_features: number of transformer layers used for feature aggregation
         self.n_features = linear_head_config.n_features
+        # Z: total embedding size after concatenating features from multiple layers
         self.embedding_size = linear_head_config.embedding_size * self.n_features
         self.num_classes = linear_head_config.num_classes
         self.head = nn.Sequential(
@@ -57,10 +58,12 @@ class LinearHead(nn.Module):
         """
         feats = inputs["features"]
         img_shape = inputs["image"].shape[-1]
+        # Z: In ViT one image is diveded into 14*14 patches
         patch_feature_size = img_shape // 14
         
         if isinstance(feats, list):
-            # Z: remove the CLS token at position 0 along the sequence dimension, then concatenate features by channels
+            # Z: remove the CLS token at position 0 along the sequence dimension, only keep patch tokens
+            # Z: then concatenate features by channels/embeddings
             # Z: tensor shape: [batch, sequence_length, embedding_dim]
             feats = torch.cat([f[:, 1:, :] for f in feats], dim=-1)
         else:
@@ -71,7 +74,7 @@ class LinearHead(nn.Module):
         x = feats.permute(0,2,1).reshape(-1,self.embedding_size, patch_feature_size, patch_feature_size)
 
         logits = self.head(x)
-
+        # Z: upsample logits to match the original image size
         logits = F.interpolate(
             input=logits, size=(int(img_shape),int(img_shape)),
                                 mode="bilinear",align_corners=False
