@@ -74,7 +74,7 @@ class Training:
         return 'Training'
 
     def __init__(self, **kwargs: Any) -> None:
-        # Z: PamaConverter to sparse INI/string parameters
+        # Z: ParamConverter to sparse INI/string parameters
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
@@ -725,7 +725,7 @@ class Training:
 
                             if is_training:
                                 if scaler:
-                                    # Z: scale the loss and bach propagation
+                                    # Z: scale the loss and back propagation
                                     scaler.scale(loss).backward()
                                     # Z: check overflow/underflow, step optimizer if safe
                                     scaler.step(optimizer)
