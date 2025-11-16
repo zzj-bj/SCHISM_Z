@@ -82,6 +82,7 @@ class LaunchTraining:
         ]
 
         for key, params, message in checks:
+            # Z: if key missing or empty, display error and return False. Empty list will activate if condition
             if not params.get(key, ""):
                 self.display.print(f"{message} Check your configuration.", colors["error"])
                 return False
@@ -175,6 +176,7 @@ class LaunchTraining:
             if not img_files:
                 self.display.print(f"No tif files in {name}/images", colors["error"])
                 return
+
             msk_files = list(masks_dir.glob("*.tif"))
             if not msk_files:
                 self.display.print(f"No tif files in {name}/masks", colors["error"])
@@ -207,7 +209,6 @@ class LaunchTraining:
         if not valid_subfolders:
             self.display.print("No valid subfolders to train on", colors["error"])
             return
-
 
         self.display.print("Starting training", colors["warning"])
 
