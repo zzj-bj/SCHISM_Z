@@ -286,6 +286,12 @@ class TiffDatasetLoader(VisionDataset):
 
         Raises:
         RuntimeError: If NaN values are detected in the weights calculation.
+
+        Z: The weights computed here are the per-sample class-weight vectors:
+        for the mask of that sample, count the number of pixels per class → compute frequencies
+        → take the inverse → apply softmax/temperature,
+        producing a weight tensor of length num_classes (for multi-class cases). 
+        For binary classification, it simply returns all zeros.
         """
         mask = mask.astype(np.int64)
         # Z: Count pixels per class

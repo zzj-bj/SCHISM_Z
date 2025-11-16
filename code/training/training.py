@@ -56,6 +56,7 @@ from training.training_logger import TrainingLogger, TrainingLoggerConfig
 
 
 # Ensure project root is on the PYTHONPATH
+# Z: Add the project root to sys.path so local packages can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class Training:
@@ -73,6 +74,7 @@ class Training:
         return 'Training'
 
     def __init__(self, **kwargs: Any) -> None:
+        # Z: PamaConverter to sparse INI/string parameters
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.subfolders = kwargs.get('subfolders')
@@ -120,10 +122,11 @@ class Training:
             'OneCycleLR': OneCycleLR,
             'CosineAnnealingWarmRestarts': CosineAnnealingWarmRestarts
         }
-
+        ### Z: From here till line 208, extract and convert hyperparameters
         # Model parameters
         self.model_params = {k: v for k,
                               v in self.hyperparameters.get_parameters()['Model'].items()}
+        # Z: if num_classes is missing, default to 3
         num_classes_param = self.param_converter._convert_param(self.model_params.get('num_classes', 3))
         if isinstance(num_classes_param, (int, float, str)):
             self.num_classes = int(num_classes_param)
@@ -131,6 +134,7 @@ class Training:
             prompt = (f"Invalid type for num_classes: {type(num_classes_param)}."
             "Expected int, float, or str.")
             raise ValueError(prompt)
+        # Z: may cause issues when saving parameters to JSON causes here num_classes is changed non manually
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.model_mapping = model_mapping
         self.model_config_mapping = model_config_mapping
@@ -145,11 +149,15 @@ class Training:
 
         # Loss parameters
         self.loss_params = {k: v for k, v in self.hyperparameters.get_parameters()['Loss'].items()}
+
+        # Z: if weights and ignore_background are missing, default to False
         self.weights = self.param_converter._convert_param(self.loss_params.get('weights', "False"))
         self.ignore_background = self.param_converter._convert_param(self.loss_params.get('ignore_background', "False"))
         if self.ignore_background:
+            # Z: background class index
             self.ignore_index = -1
         else:
+            # Z: Pytorch default ignore index
             self.ignore_index = -100
 
         # Training parameters
@@ -198,7 +206,8 @@ class Training:
         self.metrics_mapping = {}  # Initialize metrics_mapping attribute
 
         self.model = self.initialize_model()
-
+    
+    ### Z: From here till line 447, initialize components: metrics, optimizer, scheduler, loss, model
     def create_metric(self,
         binary_metric: Any,
         multiclass_metric: Any
@@ -269,6 +278,7 @@ class Training:
 
         Returns:
             Optimizer configured.
+            Z: default to Adam if not specified
         """
         optimizer_name = self.optimizer_params.get('optimizer', 'Adam')
         optimizer_class = self.optimizer_mapping.get(optimizer_name)
@@ -292,6 +302,7 @@ class Training:
 
         Returns:
             Learning rate scheduler configured.
+            Z: default to ConstantLR if not specified
         """
         scheduler_name = self.scheduler_params.get('scheduler', 'ConstantLR')
         scheduler_class = self.scheduler_mapping.get(scheduler_name)
@@ -317,6 +328,7 @@ class Training:
 
         Returns:
             Loss function configured.
+            Z: default to CrossEntropyLoss if not specified
         """
         loss_name = self.loss_params.get('loss', 'CrossEntropyLoss')
         loss_class = self.loss_mapping.get(loss_name)
@@ -334,17 +346,22 @@ class Training:
         }
 
         # Merge with dynamic parameters (e.g., batch-specific weights)
+        # Z: Merge static config params with dynamic call-time params; dynamic ones override.
+        # Z: In training, when class weighting is enabled, weight=batch_weights is passed in as a dynamic parameter
         final_params = {**converted_params, **dynamic_params}
 
         # Check if ignore_index should be included (for all losses except BCEWithLogitsLoss)
         if loss_name == 'BCEWithLogitsLoss':
             # Remove ignore_index if not needed
+            # Z: BCE does not support ignore_index
             final_params.pop('ignore_index', None)
         else:
+            # Z: if multiclass
             if self.num_classes > 1:
                 final_params['ignore_index'] = self.ignore_index
             else:
                 # Remove ignore_index if not needed
+                # Z: if binary not needed
                 final_params.pop('ignore_index', None)
 
         return loss_class(**final_params)
@@ -355,6 +372,7 @@ class Training:
 
         Returns:
             nn.Module: Instance of the configured model.
+            Z: default to UnetVanilla if not specified
         """
         model_name = self.model_params.get('model_type', 'UnetVanilla')
 
@@ -381,7 +399,7 @@ class Training:
 
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
-
+        # Z: parameters' second type conversion and verification
         try:
             typed_required_params = {
                 k: model_class.REQUIRED_PARAMS[k](v)
@@ -395,7 +413,7 @@ class Training:
         except ValueError as e:
             text =f" - Error converting parameters for model '{model_name}' : {e}"
             raise ValueError(text)
-
+        # Z: Try to initialize model on GPU, fallback to CPU on CUDA error
         try:
             return model_class(
                 model_config_class(**typed_required_params, **typed_optional_params)
@@ -613,7 +631,10 @@ class Training:
         scaler = None
         # Choose whether to use the gradient scaler
         if self.device.startswith("cuda"):
+            # Z: scale gradients before the backward pass to prevent underflow
+            # Z: because we are using mixed precision training
             scaler = GradScaler()              # automatically uses CUDA
+            # Z: Let cuDNN automatically select the fastest convolution algorithm
             cudnn.benchmark = True
         else:
             # disable scaling on CPU
@@ -650,6 +671,7 @@ class Training:
                 running_metrics = {metric: 0.0 for metric in display_metrics}
                 total_samples = 0
 
+                # Z: exterior pbar for batches, interior mbar for metrics display
                 with tqdm(
                     total=len(self.dataloaders[phase]),
                     desc=f"{phase.capitalize()}",
@@ -667,7 +689,7 @@ class Training:
                     ncols=ct.TQDM_NCOLS,
                     dynamic_ncols=False
                 ) as mbar:
-
+                    # Z: iterate over batches because of using dataloaders
                     for inputs, labels, weights in self.dataloaders[phase]:
 
                         inputs, labels, weights = (
@@ -678,8 +700,9 @@ class Training:
                         optimizer.zero_grad()
                         batch_weights = torch.mean(weights, dim=0)
                         batch_weights = torch.clamp(batch_weights, min=1e-6)
-
+                        # Z: validation phase does not require gradients
                         with torch.set_grad_enabled(is_training):
+                            # Z: autocast for mixed precision training
                             with torch.autocast(
                                     device_type=self.device,
                                     dtype=torch.bfloat16
@@ -702,8 +725,11 @@ class Training:
 
                             if is_training:
                                 if scaler:
+                                    # Z: scale the loss and bach propagation
                                     scaler.scale(loss).backward()
+                                    # Z: check overflow/underflow, step optimizer if safe
                                     scaler.step(optimizer)
+                                    # Z: update the scale for next iteration
                                     scaler.update()
                                 else:
                                     loss.backward()
@@ -712,6 +738,7 @@ class Training:
                                 if isinstance(
                                         scheduler,
                                         torch.optim.lr_scheduler.ReduceLROnPlateau):
+                                    # Z: only ReduceLROnPlateau needs the loss to step
                                     scheduler.step(loss)
                                 else:
                                     scheduler.step()
@@ -719,7 +746,9 @@ class Training:
                         running_loss += loss.item()
                         total_samples += labels.size(0)
 
+                        # Z: compute metrics, for both training and validation
                         with torch.no_grad():
+                            # Z: multicalass uses argmax, binary uses thresholding at 0.5 then 0/1 conversion
                             preds = (torch.argmax(outputs, dim=1).long()
                                      if self.num_classes > 1
                                      else (outputs > 0.5).to(torch.uint8))
@@ -745,6 +774,7 @@ class Training:
                         # overwrite the empty desc of the second bar
                         mbar.set_description(metrics_str)
 
+                # Z: end of batch iteration, calculate epoch averaged loss and metrics
                 epoch_loss = running_loss / len(self.dataloaders[phase])
 
                 epoch_metrics = {metric: running_metrics[metric] /
@@ -752,6 +782,7 @@ class Training:
                                  for metric in display_metrics}
                 loss_dict[phase][epoch] = epoch_loss
 
+                # Z: update metrics dict, print epoch loss and metrics
                 for metric, value in epoch_metrics.items():
                     metrics_dict[phase][metric].append(value)
 
@@ -762,6 +793,7 @@ class Training:
                     print(f" {metric}: {value: .4f}", end=" | ")
                 print()
 
+                # Z: save best model based on validation loss and metrics
                 if phase == "val" and epoch_loss < best_val_loss:
                     best_val_loss = epoch_loss
                     torch.save(self.model.state_dict(),
