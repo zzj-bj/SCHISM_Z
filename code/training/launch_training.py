@@ -30,6 +30,10 @@ class LaunchTraining:
         dir1: str | Path,
         dir2: str | Path
     ) -> Tuple[bool, List[str], List[str]]:
+        """Z: The function extracts the last number from each filename in two directories,
+        compares the two sets of numbers, and if they differ,
+        returns which numbers are missing on each side."""
+        # Z: get numbers from filenames in both directories
         pattern = re.compile(r"(\d+)")
         nums1 = {
             pattern.findall(f.name)[-1]
@@ -53,6 +57,7 @@ class LaunchTraining:
         params = hyperp.get_parameters()
 
         # Safely extract relevant parameter groups
+        # Z: if missing, default to empty dicts
         self.model_params     = params.get('Model', {})
         self.optimizer_params = params.get('Optimizer', {})
         self.scheduler_params = params.get('Scheduler', {})
@@ -68,6 +73,7 @@ class LaunchTraining:
 
        
         # Generalized integrity checks
+        # Z: check #1: essential parameters presence
         checks = [
             ("model_type", self.model_params, "Model not specified in hyperparameters."),
             ("optimizer", self.optimizer_params, "Optimizer not specified in hyperparameters."),
@@ -98,6 +104,7 @@ class LaunchTraining:
             params.setdefault('Data', {})['num_samples'] = new_num_samples
 
         # --- check #3: batch_size vs val_split and num_samples ---
+        # Z: ensure splited validation set has at least one batch
         val_min_size = int(self.batch_size /(1 - self.val_split))
         if self.num_samples < val_min_size:
 
@@ -126,6 +133,7 @@ class LaunchTraining:
 
         if not data_dir.is_dir():
             self.display.print(f"Invalid data directory {data_dir}", colors["error"])
+            # Z: if data_dir is invalid, use "return" to exit the function
             return
         if not run_dir.is_dir():
             self.display.print(f"Invalid run directory {run_dir}", colors["error"])
@@ -145,6 +153,7 @@ class LaunchTraining:
         valid_subfolders: List[str] = []
         total_images = 0
         for sub in data_dir.iterdir():
+            # Z: if not a folder, skip to next iteration
             if not sub.is_dir():
                 continue
             name = sub.name
@@ -202,6 +211,7 @@ class LaunchTraining:
 
         self.display.print("Starting training", colors["warning"])
 
+        # Z: initialize the Training class
         try:
             trainer = Training(
                 data_dir=str(data_dir),
@@ -213,6 +223,7 @@ class LaunchTraining:
             ut.format_and_display_error('Training Loader')
             return
 
+        # Z: load data and start training
         try:
             trainer.load_segmentation_data()
             trainer.train()
