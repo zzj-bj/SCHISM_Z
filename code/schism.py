@@ -18,13 +18,13 @@ from inference import launch_inference as li
 #=======================================================================
 
 def main() -> None:
-
+    # Z: initialize display color utility
     display = dc.DisplayColor()
 
     # Displays the CLI menu and handles user choices.
 
     print(ct.LOGO_IN)
-
+    # Z: Display current settings of debug mode, augemented hyperparameters, and CUDA availability
     display.print(f"Debug mode {'ON' if ct.DEBUG_MODE else 'OFF'}.", colors['warning'])
 
     prompt = f"Augmented hyperparmeters {'ON' if ct.AUGMENTED_HYPERPARAMETERS else 'OFF'}."
@@ -36,10 +36,12 @@ def main() -> None:
     )
     display.print(prompt, colors['warning'])
 
-
+    # Z: create main menu instance as 'MAIN'
     main_menu = menu.Menu('MAIN')
     while True:
+        # Z: display main menu
         main_menu.display_menu()
+        # Z: get user choice from main menu
         choice = main_menu.selection()
 
         if choice == 1:
