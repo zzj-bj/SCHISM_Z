@@ -36,6 +36,7 @@ from tools.constants import NUM_WORKERS
 import tools.constants as ct
 
 # Ensure project root is on the PYTHONPATH
+# Z: Add the project root to sys.path so local packages can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #==============================================================================
@@ -60,6 +61,7 @@ class Inference:
         return 'Inference'
 
     def __init__(self, **kwargs: Any) -> None:
+        # Z: ParamConverter to sparse INI/string parameters
         self.param_converter = ParamConverter()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         data_dir = kwargs.get('data_dir')
@@ -86,6 +88,7 @@ class Inference:
         self.img_res = int(self.data_params.get('img_res', 560))
         self.crop_size = int(self.data_params.get('crop_size', 224))
         self.num_classes = int(self.model_params.get('num_classes', 1))
+        # Z: may cause issues when saving parameters to JSON causes here num_classes is changed non manually
         self.num_classes = 1 if self.num_classes <= 2 else self.num_classes
         self.data_stats = ut.load_data_stats(self.run_dir, self.data_dir)
         self.model_mapping = model_mapping
@@ -125,7 +128,7 @@ class Inference:
         required_params.pop('model_type', None)
         optional_params.pop('model_type', None)
         optional_params.pop('num_classes', None)
-
+        # Z: parameters' second type conversion and verification
         try:
             typed_required_params = {
                 k: model_class.REQUIRED_PARAMS[k](v) for k, v in required_params.items()
@@ -134,7 +137,7 @@ class Inference:
             msg = f"Error converting parameters for model '{model_name}': {e}"
             self.display.print(msg, colors['error'])
             raise ValueError(msg) from e
-
+        # Z: Try to initialize model on GPU, fallback to CPU on CUDA error
         try:
             model = model_class(
                 model_config_class(**typed_required_params, **optional_params)
@@ -154,8 +157,9 @@ class Inference:
             msg = f"Checkpoint not found at '{checkpoint_path}'. Ensure the path is correct."
             self.display.print(msg, colors['error'])
             raise FileNotFoundError(msg)
-
+        # Z: weights_only=True to load only model weights
         checkpoint = torch.load(str(checkpoint_path), map_location=self.device, weights_only=True)
+        # Z: strict=False to allow lack or excess of keys in state_dict
         model.load_state_dict(checkpoint, strict=False)
         model.eval()
 
@@ -169,18 +173,20 @@ class Inference:
             DataLoader: A DataLoader object for iterating over the dataset.
         """
         # Prepare dataset structure
+        # Z: img_data is a dict with subfolder names as keys and list of image paths as values
         img_data = {}
+        # Z: indices is a list of tuples (subfolder_name, image_index)
         indices = []
-
+        # Z: listdir() returns folder and file names in the data_dir not deeper
         for subfolder in os.listdir(self.data_dir):
             img_folder = os.path.join(
                 str(self.data_dir),
                 str(subfolder),
                 "images")
-
+            # Z: skip if not a directory / folder
             if not os.path.isdir(img_folder):
                 continue
-
+            # Z: gather all image paths in the subfolder's images directory
             img_data[subfolder] = sorted(
                 glob.glob(os.path.join(img_folder, "*.*"))
             )
@@ -241,18 +247,22 @@ class Inference:
                 ncols=ct.TQDM_NCOLS,
                 dynamic_ncols=False,
           ) as pbar:
-
+            # Z: for batch_index, (img, maybe GT or mask, img_path) in enumerate(dataloader):
             for _, (img, _, img_path) in enumerate(dataloader):
 
                 with torch.no_grad():
                     # Perform patch-based prediction
+                    # Z: and reconstruct the full image prediction
                     full_pred = self._patch_based_prediction(img)
 
                 # Save the reconstructed prediction
+                # Z: get original file name and extension
                 name_c = os.path.basename(img_path[0])
+                # Z: separate file name and extension
                 base_name, ext = os.path.splitext(name_c)
+                # Z: create new file name with metric
                 new_name = f"{base_name}_{self.metric}{ext}"
-
+                # Z: get subfolder name from image path
                 subfolder = os.path.basename(os.path.dirname(os.path.dirname(img_path[0])))
 
                 preds = f"preds_{self.metric}"
@@ -269,7 +279,8 @@ class Inference:
     def _patch_based_prediction(self, patches: List[torch.Tensor]) -> torch.Tensor:
         """
         Reassembles patches into a full-size prediction map.
-
+        Z: forward patches through the model and reconstructs the full image prediction.
+        
         Args:
             patches (list of torch.Tensor): List of image patches.
             original_dims (tuple): Original dimensions of the full image (height, width).
@@ -289,30 +300,39 @@ class Inference:
             dimensions, dimensions),
             device=self.device
         )
-
+        # Z: Current treated patch index
         patch_index = 0
+        # Z: Store prediction for each patch
         predicted_patches = []
-
+        # Z: Double loop over grid to process patches in order: for row in grid, for col in grid
         for _ in range(grid_size):
             for _ in range(grid_size):
                 patch = patches[patch_index]
                 with torch.no_grad():
                     # Perform inference on the patch
                     # (model expects 4D input: [batch_size, channels, height, width])
+                    # Z: Output logits generally have the shape [batch_size, num_classes, H, W]
+                    # Z: For each image in the batch, there are num_classes channels,
+                    # Z: and each channel is an H×W score map for the whole image
                     patch_pred = self.model.forward(patch.to(self.device))
 
                     if self.num_classes > 1:
                         # Multiclass: Apply softmax to get probabilities
                         # and then get the class with the highest probability for each pixel
+                        # Z: Apply argmax over the channel dimension for each pixel,
+                        # Z: producing a [batch, H, W] tensor of type uint8,
+                        # Z: where each value is the predicted class index for that pixel (0 to num_classes−1)
                         patch_pred = torch.argmax(patch_pred, dim=1).to(torch.uint8)
                     else:
                         # Binary: Apply sigmoid to get probabilities
                         # and then threshold to get binary classification
                         patch_pred = torch.sigmoid(patch_pred).squeeze(0)
+                        # Z: if >0.5 set to 1 else 0 for each pixel
                         patch_pred = (patch_pred > 0.5).to(torch.uint8)
 
 
                 patch_pred = self._scale_mask_to_class_values(patch_pred)
+                # Z: Resize patch prediction to crop_size if needed and squeeze batch dimension
                 patch_pred_resized = nn_func.interpolate(patch_pred.unsqueeze(0),
                                                             size=(self.crop_size,
                                                                   self.crop_size),
@@ -336,6 +356,7 @@ class Inference:
     def _scale_mask_to_class_values(self, mask_tensor: torch.Tensor) -> torch.Tensor:
         """
         Scales the predicted mask tensor to the appropriate class values.
+        Z: predicted class indices = 0,1,...,num_classes-1, convert to class values in [0,255]
 
         Args:
             mask_tensor (torch.Tensor): The predicted mask tensor containing class indices.
@@ -359,6 +380,7 @@ class Inference:
             mask_tensor (torch.Tensor): The mask tensor to be saved.
             save_path (str): The file path where the mask will be saved.
         """
+        # Z: uint8 from 0 to 255
         mask_array = mask_tensor.cpu().numpy().astype(np.uint8)
         mask_image = Image.fromarray(mask_array)
         mask_image.save(save_path)
