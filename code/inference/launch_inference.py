@@ -61,7 +61,7 @@ class LaunchInference:
                 return
             for ext in IMAGE_EXTENSIONS:
                 tif_files.extend(images_dir.glob(f"*{ext}"))
-
+        # Z: til files for all subfolders
         tif_files = sorted(tif_files)
 
         if not tif_files:
@@ -72,6 +72,7 @@ class LaunchInference:
         # load hyperparameters and extract metrics
         hyper = Hyperparameters(str(hyper_path))
         params = hyper.get_parameters().get("Training", {})
+        # Z: get metrics list excluding ConfusionMatrix
         metrics = [
             m.strip()
             for m in params.get("metrics", "").split(",")
