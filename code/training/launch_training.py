@@ -62,7 +62,6 @@ class LaunchTraining:
         self.optimizer_params = params.get('Optimizer', {})
         self.scheduler_params = params.get('Scheduler', {})
         self.loss_params      = params.get('Loss', {})
-        
         self.training_params  = params.get('Training', {})
         self.data             = params.get('Data', {})
 
@@ -95,14 +94,13 @@ class LaunchTraining:
             self.display.print(
                 f"The 'num_samples' value ({self.num_samples}) exceeds total images ({total_images}). "
                 f"Setting num_samples to {new_num_samples}.\n"
-                "Consider using 'total_images - 1' as a better choice for num_samples.",
+                "     Consider using 'total_images - 1' as a better choice for num_samples.",
                 colors["warning"]
             )
 
             # Update internal values and hyperparameters
             self.num_samples = new_num_samples
             self.data['num_samples'] = new_num_samples
-            params.setdefault('Data', {})['num_samples'] = new_num_samples
 
         # --- check #3: batch_size vs val_split and num_samples ---
         # Z: ensure splited validation set has at least one batch
@@ -110,16 +108,15 @@ class LaunchTraining:
         if self.num_samples < val_min_size:
 
             self.display.print(
-                f"'The 'num_samples' value ({self.num_samples}) is too small."
+                f"'The 'num_samples' value ({self.num_samples}) is too small. "
                 f"Setting num_samples to {val_min_size}.\n"
-                "Consider using 'batch_size / (1 - val_split) as a better choice for num_samples.",
+                "     Consider using 'batch_size / (1 - val_split) as a better choice for num_samples.",
                 colors["warning"]
             )
             
             # Update internal values and hyperparameters
             self.num_samples = val_min_size
             self.data['num_samples'] = val_min_size
-            params.setdefault('Data', {})['num_samples'] = val_min_size
 
         return True
 
